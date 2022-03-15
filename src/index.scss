@@ -56,6 +56,27 @@ code {
     monospace;
 }
 
+h1 {
+  font-size: size('body', $theme-h1-font-size);
+}
+h2 {
+  font-size: size('body', $theme-h2-font-size);
+}
+h3 {
+  font-size: size('body', $theme-h3-font-size);
+}
+h4 {
+  font-size: size('body', $theme-h4-font-size);
+}
+
+h5 {
+  font-size: size('body', $theme-h5-font-size);
+}
+
+.pointer {
+  cursor: pointer !important;
+}
+
 .skipnav {
   top: 0;
   left: 0;
@@ -74,4 +95,24 @@ code {
 
 #main-content {
   outline: none;
+  border-top: 0;
+
+  table {
+    tr {
+      p {
+          margin: 0;
+      }
+
+      th {
+        border-bottom: 0.5px solid black;
+        border-top: 0;
+      }
+    }
+    td {
+      border-top: .5px;
+      white-space: unset;
+      border: 0;
+      border-bottom: 0.5px solid #1b1b1b;
+    }
+  }
 }

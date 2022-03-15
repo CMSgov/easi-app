@@ -546,6 +546,7 @@ func (s GraphQLTestSuite) TestIssueLifecycleIDWithPassedLCID() {
 				Lcid              string
 				LcidExpiresAt     string
 				LcidScope         string
+				LcidCostBaseline  string
 				DecisionNextSteps string
 				Status            string
 			}
@@ -561,7 +562,8 @@ func (s GraphQLTestSuite) TestIssueLifecycleIDWithPassedLCID() {
 				expiresAt: "2021-03-18T00:00:00Z",
 				scope: "Your scope",
 				feedback: "My feedback",
-				lcid: "123456A"
+				lcid: "123456A",
+				costBaseline: "Your cost baseline",
 				nextSteps: "Your next steps"
 			}) {
 				systemIntake {
@@ -569,6 +571,7 @@ func (s GraphQLTestSuite) TestIssueLifecycleIDWithPassedLCID() {
 					lcid
 					lcidExpiresAt
 					lcidScope
+					lcidCostBaseline
 					decisionNextSteps
 					status
 				}
@@ -580,6 +583,7 @@ func (s GraphQLTestSuite) TestIssueLifecycleIDWithPassedLCID() {
 	respIntake := resp.IssueLifecycleID.SystemIntake
 	s.Equal(respIntake.LcidExpiresAt, "2021-03-18T00:00:00Z")
 	s.Equal(respIntake.Lcid, "123456A")
+	s.Equal(respIntake.LcidCostBaseline, "Your cost baseline")
 }
 
 func (s GraphQLTestSuite) TestIssueLifecycleIDSetNewLCID() {
@@ -600,6 +604,7 @@ func (s GraphQLTestSuite) TestIssueLifecycleIDSetNewLCID() {
 				Lcid              string
 				LcidExpiresAt     string
 				LcidScope         string
+				LcidCostBaseline  string
 				DecisionNextSteps string
 				Status            string
 			}
@@ -615,14 +620,16 @@ func (s GraphQLTestSuite) TestIssueLifecycleIDSetNewLCID() {
 				expiresAt: "2021-03-18T00:00:00Z",
 				scope: "Your scope",
 				feedback: "My feedback",
-				lcid: ""
-				nextSteps: "Your next steps"
+				lcid: "",
+				nextSteps: "Your next steps",
+				costBaseline: "Test cost baseline"
 			}) {
 				systemIntake {
 					id
 					lcid
 					lcidExpiresAt
 					lcidScope
+					lcidCostBaseline
 					decisionNextSteps
 					status
 				}
@@ -634,6 +641,8 @@ func (s GraphQLTestSuite) TestIssueLifecycleIDSetNewLCID() {
 	respIntake := resp.IssueLifecycleID.SystemIntake
 	s.Equal(respIntake.LcidExpiresAt, "2021-03-18T00:00:00Z")
 	s.Equal(respIntake.Lcid, "654321B")
+	s.Equal(respIntake.LcidCostBaseline, "Test cost baseline")
+
 }
 
 func date(year, month, day int) *time.Time {
@@ -1117,6 +1126,7 @@ func (s GraphQLTestSuite) TestUpdateRequestDetails() {
 				RequestName      string
 				BusinessSolution string
 				BusinessNeed     string
+				CurrentStage     string
 				NeedsEaSupport   bool
 			}
 		}
@@ -1131,6 +1141,7 @@ func (s GraphQLTestSuite) TestUpdateRequestDetails() {
 				requestName: "My request",
 				businessSolution: "My solution",
 				businessNeed: "My need",
+				currentStage:  "Just an idea",
 				needsEaSupport: false
 			}) {
 				systemIntake {
@@ -1138,6 +1149,7 @@ func (s GraphQLTestSuite) TestUpdateRequestDetails() {
 					requestName
 					businessSolution
 					businessNeed
+					currentStage
 					needsEaSupport
 				}
 			}
@@ -1149,6 +1161,7 @@ func (s GraphQLTestSuite) TestUpdateRequestDetails() {
 	s.Equal(respIntake.RequestName, "My request")
 	s.Equal(respIntake.BusinessSolution, "My solution")
 	s.Equal(respIntake.BusinessNeed, "My need")
+	s.Equal(respIntake.CurrentStage, "Just an idea")
 	s.False(respIntake.NeedsEaSupport)
 }
 
@@ -1165,7 +1178,6 @@ func (s GraphQLTestSuite) TestUpdateContractDetails() {
 		UpdateSystemIntakeContractDetails struct {
 			SystemIntake struct {
 				ID            string
-				CurrentStage  string
 				FundingSource struct {
 					FundingNumber string
 					IsFunded      bool
@@ -1198,7 +1210,6 @@ func (s GraphQLTestSuite) TestUpdateContractDetails() {
 		`mutation {
 			updateSystemIntakeContractDetails(input: {
 				id: "%s",
-				currentStage: "Just an idea"
 				fundingSource: {
 					fundingNumber: "123456"
 					isFunded: true
@@ -1218,7 +1229,6 @@ func (s GraphQLTestSuite) TestUpdateContractDetails() {
 			}) {
 				systemIntake {
 					id
-					currentStage
 					fundingSource {
 						fundingNumber
 						isFunded
@@ -1250,7 +1260,6 @@ func (s GraphQLTestSuite) TestUpdateContractDetails() {
 	s.Equal(intake.ID.String(), resp.UpdateSystemIntakeContractDetails.SystemIntake.ID)
 
 	respIntake := resp.UpdateSystemIntakeContractDetails.SystemIntake
-	s.Equal(respIntake.CurrentStage, "Just an idea")
 
 	fundingSource := respIntake.FundingSource
 	s.Equal(fundingSource.FundingNumber, "123456")
@@ -1403,9 +1412,8 @@ func (s GraphQLTestSuite) TestUpdateContractDetailsRemoveContract() {
 	var resp struct {
 		UpdateSystemIntakeContractDetails struct {
 			SystemIntake struct {
-				ID           string
-				CurrentStage string
-				Contract     struct {
+				ID       string
+				Contract struct {
 					Contractor *string
 					EndDate    struct {
 						Day   *string
@@ -1510,4 +1518,242 @@ func (s GraphQLTestSuite) TestSubmitIntake() {
 	respIntake := resp.SubmitIntake.SystemIntake
 	s.Equal(intake.ID.String(), respIntake.ID)
 	s.Equal(string(models.SystemIntakeStatusINTAKESUBMITTED), respIntake.Status)
+}
+
+func (s GraphQLTestSuite) TestExtendLifecycleId() {
+	ctx := context.Background()
+
+	intake, intakeErr := s.store.CreateSystemIntake(ctx, &models.SystemIntake{
+		Status:      models.SystemIntakeStatusLCIDISSUED,
+		RequestType: models.SystemIntakeRequestTypeNEW,
+		EUAUserID:   null.StringFrom("TEST"),
+	})
+	s.NoError(intakeErr)
+
+	intake.LifecycleID = null.StringFrom("123456")
+	intake.LifecycleExpiresAt = date(2021, 12, 1)
+	intake.LifecycleScope = null.StringFrom("Original Scope")
+	intake.DecisionNextSteps = null.StringFrom("Original Next Steps")
+	intake.LifecycleCostBaseline = null.StringFrom("Original Cost Baseline")
+
+	_, updateErr := s.store.UpdateSystemIntake(ctx, intake)
+	s.NoError(updateErr)
+
+	type userErrors []struct {
+		Message string
+		Path    []string
+	}
+
+	var resp struct {
+		CreateSystemIntakeActionExtendLifecycleID struct {
+			SystemIntake struct {
+				ID                string
+				LcidExpiresAt     string
+				LcidScope         string
+				DecisionNextSteps string
+				LcidCostBaseline  string
+				Lcid              string
+				Actions           []struct {
+					ID    string
+					Type  string
+					Actor struct {
+						Name  string
+						Email string
+					}
+					Feedback             string
+					LcidExpirationChange struct {
+						NewDate              string
+						PreviousDate         string
+						NewScope             string
+						PreviousScope        string
+						NewNextSteps         string
+						PreviousNextSteps    string
+						NewCostBaseline      string
+						PreviousCostBaseline string
+					}
+				}
+			}
+			UserErrors userErrors
+		}
+	}
+
+	s.client.MustPost(fmt.Sprintf(
+		`mutation {
+			createSystemIntakeActionExtendLifecycleId(input: {
+				id: "%s",
+				expirationDate: "%s",
+				scope: "%s",
+				nextSteps: "%s",
+				costBaseline: "%s",
+			}) {
+				systemIntake {
+					id
+					lcid
+					lcidExpiresAt
+					lcidScope
+					decisionNextSteps
+					lcidCostBaseline
+					actions {
+						type
+						actor {
+							name
+							email
+						}
+						feedback
+						lcidExpirationChange {
+							previousDate
+							newDate
+							previousScope
+							newScope
+							previousNextSteps
+							newNextSteps
+							previousCostBaseline
+							newCostBaseline
+						}
+					}
+				}
+				userErrors {
+					message
+					path
+				}
+			}
+		}`, intake.ID, date(2025, 5, 14).Format(time.RFC3339), "New Scope", "New Next Steps", "New Cost Baseline"), &resp, testhelpers.AddAuthWithAllJobCodesToGraphQLClientTest("WWWW"))
+
+	s.Equal(0, len(resp.CreateSystemIntakeActionExtendLifecycleID.UserErrors))
+
+	respIntake := resp.CreateSystemIntakeActionExtendLifecycleID.SystemIntake
+	s.Equal(intake.ID.String(), respIntake.ID)
+	s.Equal("2025-05-14T00:00:00Z", respIntake.LcidExpiresAt)
+	s.Equal("New Scope", respIntake.LcidScope)
+	s.Equal("New Next Steps", respIntake.DecisionNextSteps)
+	s.Equal("New Cost Baseline", respIntake.LcidCostBaseline)
+
+	s.Equal(1, len(respIntake.Actions))
+	action := respIntake.Actions[0]
+	s.Equal("EXTEND_LCID", action.Type)
+	s.Equal("wwww Doe", action.Actor.Name)
+	s.Equal("WWWW@local.fake", action.Actor.Email)
+
+	s.Equal("2025-05-14T00:00:00Z", action.LcidExpirationChange.NewDate)
+	s.Equal("2021-12-01T00:00:00Z", action.LcidExpirationChange.PreviousDate)
+	s.Equal("New Scope", action.LcidExpirationChange.NewScope)
+	s.Equal("Original Scope", action.LcidExpirationChange.PreviousScope)
+	s.Equal("New Next Steps", action.LcidExpirationChange.NewNextSteps)
+	s.Equal("Original Next Steps", action.LcidExpirationChange.PreviousNextSteps)
+	s.Equal("New Cost Baseline", action.LcidExpirationChange.NewCostBaseline)
+	s.Equal("Original Cost Baseline", action.LcidExpirationChange.PreviousCostBaseline)
+
+	// TODO check for dates in returned action
+	// TODO verify that email was sent
+}
+
+func (s GraphQLTestSuite) TestExtendLifecycleIdRequiresExpirationDate() {
+	ctx := context.Background()
+
+	intake, intakeErr := s.store.CreateSystemIntake(ctx, &models.SystemIntake{
+		Status:      models.SystemIntakeStatusLCIDISSUED,
+		RequestType: models.SystemIntakeRequestTypeNEW,
+		EUAUserID:   null.StringFrom("TEST"),
+	})
+	s.NoError(intakeErr)
+
+	type userErrors []struct {
+		Message string
+		Path    []string
+	}
+
+	var resp struct {
+		CreateSystemIntakeActionExtendLifecycleID struct {
+			SystemIntake struct {
+				ID                string
+				LcidExpiresAt     string
+				LcidScope         string
+				DecisionNextSteps string
+				LcidCostBaseline  string
+				Lcid              string
+			}
+			UserErrors userErrors
+		}
+	}
+
+	s.client.MustPost(fmt.Sprintf(
+		`mutation {
+			createSystemIntakeActionExtendLifecycleId(input: {
+				id: "%s",
+				scope: "%s",
+				nextSteps: "%s",
+			}) {
+				systemIntake {
+					id
+					lcid
+					lcidExpiresAt
+					lcidScope
+					lcidCostBaseline
+					decisionNextSteps
+				}
+				userErrors {
+					message
+					path
+				}
+			}
+		}`, intake.ID, "Scope", "Next Steps"), &resp)
+
+	s.Empty(resp.CreateSystemIntakeActionExtendLifecycleID.SystemIntake.ID)
+	s.Equal(userErrors{{Message: "Must provide a valid future date", Path: []string{"expirationDate"}}}, resp.CreateSystemIntakeActionExtendLifecycleID.UserErrors)
+}
+
+func (s GraphQLTestSuite) TestExtendLifecycleIdRequiresScope() {
+	ctx := context.Background()
+
+	intake, intakeErr := s.store.CreateSystemIntake(ctx, &models.SystemIntake{
+		Status:      models.SystemIntakeStatusLCIDISSUED,
+		RequestType: models.SystemIntakeRequestTypeNEW,
+		EUAUserID:   null.StringFrom("TEST"),
+	})
+	s.NoError(intakeErr)
+
+	type userErrors []struct {
+		Message string
+		Path    []string
+	}
+
+	var resp struct {
+		CreateSystemIntakeActionExtendLifecycleID struct {
+			SystemIntake struct {
+				ID                string
+				LcidExpiresAt     string
+				LcidScope         string
+				DecisionNextSteps string
+				LcidCostBaseline  string
+				Lcid              string
+			}
+			UserErrors userErrors
+		}
+	}
+
+	s.client.MustPost(fmt.Sprintf(
+		`mutation {
+			createSystemIntakeActionExtendLifecycleId(input: {
+				id: "%s",
+				expirationDate: "%s",
+				scope: "%s"
+				nextSteps: "%s",
+			}) {
+				systemIntake {
+					id
+					lcid
+					lcidExpiresAt
+					lcidScope
+					lcidCostBaseline
+					decisionNextSteps
+				}
+				userErrors {
+					message
+					path
+				}
+			}
+		}`, intake.ID, date(2025, 5, 14).Format(time.RFC3339), "", "Next Steps"), &resp)
+
+	s.Empty(resp.CreateSystemIntakeActionExtendLifecycleID.SystemIntake.ID)
+	s.Equal(userErrors{{Message: "Must provide a non-empty scope", Path: []string{"scope"}}}, resp.CreateSystemIntakeActionExtendLifecycleID.UserErrors)
 }

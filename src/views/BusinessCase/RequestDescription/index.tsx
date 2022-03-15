@@ -1,6 +1,11 @@
 import React from 'react';
 import { useHistory } from 'react-router-dom';
-import { Button } from '@trussworks/react-uswds';
+import {
+  Button,
+  IconNavigateBefore,
+  Label,
+  Textarea
+} from '@trussworks/react-uswds';
 import { Field, Form, Formik, FormikProps } from 'formik';
 
 import CharacterCounter from 'components/CharacterCounter';
@@ -12,8 +17,6 @@ import { ErrorAlert, ErrorAlertMessage } from 'components/shared/ErrorAlert';
 import FieldErrorMsg from 'components/shared/FieldErrorMsg';
 import FieldGroup from 'components/shared/FieldGroup';
 import HelpText from 'components/shared/HelpText';
-import Label from 'components/shared/Label';
-import TextAreaField from 'components/shared/TextAreaField';
 import { alternativeSolutionHasFilledFields } from 'data/businessCase';
 import { BusinessCaseModel, RequestDescriptionForm } from 'types/businessCase';
 import flattenErrors from 'utils/flattenErrors';
@@ -124,7 +127,7 @@ const RequestDescription = ({
                   </HelpText>
                   <FieldErrorMsg>{flatErrors.businessNeed}</FieldErrorMsg>
                   <Field
-                    as={TextAreaField}
+                    as={Textarea}
                     error={!!flatErrors.businessNeed}
                     id="BusinessCase-BusinessNeed"
                     maxLength={2000}
@@ -155,7 +158,7 @@ const RequestDescription = ({
                   </HelpText>
                   <FieldErrorMsg>{flatErrors.cmsBenefit}</FieldErrorMsg>
                   <Field
-                    as={TextAreaField}
+                    as={Textarea}
                     error={!!flatErrors.cmsBenefit}
                     id="BusinessCase-CmsBenefit"
                     maxLength={2000}
@@ -185,7 +188,7 @@ const RequestDescription = ({
                   </HelpText>
                   <FieldErrorMsg>{flatErrors.priorityAlignment}</FieldErrorMsg>
                   <Field
-                    as={TextAreaField}
+                    as={Textarea}
                     error={!!flatErrors.priorityAlignment}
                     id="BusinessCase-PriorityAlignment"
                     maxLength={2000}
@@ -215,7 +218,7 @@ const RequestDescription = ({
                   </HelpText>
                   <FieldErrorMsg>{flatErrors.successIndicators}</FieldErrorMsg>
                   <Field
-                    as={TextAreaField}
+                    as={Textarea}
                     error={!!flatErrors.successIndicators}
                     id="BusinessCase-SuccessIndicators"
                     maxLength={2000}
@@ -268,8 +271,8 @@ const RequestDescription = ({
                   );
                 }}
               >
-                <span>
-                  <i className="fa fa-angle-left" /> Save & Exit
+                <span className="display-flex flex-align-center">
+                  <IconNavigateBefore /> Save & Exit
                 </span>
               </Button>
             </div>

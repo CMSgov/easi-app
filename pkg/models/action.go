@@ -25,6 +25,8 @@ const (
 	ActionTypePROVIDEFEEDBACKNEEDBIZCASE ActionType = "PROVIDE_FEEDBACK_NEED_BIZ_CASE"
 	// ActionTypeISSUELCID captures enum value ISSUE_LCID
 	ActionTypeISSUELCID ActionType = "ISSUE_LCID"
+	// ActionTypeEXTENDLCID captures enum value EXTEND_LCID
+	ActionTypeEXTENDLCID ActionType = "EXTEND_LCID"
 	// ActionTypeCREATEBIZCASE captures enum value CREATE_BIZ_CASE
 	ActionTypeCREATEBIZCASE ActionType = "CREATE_BIZ_CASE"
 	// ActionTypeSUBMITBIZCASE captures enum value SUBMIT_BIZ_CASE
@@ -51,13 +53,21 @@ const (
 
 // Action is the model for an action on a system intake
 type Action struct {
-	ID             uuid.UUID    `json:"id"`
-	IntakeID       *uuid.UUID   `db:"intake_id"`
-	BusinessCaseID *uuid.UUID   `db:"business_case_id"`
-	ActionType     ActionType   `json:"actionType" db:"action_type"`
-	ActorName      string       `json:"actorName" db:"actor_name"`
-	ActorEmail     EmailAddress `json:"actorEmail" db:"actor_email"`
-	ActorEUAUserID string       `json:"actorEuaUserId" db:"actor_eua_user_id"`
-	Feedback       null.String  `json:"feedback"`
-	CreatedAt      *time.Time   `json:"createdAt" db:"created_at"`
+	ID                                       uuid.UUID    `json:"id"`
+	IntakeID                                 *uuid.UUID   `db:"intake_id"`
+	BusinessCaseID                           *uuid.UUID   `db:"business_case_id"`
+	ActionType                               ActionType   `json:"actionType" db:"action_type"`
+	ActorName                                string       `json:"actorName" db:"actor_name"`
+	ActorEmail                               EmailAddress `json:"actorEmail" db:"actor_email"`
+	ActorEUAUserID                           string       `json:"actorEuaUserId" db:"actor_eua_user_id"`
+	Feedback                                 null.String  `json:"feedback"` // Feedback to requestor sent via email
+	CreatedAt                                *time.Time   `json:"createdAt" db:"created_at"`
+	LCIDExpirationChangeNewDate              *time.Time   `db:"lcid_expiration_change_new_date"`
+	LCIDExpirationChangePreviousDate         *time.Time   `db:"lcid_expiration_change_previous_date"`
+	LCIDExpirationChangeNewScope             null.String  `db:"lcid_expiration_change_new_scope"`
+	LCIDExpirationChangePreviousScope        null.String  `db:"lcid_expiration_change_previous_scope"`
+	LCIDExpirationChangeNewNextSteps         null.String  `db:"lcid_expiration_change_new_next_steps"`
+	LCIDExpirationChangePreviousNextSteps    null.String  `db:"lcid_expiration_change_previous_next_steps"`
+	LCIDExpirationChangeNewCostBaseline      null.String  `db:"lcid_expiration_change_new_cost_baseline"`
+	LCIDExpirationChangePreviousCostBaseline null.String  `db:"lcid_expiration_change_previous_cost_baseline"`
 }

@@ -10,20 +10,28 @@ const taskList = {
   decision: {
     bizCaseApproved: 'Your business case has been approved.',
     bizCaseRejected: 'Your business case has been rejected.',
+    aboutThisLcid: 'About this Lifecycle ID',
+    tempLcidExplanation:
+      'You have been issued a Lifecycle ID, but you still have more steps to complete before your business case is fully approved.',
+    tempLcidNextSteps:
+      'Even though you have been issued a Lifecycle ID, you have some remaining tasks before your request is complete. After reviewing the information on this page, please return to the task list to continue your request.',
     notItRequest: 'Not an IT Request',
     noGovernanceNeeded: 'No further governance needed',
     lcid: 'Project Lifecycle ID',
     lcidScope: 'Lifecycle ID Scope',
     lcidExpiration: 'This ID expires on {{date}}',
+    costBaseline: 'Project Cost Baseline',
     reasons: 'Reasons',
     nextSteps: 'Next steps',
     completeNextSteps:
       'Finish these next steps to complete the governance review process.'
   },
   navigation: {
-    home: 'Home',
-    governanceApproval: 'Get governance approval',
+    home: 'IT Governance',
+    governanceTaskList: 'Governance Task List',
     feedback: 'Feedback',
+    lcidInfo: 'About this LCID',
+    nextSteps: 'Decision and next steps',
     returnToTaskList: 'Return to task list'
   },
   feedback: {

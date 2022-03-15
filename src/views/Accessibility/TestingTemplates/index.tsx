@@ -5,12 +5,13 @@ import {
   Breadcrumb,
   BreadcrumbBar,
   BreadcrumbLink,
+  IconError,
   Link as UswdsLink,
   SummaryBox
 } from '@trussworks/react-uswds';
 
-import RemediationPlanDoc from 'assets/files/CMS508RemediationPlanTemplate_AppName-a.pdf';
-import TestPlanDoc from 'assets/files/Section508TestPlanTemplate_AppName-a.pdf';
+import RemediationPlanDoc from 'assets/files/CMS508RemediationPlanTemplate.pdf';
+import TestPlanDoc from 'assets/files/Section508TestPlanTemplate.pdf';
 import PageHeading from 'components/PageHeading';
 
 import './index.scss';
@@ -121,8 +122,8 @@ const TestingTemplates = () => {
           'testingTemplates.vpatSection.subSection.downloadVPAT.line1.otherText'
         )}
       </p>
-      <p className="display-flex flex-row flex-align-center accessibility-testing-templates__alert-note">
-        <i className="fa fa-exclamation-circle margin-right-1" />
+      <p className="display-flex flex-row flex-align-center">
+        <IconError className="margin-right-1" />
         {` `}
         {t('testingTemplates.vpatSection.subSection.downloadVPAT.line2.text')}
       </p>

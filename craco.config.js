@@ -8,9 +8,12 @@ module.exports = {
         resources: [
           './src/stylesheets/_uswdsUtilities.scss',
           './src/stylesheets/_colors.scss',
-          './src/stylesheets/_variables.scss'
+          './src/stylesheets/_variables.module.scss'
         ]
       }
     }
-  ]
+  ],
+  typescript: {
+    enableTypeChecking: false
+  }
 };

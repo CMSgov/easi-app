@@ -3,34 +3,54 @@ import { CSVLink } from 'react-csv';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
-import { useSortBy, useTable } from 'react-table';
+import {
+  Row,
+  useFilters,
+  useGlobalFilter,
+  usePagination,
+  useSortBy,
+  useTable
+} from 'react-table';
 import {
   Breadcrumb,
   BreadcrumbBar,
   BreadcrumbLink,
-  Link as UswdsLink,
+  IconError,
+  IconFileDownload,
   Table
 } from '@trussworks/react-uswds';
 import classnames from 'classnames';
 import { DateTime } from 'luxon';
 
+import UswdsReactLink from 'components/LinkWrapper';
+import MainContent from 'components/MainContent';
 import PageHeading from 'components/PageHeading';
 import TruncatedText from 'components/shared/TruncatedText';
+import GlobalClientFilter from 'components/TableFilter';
+import TablePagination from 'components/TablePagination';
+import TableResults from 'components/TableResults';
 import { convertIntakeToCSV } from 'data/systemIntake';
+import useCheckResponsiveScreen from 'hooks/checkMobile';
+import { GetSystemIntake_systemIntake_lastAdminNote as LastAdminNote } from 'queries/types/GetSystemIntake';
 import { AppState } from 'reducers/rootReducer';
 import { fetchSystemIntakes } from 'types/routines';
-import { formatDateAndIgnoreTimezone } from 'utils/date';
+import { SystemIntakeForm } from 'types/systemIntake';
+import { formatDate } from 'utils/date';
+import globalTableFilter from 'utils/globalTableFilter';
 import {
-  getAcronymForComponent,
-  translateRequestType
-} from 'utils/systemIntake';
+  getColumnSortStatus,
+  getHeaderSortIcon,
+  sortColumnValues
+} from 'utils/tableSort';
 
 import csvHeaderMap from './csvHeaderMap';
+import tableMap from './tableMap';
 
 import './index.scss';
 
 const RequestRepository = () => {
   type TableTypes = 'open' | 'closed';
+  const isMobile = useCheckResponsiveScreen('tablet');
   const [activeTable, setActiveTable] = useState<TableTypes>('open');
   const { t } = useTranslation('governanceReviewTeam');
   const dispatch = useDispatch();
@@ -50,6 +70,7 @@ const RequestRepository = () => {
       if (value) {
         return DateTime.fromISO(value).toLocaleString(DateTime.DATE_FULL);
       }
+
       return t('requestRepository.table.submissionDate.null');
     }
   };
@@ -70,28 +91,30 @@ const RequestRepository = () => {
     Header: t('intake:contactDetails.requester'),
     accessor: 'requester',
     Cell: ({ value }: any) => {
-      // Display both the requester name and the acronym of their component
-      // TODO: might be better to just save the component's acronym in the intake?
-      return `${value.name}, ${getAcronymForComponent(value.component)}`;
+      return value;
     }
   };
 
   const adminLeadColumn = {
     Header: t('intake:fields.adminLead'),
-    accessor: 'adminLead',
-    Cell: ({ value }: any) => {
-      if (value) {
-        return value;
+    accessor: (value: SystemIntakeForm) => {
+      if (value.adminLead) {
+        return value.adminLead;
       }
-
-      return (
-        <>
-          {/* TODO: should probably make this a button that opens up the assign admin
-                    lead automatically. Similar to the Dates functionality */}
-          <i className="fa fa-exclamation-circle text-secondary margin-right-05" />
-          {t('governanceReviewTeam:adminLeads.notAssigned')}
-        </>
-      );
+      return t('governanceReviewTeam:adminLeads.notAssigned');
+    },
+    Cell: ({ value }: any) => {
+      if (value === t('governanceReviewTeam:adminLeads.notAssigned')) {
+        return (
+          <div className="display-flex flex-align-center">
+            {/* TODO: should probably make this a button that opens up the assign admin
+                lead automatically. Similar to the Dates functionality */}
+            <IconError className="text-secondary margin-right-05" />
+            {value}
+          </div>
+        );
+      }
+      return value;
     }
   };
 
@@ -99,20 +122,17 @@ const RequestRepository = () => {
     Header: t('intake:fields.grtDate'),
     accessor: 'grtDate',
     Cell: ({ row, value }: any) => {
-      if (value) {
-        return formatDateAndIgnoreTimezone(value);
+      if (!value) {
+        return (
+          <UswdsReactLink
+            data-testid="add-grt-date-cta"
+            to={`/governance-review-team/${row.original.id}/dates`}
+          >
+            {t('requestRepository.table.addDate')}
+          </UswdsReactLink>
+        );
       }
-
-      // If date is null, return button that takes user to page to add date
-      return (
-        <UswdsLink
-          data-testid="add-grt-date-cta"
-          asCustom={Link}
-          to={`/governance-review-team/${row.original.id}/dates`}
-        >
-          {t('requestRepository.table.addDate')}
-        </UswdsLink>
-      );
+      return formatDate(value);
     }
   };
 
@@ -120,20 +140,17 @@ const RequestRepository = () => {
     Header: t('intake:fields.grbDate'),
     accessor: 'grbDate',
     Cell: ({ row, value }: any) => {
-      if (value) {
-        return formatDateAndIgnoreTimezone(value);
+      if (!value) {
+        return (
+          <UswdsReactLink
+            data-testid="add-grb-date-cta"
+            to={`/governance-review-team/${row.original.id}/dates`}
+          >
+            {t('requestRepository.table.addDate')}
+          </UswdsReactLink>
+        );
       }
-
-      // If date is null, return button that takes user to page to add date
-      return (
-        <UswdsLink
-          data-testid="add-grb-date-cta"
-          asCustom={Link}
-          to={`/governance-review-team/${row.original.id}/dates`}
-        >
-          {t('requestRepository.table.addDate')}
-        </UswdsLink>
-      );
+      return formatDate(value);
     }
   };
 
@@ -181,7 +198,13 @@ const RequestRepository = () => {
 
   const lastAdminNoteColumn = {
     Header: t('intake:fields.lastAdminNote'),
-    accessor: 'lastAdminNote',
+    accessor: ({ lastAdminNote }: { lastAdminNote: LastAdminNote }) => {
+      if (lastAdminNote?.content) {
+        /* eslint react/prop-types: 0 */
+        return lastAdminNote.content;
+      }
+      return null;
+    },
     Cell: ({ value }: any) => {
       if (value) {
         return (
@@ -191,7 +214,7 @@ const RequestRepository = () => {
             id="last-admin-note"
             label="less"
             closeLabel="more"
-            text={value.content}
+            text={value}
             charLimit={freeFormTextCharLimit}
           />
         );
@@ -228,29 +251,12 @@ const RequestRepository = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTable, t]);
 
+  // Modifying data for table sorting and prepping for Cell configuration
   const data = useMemo(() => {
-    return systemIntakes.map(intake => {
-      const statusEnum = intake.status;
-      let statusTranslation = '';
-
-      // Translating status
-      if (statusEnum === 'LCID_ISSUED') {
-        // if status is LCID_ISSUED, translate from enum to i18n and append LCID
-        statusTranslation = `${t(`intake:statusMap.${statusEnum}`)}: ${
-          intake.lcid
-        }`;
-      } else {
-        // if not just translate from enum to i18n
-        statusTranslation = t(`intake:statusMap.${statusEnum}`);
-      }
-
-      // Override all applicable fields in intake to use i18n translations
-      return {
-        ...intake,
-        status: statusTranslation,
-        requestType: translateRequestType(intake.requestType)
-      };
-    });
+    if (systemIntakes) {
+      return tableMap(systemIntakes, t);
+    }
+    return [];
   }, [systemIntakes, t]);
 
   useEffect(() => {
@@ -261,74 +267,42 @@ const RequestRepository = () => {
     getTableProps,
     getTableBodyProps,
     headerGroups,
-    rows,
+    canPreviousPage,
+    canNextPage,
+    pageOptions,
+    pageCount,
+    gotoPage,
+    nextPage,
+    previousPage,
+    setPageSize,
+    setGlobalFilter,
+    state,
+    page,
     prepareRow
   } = useTable(
     {
       columns,
       sortTypes: {
-        // TODO: This may not work if another column is added that is not a string or date.
-        // Sort method changes depending on if item is a string or object
         alphanumeric: (rowOne, rowTwo, columnName) => {
-          const rowOneElem = rowOne.values[columnName];
-          const rowTwoElem = rowTwo.values[columnName];
-
-          // Null checks for columns with data potentially empty (LCID Expiration, Admin Notes, etc.)
-          if (rowOneElem === null) {
-            return 1;
-          }
-
-          if (rowTwoElem === null) {
-            return -1;
-          }
-
-          // If both items are strings, enforce capitalization (temporarily) and then compare
-          if (
-            typeof rowOneElem === 'string' &&
-            typeof rowTwoElem === 'string'
-          ) {
-            return rowOneElem.toUpperCase() > rowTwoElem.toUpperCase() ? 1 : -1;
-          }
-
-          // If both items are DateTimes, convert to Number and compare
-          if (
-            rowOneElem instanceof DateTime &&
-            rowTwoElem instanceof DateTime
-          ) {
-            return Number(rowOneElem) > Number(rowTwoElem) ? 1 : -1;
-          }
-
-          // If items are different types and/or neither string nor DateTime, return bare comparison
-          return rowOneElem > rowTwoElem ? 1 : -1;
+          return sortColumnValues(
+            rowOne.values[columnName],
+            rowTwo.values[columnName]
+          );
         }
       },
+      globalFilter: useMemo(() => globalTableFilter, []),
       data,
+      autoResetSortBy: false,
+      autoResetPage: false,
       initialState: {
-        sortBy: [{ id: 'submittedAt', desc: true }]
+        sortBy: useMemo(() => [{ id: 'submittedAt', desc: true }], [])
       }
     },
-    useSortBy
+    useFilters,
+    useGlobalFilter,
+    useSortBy,
+    usePagination
   );
-
-  const getHeaderSortIcon = (isDesc: boolean | undefined) => {
-    return classnames('margin-left-1', {
-      'fa fa-caret-down': isDesc,
-      'fa fa-caret-up': !isDesc
-    });
-  };
-
-  const getColumnSortStatus = (
-    column: any
-  ): 'descending' | 'ascending' | 'none' => {
-    if (column.isSorted) {
-      if (column.isSortedDesc) {
-        return 'descending';
-      }
-      return 'ascending';
-    }
-
-    return 'none';
-  };
 
   const csvHeaders = csvHeaderMap(t);
 
@@ -337,7 +311,7 @@ const RequestRepository = () => {
   };
 
   return (
-    <>
+    <MainContent className="padding-x-4 margin-bottom-5">
       <div className="display-flex flex-justify flex-wrap margin-bottom-2">
         <BreadcrumbBar variant="wrap">
           <Breadcrumb>
@@ -353,7 +327,7 @@ const RequestRepository = () => {
           filename="request-repository.csv"
           headers={csvHeaders}
         >
-          <i className="fa fa-download" />
+          <IconFileDownload />
           &nbsp;{' '}
           <span className="text-underline">
             Download all requests as excel file
@@ -404,14 +378,30 @@ const RequestRepository = () => {
           count: data.length
         })}
       </PageHeading>
-      {/* h1 for screen devices / complicated CSS to have them together */}
-      <h1 className="font-heading-sm" aria-hidden>
-        {t('requestRepository.requestCount', {
-          context: activeTable,
-          count: data.length
-        })}
-      </h1>
-      <Table fixed bordered={false} {...getTableProps()} fullWidth>
+
+      <GlobalClientFilter
+        setGlobalFilter={setGlobalFilter}
+        tableID={t('requestRepository.id')}
+        tableName={t('requestRepository.title')}
+        className="margin-bottom-4"
+      />
+
+      <TableResults
+        globalFilter={state.globalFilter}
+        pageIndex={state.pageIndex}
+        pageSize={state.pageSize}
+        filteredRowLength={page.length}
+        rowLength={data.length}
+        className="margin-bottom-4"
+      />
+
+      {/* This is the only table that expands past the USWDS desktop dimensions.  Only convert to scrollable when in tablet/mobile */}
+      <Table
+        scrollable={isMobile}
+        fullWidth
+        bordered={false}
+        {...getTableProps()}
+      >
         <caption className="usa-sr-only">
           {activeTable === 'open' &&
             t('requestRepository.aria.openTableCaption')}
@@ -421,25 +411,33 @@ const RequestRepository = () => {
         <thead>
           {headerGroups.map(headerGroup => (
             <tr {...headerGroup.getHeaderGroupProps()}>
-              {headerGroup.headers.map(column => (
+              {headerGroup.headers.map((column, index) => (
                 <th
                   {...column.getHeaderProps(column.getSortByToggleProps())}
                   aria-sort={getColumnSortStatus(column)}
-                  style={{ whiteSpace: 'nowrap' }}
+                  style={{
+                    minWidth: index === 0 ? '175px' : '150px',
+                    position: 'relative'
+                  }}
                 >
-                  {column.render('Header')}
-                  {column.isSorted && (
-                    <span className={getHeaderSortIcon(column.isSortedDesc)} />
-                  )}
+                  <button
+                    className="usa-button usa-button--unstyled"
+                    type="button"
+                    {...column.getSortByToggleProps()}
+                  >
+                    {column.render('Header')}
+                    {getHeaderSortIcon(column)}
+                  </button>
                 </th>
               ))}
             </tr>
           ))}
         </thead>
         <tbody {...getTableBodyProps()}>
-          {rows.map(row => {
+          {page.map((row: Row) => {
             prepareRow(row);
             return (
+              // @ts-ignore
               <tr {...row.getRowProps()} data-testid={`${row.original.id}-row`}>
                 {row.cells.map((cell, i) => {
                   if (i === 0) {
@@ -467,7 +465,21 @@ const RequestRepository = () => {
           })}
         </tbody>
       </Table>
-    </>
+
+      <TablePagination
+        gotoPage={gotoPage}
+        previousPage={previousPage}
+        nextPage={nextPage}
+        canNextPage={canNextPage}
+        pageIndex={state.pageIndex}
+        pageOptions={pageOptions}
+        canPreviousPage={canPreviousPage}
+        pageCount={pageCount}
+        pageSize={state.pageSize}
+        setPageSize={setPageSize}
+        page={[]}
+      />
+    </MainContent>
   );
 };
 

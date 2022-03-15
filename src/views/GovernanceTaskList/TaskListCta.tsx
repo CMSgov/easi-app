@@ -1,58 +1,56 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link, useHistory } from 'react-router-dom';
-import { Button, Link as UswdsLink } from '@trussworks/react-uswds';
+import { useHistory } from 'react-router-dom';
+import { Button } from '@trussworks/react-uswds';
 
+import UswdsReactLink from 'components/LinkWrapper';
 import { isIntakeStarted } from 'data/systemIntake';
 import { attendGrbMeetingTag } from 'data/taskList';
-import { SystemIntakeForm } from 'types/systemIntake';
+import { GetSystemIntake_systemIntake as SystemIntake } from 'queries/types/GetSystemIntake';
 
 // CTA for Task List Intake Draft
-export const IntakeDraftCta = ({ intake }: { intake: SystemIntakeForm }) => {
-  switch (intake.status) {
+export const IntakeDraftCta = ({ intake }: { intake: SystemIntake }) => {
+  const { id, status } = intake || {};
+  switch (status) {
     case 'INTAKE_SUBMITTED':
       return (
-        <UswdsLink
+        <UswdsReactLink
           data-testid="intake-view-link"
-          asCustom={Link}
-          to={`/system/${intake.id}/view`}
+          to={`/system/${id}/view`}
         >
           View Submitted Request Form
-        </UswdsLink>
+        </UswdsReactLink>
       );
     case 'INTAKE_DRAFT':
       if (isIntakeStarted(intake)) {
         return (
-          <UswdsLink
+          <UswdsReactLink
             className="usa-button"
             variant="unstyled"
-            asCustom={Link}
-            to={`/system/${intake.id}/contact-details`}
+            to={`/system/${id}/contact-details`}
           >
             Continue
-          </UswdsLink>
+          </UswdsReactLink>
         );
       }
       return (
-        <UswdsLink
+        <UswdsReactLink
           data-testid="intake-start-btn"
           className="usa-button"
           variant="unstyled"
-          asCustom={Link}
-          to={`/system/${intake.id || 'new'}/contact-details`}
+          to={`/system/${id || 'new'}/contact-details`}
         >
           Start
-        </UswdsLink>
+        </UswdsReactLink>
       );
     default:
       return (
-        <UswdsLink
+        <UswdsReactLink
           data-testid="intake-view-link"
-          asCustom={Link}
-          to={`/system/${intake.id}/view`}
+          to={`/system/${id}/view`}
         >
           View Submitted Request Form
-        </UswdsLink>
+        </UswdsReactLink>
       );
   }
 };
@@ -61,10 +59,11 @@ export const IntakeDraftCta = ({ intake }: { intake: SystemIntakeForm }) => {
 export const BusinessCaseDraftCta = ({
   systemIntake
 }: {
-  systemIntake: SystemIntakeForm;
+  systemIntake: SystemIntake;
 }) => {
+  const { id, status, businessCaseId } = systemIntake || {};
   const history = useHistory();
-  switch (systemIntake.status) {
+  switch (status) {
     case 'NEED_BIZ_CASE':
       return (
         <Button
@@ -73,7 +72,7 @@ export const BusinessCaseDraftCta = ({
             history.push({
               pathname: '/business/new/general-request-info',
               state: {
-                systemIntakeId: systemIntake.id
+                systemIntakeId: id
               }
             });
           }}
@@ -85,15 +84,14 @@ export const BusinessCaseDraftCta = ({
       );
     case 'BIZ_CASE_DRAFT':
       return (
-        <UswdsLink
+        <UswdsReactLink
           data-testid="continue-biz-case-btn"
           className="usa-button"
           variant="unstyled"
-          asCustom={Link}
-          to={`/business/${systemIntake.businessCaseId}/general-request-info`}
+          to={`/business/${businessCaseId}/general-request-info`}
         >
           Continue
-        </UswdsLink>
+        </UswdsReactLink>
       );
     case 'BIZ_CASE_DRAFT_SUBMITTED':
     case 'BIZ_CASE_FINAL_NEEDED':
@@ -103,50 +101,46 @@ export const BusinessCaseDraftCta = ({
     case 'NOT_APPROVED':
     case 'NO_GOVERNANCE':
     case 'WITHDRAWN':
-      if (systemIntake.businessCaseId) {
+      if (businessCaseId) {
         return (
-          <UswdsLink
+          <UswdsReactLink
             data-testid="view-biz-case-link"
-            asCustom={Link}
-            to={`/business/${systemIntake.businessCaseId}/view`}
+            to={`/business/${businessCaseId}/view`}
           >
             View submitted business case
-          </UswdsLink>
+          </UswdsReactLink>
         );
       }
       return <></>;
     case 'BIZ_CASE_CHANGES_NEEDED':
       return (
-        <UswdsLink
+        <UswdsReactLink
           data-testid="update-biz-case-draft-btn"
           className="usa-button"
           variant="unstyled"
-          asCustom={Link}
-          to={`/business/${systemIntake.businessCaseId}/general-request-info`}
+          to={`/business/${businessCaseId}/general-request-info`}
         >
           Update draft business case
-        </UswdsLink>
+        </UswdsReactLink>
       );
     case 'READY_FOR_GRT':
       return (
         <>
-          <UswdsLink
+          <UswdsReactLink
             data-testid="prepare-for-grt-cta"
             className="display-table margin-bottom-3 usa-button"
             variant="unstyled"
-            asCustom={Link}
-            to={`/governance-task-list/${systemIntake.businessCaseId}/prepare-for-grt`}
+            to={`/governance-task-list/${id}/prepare-for-grt`}
           >
             Prepare for review team meeting
-          </UswdsLink>
+          </UswdsReactLink>
 
-          <UswdsLink
+          <UswdsReactLink
             data-testid="view-biz-case-cta"
-            asCustom={Link}
-            to={`/business/${systemIntake.businessCaseId}/general-request-info`}
+            to={`/business/${businessCaseId}/general-request-info`}
           >
             Update submitted draft business case
-          </UswdsLink>
+          </UswdsReactLink>
         </>
       );
     default:
@@ -155,34 +149,29 @@ export const BusinessCaseDraftCta = ({
 };
 
 // CTA for Task List GRB Meeting
-export const AttendGrbMeetingCta = ({
-  intake
-}: {
-  intake: SystemIntakeForm;
-}) => {
-  if (intake.status === 'READY_FOR_GRB') {
+export const AttendGrbMeetingCta = ({ intake }: { intake: SystemIntake }) => {
+  const { id, status } = intake || {};
+  if (status === 'READY_FOR_GRB') {
     return (
-      <UswdsLink
+      <UswdsReactLink
         data-testid="prepare-for-grb-btn"
         className="usa-button"
         variant="unstyled"
-        asCustom={Link}
-        to={`/governance-task-list/${intake.id}/prepare-for-grb`}
+        to={`/governance-task-list/${id}/prepare-for-grb`}
       >
         Prepare for the Review Board meeting
-      </UswdsLink>
+      </UswdsReactLink>
     );
   }
 
   if (attendGrbMeetingTag(intake) === 'COMPLETED') {
     return (
-      <UswdsLink
+      <UswdsReactLink
         data-testid="prepare-for-grb-link"
-        asCustom={Link}
-        to={`/governance-task-list/${intake.id}/prepare-for-grb`}
+        to={`/governance-task-list/${id}/prepare-for-grb`}
       >
         Prepare for the Review Board meeting
-      </UswdsLink>
+      </UswdsReactLink>
     );
   }
 
@@ -190,23 +179,22 @@ export const AttendGrbMeetingCta = ({
 };
 
 // CTA for Task List Decision
-export const DecisionCta = ({ intake }: { intake: SystemIntakeForm }) => {
+export const DecisionCta = ({ id, status }: { id: string; status: string }) => {
   const { t } = useTranslation();
-  if (['LCID_ISSUED', 'NOT_APPROVED'].includes(intake.status)) {
+  if (['LCID_ISSUED', 'NOT_APPROVED'].includes(status)) {
     return (
-      <UswdsLink
+      <UswdsReactLink
         data-testid="decision-cta"
         className="usa-button"
         variant="unstyled"
-        asCustom={Link}
-        to={`/governance-task-list/${intake.id}/request-decision`}
+        to={`/governance-task-list/${id}/request-decision`}
       >
         Read decision from board
-      </UswdsLink>
+      </UswdsReactLink>
     );
   }
 
-  if (intake.status === 'NOT_IT_REQUEST') {
+  if (status === 'NOT_IT_REQUEST') {
     return (
       <span data-testid="plain-text-not-it-request-decision">
         <b>Decision:&nbsp;</b>
@@ -215,7 +203,7 @@ export const DecisionCta = ({ intake }: { intake: SystemIntakeForm }) => {
     );
   }
 
-  if (intake.status === 'NO_GOVERNANCE') {
+  if (status === 'NO_GOVERNANCE') {
     return (
       <span data-testid="plain-text-no-governance-decision">
         <b>Decision:&nbsp;</b>

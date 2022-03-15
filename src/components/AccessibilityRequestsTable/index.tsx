@@ -2,18 +2,32 @@
 
 import React, { FunctionComponent, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link } from 'react-router-dom';
-import { useSortBy, useTable } from 'react-table';
-import { Link as UswdsLink, Table } from '@trussworks/react-uswds';
-import classnames from 'classnames';
+import {
+  useFilters,
+  useGlobalFilter,
+  usePagination,
+  useSortBy,
+  useTable
+} from 'react-table';
+import { Table } from '@trussworks/react-uswds';
 import { DateTime } from 'luxon';
 
+import UswdsReactLink from 'components/LinkWrapper';
+import GlobalClientFilter from 'components/TableFilter';
+import TablePagination from 'components/TablePagination';
+import TableResults from 'components/TableResults';
 import { GetAccessibilityRequests_accessibilityRequests_edges_node as AccessibilityRequests } from 'queries/types/GetAccessibilityRequests';
 import { accessibilityRequestStatusMap } from 'utils/accessibilityRequest';
 import { formatDate } from 'utils/date';
+import globalTableFilter from 'utils/globalTableFilter';
+import {
+  currentTableSortDescription,
+  getColumnSortStatus,
+  getHeaderSortIcon,
+  sortColumnValues
+} from 'utils/tableSort';
 
 import './index.scss';
-// import cmsDivisionsAndOffices from 'constants/enums/cmsDivisionsAndOffices';
 
 type AccessibilityRequestsTableProps = {
   requests: AccessibilityRequests[];
@@ -30,9 +44,9 @@ const AccessibilityRequestsTable: FunctionComponent<AccessibilityRequestsTablePr
         accessor: 'requestName',
         Cell: ({ row, value }: any) => {
           return (
-            <UswdsLink asCustom={Link} to={`/508/requests/${row.original.id}`}>
+            <UswdsReactLink to={`/508/requests/${row.original.id}`}>
               {value}
-            </UswdsLink>
+            </UswdsReactLink>
           );
         },
         minWidth: 300,
@@ -40,7 +54,12 @@ const AccessibilityRequestsTable: FunctionComponent<AccessibilityRequestsTablePr
       },
       {
         Header: t('requestTable.header.submissionDate'),
-        accessor: 'submittedAt',
+        accessor: ({ submittedAt }: { submittedAt: string }) => {
+          if (submittedAt) {
+            return DateTime.fromISO(submittedAt);
+          }
+          return null;
+        },
         Cell: ({ value }: any) => {
           if (value) {
             return formatDate(value);
@@ -55,8 +74,13 @@ const AccessibilityRequestsTable: FunctionComponent<AccessibilityRequestsTablePr
       },
       {
         Header: t('requestTable.header.testDate'),
-        accessor: 'relevantTestDate',
-        Cell: ({ value }: any) => {
+        accessor: ({ relevantTestDate }: { relevantTestDate: string }) => {
+          if (relevantTestDate) {
+            return DateTime.fromISO(relevantTestDate);
+          }
+          return null;
+        },
+        Cell: ({ value }: any): any => {
           if (value) {
             return formatDate(value);
           }
@@ -66,19 +90,23 @@ const AccessibilityRequestsTable: FunctionComponent<AccessibilityRequestsTablePr
       },
       {
         Header: t('requestTable.header.status'),
-        accessor: 'statusRecord',
+        accessor: (value: AccessibilityRequests) => {
+          return value?.statusRecord?.status;
+        },
         Cell: ({ row, value }: any) => {
           // Status hasn't changed if the status record created at is the same
           // as the 508 request's submitted at
-          if (row.original.submittedAt.toISO() === value.createdAt.toISO()) {
-            return <span>{value.status}</span>;
+          if (
+            row.original?.submittedAt === row.original?.statusRecord?.createdAt
+          ) {
+            return <span>{value}</span>;
           }
 
           return (
             <span>
-              {value.status}{' '}
+              {value}{' '}
               <span className="text-base-dark font-body-3xs">{`changed on ${formatDate(
-                value.createdAt
+                row.original?.statusRecord?.createdAt
               )}`}</span>
             </span>
           );
@@ -89,26 +117,25 @@ const AccessibilityRequestsTable: FunctionComponent<AccessibilityRequestsTablePr
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Here is where the data can be modified and used appropriately for sorting.
+  // Modifed data can then be configured with JSX components in column cell configuration
   const data = useMemo(() => {
     const tableData = requests.map(request => {
-      const submittedAt = request.submittedAt
-        ? DateTime.fromISO(request.submittedAt)
-        : null;
       const businessOwner = `${request.system.businessOwner.name}, ${request.system.businessOwner.component}`;
       const testDate = request.relevantTestDate?.date
-        ? DateTime.fromISO(request.relevantTestDate?.date)
+        ? request.relevantTestDate?.date
         : null;
       const statusRecord = {
         status: accessibilityRequestStatusMap[`${request.statusRecord.status}`],
         createdAt: request.statusRecord.createdAt
-          ? DateTime.fromISO(request.statusRecord.createdAt)
+          ? request.statusRecord.createdAt
           : null
       };
 
       return {
         id: request.id,
         requestName: request.name,
-        submittedAt,
+        submittedAt: request.submittedAt,
         businessOwner,
         relevantTestDate: testDate,
         statusRecord
@@ -122,7 +149,17 @@ const AccessibilityRequestsTable: FunctionComponent<AccessibilityRequestsTablePr
     getTableProps,
     getTableBodyProps,
     headerGroups,
-    rows,
+    canPreviousPage,
+    canNextPage,
+    pageOptions,
+    pageCount,
+    gotoPage,
+    nextPage,
+    previousPage,
+    setPageSize,
+    page,
+    setGlobalFilter,
+    state,
     prepareRow
   } = useTable(
     {
@@ -130,54 +167,46 @@ const AccessibilityRequestsTable: FunctionComponent<AccessibilityRequestsTablePr
       data,
       sortTypes: {
         alphanumeric: (rowOne, rowTwo, columnName) => {
-          const rowOneElem = rowOne.values[columnName];
-          const rowTwoElem = rowTwo.values[columnName];
-
-          // If item is a string, enforce capitalization (temporarily) and then compare
-          if (typeof rowOneElem === 'string') {
-            return rowOneElem.toUpperCase() > rowTwoElem.toUpperCase() ? 1 : -1;
-          }
-
-          // If item is a DateTime, convert to Number and compare
-          if (rowOneElem instanceof DateTime) {
-            return Number(rowOneElem) > Number(rowTwoElem) ? 1 : -1;
-          }
-
-          // If neither string nor DateTime, return bare comparison
-          return rowOneElem > rowTwoElem ? 1 : -1;
+          return sortColumnValues(
+            rowOne.values[columnName],
+            rowTwo.values[columnName]
+          );
         }
       },
+      globalFilter: useMemo(() => globalTableFilter, []),
       requests,
+      autoResetSortBy: false,
+      autoResetPage: false,
       initialState: {
-        sortBy: [{ id: 'submittedAt', desc: true }]
+        sortBy: useMemo(() => [{ id: 'submittedAt', desc: true }], []),
+        pageIndex: 0
       }
     },
-    useSortBy
+    useFilters,
+    useGlobalFilter,
+    useSortBy,
+    usePagination
   );
-
-  const getHeaderSortIcon = (isDesc: boolean | undefined) => {
-    return classnames('margin-left-1', {
-      'fa fa-caret-down fa-lg caret': isDesc,
-      'fa fa-caret-up fa-lg caret': !isDesc
-    });
-  };
-
-  const getColumnSortStatus = (
-    column: any
-  ): 'descending' | 'ascending' | 'none' => {
-    if (column.isSorted) {
-      if (column.isSortedDesc) {
-        return 'descending';
-      }
-      return 'ascending';
-    }
-
-    return 'none';
-  };
 
   return (
     <div className="accessibility-requests-table">
-      <Table bordered={false} {...getTableProps()} fullWidth>
+      <GlobalClientFilter
+        setGlobalFilter={setGlobalFilter}
+        tableID={t('requestTable.id')}
+        tableName={t('requestTable.title')}
+        className="margin-bottom-4"
+      />
+
+      <TableResults
+        globalFilter={state.globalFilter}
+        pageIndex={state.pageIndex}
+        pageSize={state.pageSize}
+        filteredRowLength={page.length}
+        rowLength={data.length}
+        className="margin-bottom-4"
+      />
+
+      <Table bordered={false} scrollable {...getTableProps()} fullWidth>
         <caption className="usa-sr-only">{t('requestTable.caption')}</caption>
         <thead>
           {headerGroups.map(headerGroup => (
@@ -189,7 +218,7 @@ const AccessibilityRequestsTable: FunctionComponent<AccessibilityRequestsTablePr
                       width: column.width,
                       minWidth: column.minWidth,
                       maxWidth: column.maxWidth,
-                      whiteSpace: 'nowrap'
+                      position: 'relative'
                     }
                   })}
                   aria-sort={getColumnSortStatus(column)}
@@ -201,14 +230,7 @@ const AccessibilityRequestsTable: FunctionComponent<AccessibilityRequestsTablePr
                     {...column.getSortByToggleProps()}
                   >
                     {column.render('Header')}
-                    {column.isSorted && (
-                      <span
-                        className={getHeaderSortIcon(column.isSortedDesc)}
-                      />
-                    )}
-                    {!column.isSorted && (
-                      <span className="margin-left-1 fa fa-sort caret" />
-                    )}
+                    {getHeaderSortIcon(column)}
                   </button>
                 </th>
               ))}
@@ -216,7 +238,7 @@ const AccessibilityRequestsTable: FunctionComponent<AccessibilityRequestsTablePr
           ))}
         </thead>
         <tbody {...getTableBodyProps()}>
-          {rows.map(row => {
+          {page.map(row => {
             prepareRow(row);
             return (
               <tr {...row.getRowProps()}>
@@ -240,7 +262,10 @@ const AccessibilityRequestsTable: FunctionComponent<AccessibilityRequestsTablePr
                   return (
                     <td
                       {...cell.getCellProps({
-                        style: { width: cell.column.width, maxWidth: '16em' }
+                        style: {
+                          width: cell.column.width,
+                          maxWidth: '16em'
+                        }
                       })}
                     >
                       {cell.render('Cell')}
@@ -251,6 +276,20 @@ const AccessibilityRequestsTable: FunctionComponent<AccessibilityRequestsTablePr
             );
           })}
         </tbody>
+
+        <TablePagination
+          gotoPage={gotoPage}
+          previousPage={previousPage}
+          nextPage={nextPage}
+          canNextPage={canNextPage}
+          pageIndex={state.pageIndex}
+          pageOptions={pageOptions}
+          canPreviousPage={canPreviousPage}
+          pageCount={pageCount}
+          pageSize={state.pageSize}
+          setPageSize={setPageSize}
+          page={[]}
+        />
       </Table>
       <div
         className="usa-sr-only usa-table__announcement-region"
@@ -260,16 +299,6 @@ const AccessibilityRequestsTable: FunctionComponent<AccessibilityRequestsTablePr
       </div>
     </div>
   );
-};
-
-const currentTableSortDescription = headerGroup => {
-  const sortedHeader = headerGroup.headers.find(header => header.isSorted);
-
-  if (sortedHeader) {
-    const direction = sortedHeader.isSortedDesc ? 'descending' : 'ascending';
-    return `Requests table sorted by ${sortedHeader.Header} ${direction}`;
-  }
-  return 'Requests table reset to default sort order';
 };
 
 export default AccessibilityRequestsTable;

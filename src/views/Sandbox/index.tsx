@@ -1,18 +1,18 @@
 import React, { useEffect } from 'react';
 
-import Header from 'components/Header';
+import MainContent from 'components/MainContent';
+
+import '../SystemProfile/components/SystemDetails/index.scss';
 
 const Sandbox = () => {
   useEffect(() => {
     document.title = 'Sandbox';
   }, []);
+
   return (
-    <div>
-      <Header />
-      <div className="grid-container">
-        <h1>Sandbox</h1>
-      </div>
-    </div>
+    <MainContent>
+      <></>
+    </MainContent>
   );
 };
 

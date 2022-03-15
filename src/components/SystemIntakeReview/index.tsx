@@ -1,5 +1,4 @@
 import React from 'react';
-import { DateTime } from 'luxon';
 
 import ReviewRow from 'components/ReviewRow';
 import {
@@ -10,6 +9,7 @@ import {
 import contractStatus from 'constants/enums/contractStatus';
 import { yesNoMap } from 'data/common';
 import { GetSystemIntake_systemIntake as SystemIntake } from 'queries/types/GetSystemIntake';
+import { SystemIntakeStatus } from 'types/graphql-global-types';
 import convertBoolToYesNo from 'utils/convertBoolToYesNo';
 import { formatContractDate, formatDate } from 'utils/date';
 
@@ -20,7 +20,7 @@ type SystemIntakeReviewProps = {
 export const SystemIntakeReview = ({
   systemIntake
 }: SystemIntakeReviewProps) => {
-  const { contract } = systemIntake;
+  const { contract, status, submittedAt } = systemIntake;
 
   const fundingDefinition = () => {
     const {
@@ -44,19 +44,25 @@ export const SystemIntakeReview = ({
     return hasIsso;
   };
 
+  const getSubmissionDate = () => {
+    if (status === SystemIntakeStatus.INTAKE_DRAFT) {
+      return 'Not yet submitted';
+    }
+
+    if (submittedAt) {
+      return formatDate(submittedAt);
+    }
+
+    return 'N/A';
+  };
+
   return (
     <div>
       <DescriptionList title="System Request">
         <ReviewRow>
           <div>
             <DescriptionTerm term="Submission Date" />
-            <DescriptionDefinition
-              definition={
-                systemIntake.submittedAt
-                  ? formatDate(systemIntake.submittedAt)
-                  : DateTime.local().toLocaleString(DateTime.DATE_MED)
-              }
-            />
+            <DescriptionDefinition definition={getSubmissionDate()} />
           </div>
         </ReviewRow>
       </DescriptionList>
@@ -112,8 +118,8 @@ export const SystemIntakeReview = ({
           </div>
           <div>
             <DescriptionTerm term="I have started collaborating with" />
-            {systemIntake.governanceTeams.teams ? (
-              systemIntake.governanceTeams.teams.map(team => (
+            {systemIntake.governanceTeams.isPresent ? (
+              (systemIntake.governanceTeams.teams || []).map(team => (
                 <DescriptionDefinition
                   key={`GovernanceTeam-${team.name.split(' ').join('-')}`}
                   definition={`${team.name}, ${team.collaborator}`}
@@ -156,6 +162,12 @@ export const SystemIntakeReview = ({
         </div>
         <ReviewRow>
           <div>
+            <DescriptionTerm term="Where are you in the process?" />
+            <DescriptionDefinition definition={systemIntake.currentStage} />
+          </div>
+        </ReviewRow>
+        <ReviewRow>
+          <div>
             <DescriptionTerm term="Do you need Enterprise Architecture (EA) support?" />
             <DescriptionDefinition
               definition={convertBoolToYesNo(systemIntake.needsEaSupport)}
@@ -170,11 +182,7 @@ export const SystemIntakeReview = ({
       <DescriptionList title="Contract Details">
         <ReviewRow>
           <div>
-            <DescriptionTerm term="Where are you in the process?" />
-            <DescriptionDefinition definition={systemIntake.currentStage} />
-          </div>
-          <div>
-            <DescriptionTerm term="Does the project have funding?" />
+            <DescriptionTerm term="Will this project be funded out of an existing funding source?" />
             <DescriptionDefinition definition={fundingDefinition()} />
           </div>
         </ReviewRow>
@@ -208,7 +216,7 @@ export const SystemIntakeReview = ({
           </div>
         </ReviewRow>
         {['HAVE_CONTRACT', 'IN_PROGRESS'].includes(
-          contract.hasContract || ''
+          systemIntake.contract.hasContract || ''
         ) && (
           <>
             <ReviewRow>

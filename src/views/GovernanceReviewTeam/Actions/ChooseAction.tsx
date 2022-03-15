@@ -9,6 +9,7 @@ import CollapsableLink from 'components/shared/CollapsableLink';
 import { RadioField, RadioGroup } from 'components/shared/RadioField';
 import { AnythingWrongSurvey } from 'components/Survey';
 import { BusinessCaseModel } from 'types/businessCase';
+import { SystemIntakeStatus } from 'types/graphql-global-types';
 import { RequestType } from 'types/systemIntake';
 
 type ActionContextType = {
@@ -52,14 +53,15 @@ const ActionRadioOption = ({ label, route }: ActionRadioOptionProps) => {
 };
 
 type ChooseActionProps = {
+  systemIntake: {
+    status: SystemIntakeStatus;
+    lcid: string | null;
+    requestType: RequestType;
+  };
   businessCase: BusinessCaseModel;
-  systemIntakeType: RequestType;
 };
 
-const ChooseAction = ({
-  businessCase,
-  systemIntakeType
-}: ChooseActionProps) => {
+const ChooseAction = ({ systemIntake, businessCase }: ChooseActionProps) => {
   const history = useHistory();
   const { t } = useTranslation('action');
 
@@ -194,9 +196,19 @@ const ChooseAction = ({
     />
   );
 
+  const extendLifecycleIDRoute = 'extend-lcid';
+  const ExtendLifecycleID = (
+    <ActionRadioOption
+      key={extendLifecycleIDRoute}
+      label={t('actions.extendLifecycleID')}
+      route={extendLifecycleIDRoute}
+    />
+  );
+
   let availableActions: Array<any> = [];
   let availableHiddenActions: Array<any> = [];
-  if (systemIntakeType === 'SHUTDOWN') {
+
+  if (systemIntake.requestType === 'SHUTDOWN') {
     availableActions = [
       SendEmail,
       GuideReceivedClose,
@@ -224,6 +236,14 @@ const ChooseAction = ({
       NoFurtherGovernance,
       IssueLifecycleId
     ];
+  }
+
+  // Only display extend LCID action if status is LCID_ISSUED or there has been an lcid issued in the past
+  if (
+    systemIntake.status === SystemIntakeStatus.LCID_ISSUED ||
+    systemIntake.lcid != null
+  ) {
+    availableActions.unshift(ExtendLifecycleID);
   }
 
   return (

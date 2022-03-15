@@ -126,11 +126,13 @@ type SystemIntake struct {
 	LifecycleID                 null.String             `json:"lcid" db:"lcid"`
 	LifecycleExpiresAt          *time.Time              `json:"lcidExpiresAt" db:"lcid_expires_at" gqlgen:"lcidExpiresAt"`
 	LifecycleScope              null.String             `json:"lcidScope" db:"lcid_scope"`
+	LifecycleCostBaseline       null.String             `json:"lcidCostBaseline" db:"lcid_cost_baseline"`
 	DecisionNextSteps           null.String             `json:"decisionNextSteps" db:"decision_next_steps"`
 	RejectionReason             null.String             `json:"rejectionReason" db:"rejection_reason"`
 	AdminLead                   null.String             `json:"adminLead" db:"admin_lead"`
 	LastAdminNoteContent        null.String             `json:"lastAdminNoteContent" db:"last_admin_note_content"`
 	LastAdminNoteCreatedAt      *time.Time              `json:"lastAdminNoteCreatedAt" db:"last_admin_note_created_at"`
+	CedarSystemID               null.String             `json:"cedarSystemId" db:"cedar_system_id"`
 }
 
 // SystemIntakes is a list of System Intakes

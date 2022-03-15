@@ -1,20 +1,34 @@
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Cell, Column, useTable } from 'react-table';
-import { Button, Link, Table } from '@trussworks/react-uswds';
+import {
+  Cell,
+  Column,
+  useFilters,
+  useGlobalFilter,
+  usePagination,
+  useSortBy,
+  useTable
+} from 'react-table';
+import { Button, IconError, Link, Table } from '@trussworks/react-uswds';
+import { DateTime } from 'luxon';
 
 import Modal from 'components/Modal';
 import PageHeading from 'components/PageHeading';
+import GlobalClientFilter from 'components/TableFilter';
+import TablePagination from 'components/TablePagination';
+import TableResults from 'components/TableResults';
 import {
   AccessibilityRequestDocumentCommonType,
   AccessibilityRequestDocumentStatus
 } from 'types/graphql-global-types';
 import { translateDocumentType } from 'utils/accessibilityRequest';
 import { formatDate } from 'utils/date';
+import { getHeaderSortIcon, sortColumnValues } from 'utils/tableSort';
 
 type Document = {
   id: string;
   status: AccessibilityRequestDocumentStatus;
+  translatedStatus?: string;
   url: string;
   uploadedAt: string;
   documentType: {
@@ -45,28 +59,20 @@ const AccessibilityDocumentsList = ({
     return [
       {
         Header: t<string>('documentTable.header.documentName'),
-        accessor: 'documentType',
-        Cell: ({ value }: any) => translateDocumentType(value)
+        accessor: (value: Document) => translateDocumentType(value.documentType)
       },
       {
         Header: t<string>('documentTable.header.uploadedAt'),
         accessor: 'uploadedAt',
-        Cell: ({ value }: any) => {
-          if (value) {
-            return formatDate(value);
-          }
-          return '';
-        },
         width: '25%'
       },
       {
         Header: t<string>('documentTable.header.actions'),
-        Cell: ({ row }: Cell<Document>) => (
+        accessor: 'translatedStatus',
+        Cell: ({ row, value }: Cell<Document>) => (
           <>
-            {row.original.status === 'PENDING' && (
-              <em>Virus scan in progress...</em>
-            )}
-            {row.original.status === 'AVAILABLE' && (
+            {value === t('documentTable.status.pending') && <em>{value}</em>}
+            {value === t('documentTable.view') && (
               <>
                 <Link
                   className="margin-right-3"
@@ -78,7 +84,7 @@ const AccessibilityDocumentsList = ({
                     row.original.documentType
                   )} in a new tab or window`}
                 >
-                  {t('documentTable.view')}
+                  {value}
                 </Link>
                 <Button
                   aria-label={`Remove ${translateDocumentType(
@@ -93,11 +99,10 @@ const AccessibilityDocumentsList = ({
                 </Button>
               </>
             )}
-            {row.original.status === 'UNAVAILABLE' && (
-              <>
-                <i className="fa fa-exclamation-circle text-secondary" />{' '}
-                Document failed virus scan
-              </>
+            {value === t('documentTable.status.unavailable') && (
+              <div className="display-flex flex-align-center">
+                <IconError className="text-secondary" /> {value}
+              </div>
             )}
           </>
         )
@@ -106,27 +111,103 @@ const AccessibilityDocumentsList = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Here is where the data can be modified and used appropriately for sorting.
+  // Modifed data can then be configured with JSX components in column cell configuration
+  const data = useMemo(() => {
+    const tableData = documents.map((singleDoc: Document) => {
+      const uploadedAt = singleDoc.uploadedAt
+        ? formatDate(DateTime.fromISO(singleDoc.uploadedAt))
+        : '';
+
+      let translatedStatus;
+      switch (singleDoc.status) {
+        case AccessibilityRequestDocumentStatus.PENDING:
+          translatedStatus = t('documentTable.status.pending');
+          break;
+        case AccessibilityRequestDocumentStatus.AVAILABLE:
+          translatedStatus = t('documentTable.view');
+          break;
+        case AccessibilityRequestDocumentStatus.UNAVAILABLE:
+          translatedStatus = t('documentTable.status.unavailable');
+          break;
+        default:
+          translatedStatus = '';
+          break;
+      }
+
+      return {
+        ...singleDoc,
+        translatedStatus,
+        uploadedAt
+      };
+    });
+
+    return tableData;
+  }, [documents, t]);
+
   const {
     getTableProps,
     getTableBodyProps,
     headerGroups,
-    rows,
+    canPreviousPage,
+    canNextPage,
+    pageOptions,
+    pageCount,
+    gotoPage,
+    nextPage,
+    previousPage,
+    setPageSize,
+    page,
+    setGlobalFilter,
+    state,
     prepareRow
-  } = useTable({
-    columns,
-    data: documents,
-    documents,
-    initialState: {
-      sortBy: [{ id: 'uploadedAt', desc: true }]
-    }
-  });
+  } = useTable(
+    {
+      columns,
+      sortTypes: {
+        alphanumeric: (rowOne, rowTwo, columnName) => {
+          return sortColumnValues(
+            rowOne.values[columnName],
+            rowTwo.values[columnName]
+          );
+        }
+      },
+      data,
+      documents,
+      autoResetSortBy: false,
+      autoResetPage: false,
+      initialState: {
+        sortBy: useMemo(() => [{ id: 'uploadedAt', desc: true }], [])
+      }
+    },
+    useFilters,
+    useGlobalFilter,
+    useSortBy,
+    usePagination
+  );
 
   if (documents.length === 0) {
     return <div>{t('documentTable.noDocuments')}</div>;
   }
   return (
     <div data-testid="accessibility-documents-list">
-      <Table bordered={false} {...getTableProps()} fullWidth>
+      <GlobalClientFilter
+        setGlobalFilter={setGlobalFilter}
+        tableID={t('documentTable.id')}
+        tableName={t('documentTable.title')}
+        className="margin-bottom-4"
+      />
+
+      <TableResults
+        globalFilter={state.globalFilter}
+        pageIndex={state.pageIndex}
+        pageSize={state.pageSize}
+        filteredRowLength={page.length}
+        rowLength={data.length}
+        className="margin-bottom-4"
+      />
+
+      <Table bordered={false} {...getTableProps()} fullWidth scrollable>
         <caption className="usa-sr-only">
           {`${t('documentTable.caption')} ${requestName}`}
         </caption>
@@ -136,17 +217,27 @@ const AccessibilityDocumentsList = ({
               {headerGroup.headers.map(column => (
                 <th
                   {...column.getHeaderProps()}
-                  style={{ whiteSpace: 'nowrap', width: column.width }}
+                  style={{
+                    width: column.width,
+                    position: 'relative'
+                  }}
                   scope="col"
                 >
-                  {column.render('Header')}
+                  <button
+                    className="usa-button usa-button--unstyled"
+                    type="button"
+                    {...column.getSortByToggleProps()}
+                  >
+                    {column.render('Header')}
+                    {getHeaderSortIcon(column)}
+                  </button>
                 </th>
               ))}
             </tr>
           ))}
         </thead>
         <tbody {...getTableBodyProps()}>
-          {rows.map(row => {
+          {page.map(row => {
             prepareRow(row);
             return (
               <tr data-testurl={row.original.url} {...row.getRowProps()}>
@@ -173,6 +264,21 @@ const AccessibilityDocumentsList = ({
           })}
         </tbody>
       </Table>
+
+      <TablePagination
+        gotoPage={gotoPage}
+        previousPage={previousPage}
+        nextPage={nextPage}
+        canNextPage={canNextPage}
+        pageIndex={state.pageIndex}
+        pageOptions={pageOptions}
+        canPreviousPage={canPreviousPage}
+        pageCount={pageCount}
+        pageSize={state.pageSize}
+        setPageSize={setPageSize}
+        page={[]}
+      />
+
       <Modal isOpen={!!document} closeModal={() => setDocument(null)}>
         {document && (
           <>

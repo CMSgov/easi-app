@@ -45,10 +45,8 @@ func main() {
 		panic(storeErr)
 	}
 
-	for i := 0; i < 5; i++ {
-		makeAccessibilityRequest("TACO", store)
-		makeAccessibilityRequest("Big Project", store)
-	}
+	makeAccessibilityRequest("TACO", store)
+	makeAccessibilityRequest("Big Project", store)
 
 	now := time.Now()
 	yyyy, mm, dd := now.Date()
@@ -56,6 +54,7 @@ func main() {
 	makeAccessibilityRequest("Seeded 508 Request", store, func(i *models.AccessibilityRequest) {
 		i.ID = uuid.MustParse("6e224030-09d5-46f7-ad04-4bb851b36eab")
 	})
+
 	// Test date is one day after the 508 request is created
 	makeTestDate(logger, store, func(i *models.TestDate) {
 		i.ID = uuid.MustParse("18624c5b-4c00-49a7-960f-ac6d8b2c58df")
@@ -116,7 +115,7 @@ func main() {
 		i.FundingNumber = null.StringFrom("")
 		i.BusinessNeed = null.StringFrom("Business Need: The quick brown fox jumps over the lazy dog.")
 		i.Solution = null.StringFrom("The quick brown fox jumps over the lazy dog.")
-		i.ProcessStatus = null.StringFrom("The project is already funded")
+		i.ProcessStatus = null.StringFrom("Initial development underway")
 		i.EASupportRequest = null.BoolFrom(false)
 		i.ExistingContract = null.StringFrom("No")
 		i.GrtReviewEmailBody = null.StringFrom("")
@@ -125,8 +124,6 @@ func main() {
 	makeSystemIntake("Closable Request", logger, store, func(i *models.SystemIntake) {
 		i.ID = uuid.MustParse("20cbcfbf-6459-4c96-943b-e76b83122dbf")
 	})
-
-	makeBusinessCase("TACO", logger, store, nil)
 
 	intake := makeSystemIntake("Draft Business Case", logger, store, func(i *models.SystemIntake) {
 		i.Status = models.SystemIntakeStatusBIZCASEDRAFT
@@ -150,6 +147,18 @@ func main() {
 		i.GRTDate = &tomorrow
 	})
 	makeBusinessCase("With GRT scheduled", logger, store, intake)
+
+	intake = makeSystemIntake("With LCID Issued", logger, store, func(i *models.SystemIntake) {
+		lifecycleExpiresAt := time.Now().Add(30 * 24 * time.Hour)
+		submittedAt := time.Now().Add(-365 * 24 * time.Hour)
+		i.LifecycleID = null.StringFrom("210001")
+		i.LifecycleExpiresAt = &lifecycleExpiresAt
+		i.Status = models.SystemIntakeStatusLCIDISSUED
+		i.SubmittedAt = &submittedAt
+	})
+	makeBusinessCase("With LCID Issued", logger, store, intake, func(c *models.BusinessCase) {
+		c.Status = models.BusinessCaseStatusCLOSED
+	})
 }
 
 func makeSystemIntake(name string, logger *zap.Logger, store *storage.Store, callbacks ...func(*models.SystemIntake)) *models.SystemIntake {
@@ -313,7 +322,7 @@ func makeAccessibilityRequest(name string, store *storage.Store, callbacks ...fu
 
 	accessibilityRequest := models.AccessibilityRequest{
 		Name:      fmt.Sprintf("%s v2", name),
-		IntakeID:  intake.ID,
+		IntakeID:  &intake.ID,
 		EUAUserID: "ABCD",
 	}
 	for _, cb := range callbacks {

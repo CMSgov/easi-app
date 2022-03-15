@@ -1,6 +1,7 @@
 const governanceReviewTeam = {
   prepare: {
     title: 'Prepare for Governance Review Team meeting',
+    breadcrumb: 'Prepare for GRT meeting',
 
     whatToExpect: {
       title: 'What to expect',
@@ -87,6 +88,8 @@ const governanceReviewTeam = {
     email_time_notification: 'An email was sent to the requester on {{date}}'
   },
   requestRepository: {
+    id: 'request-repository',
+    title: 'Request Repository',
     header: 'Requests',
     requestCount_open: 'There is {{count}} open request',
     requestCount_open_plural: 'There are {{count}} open requests',
@@ -117,6 +120,7 @@ const governanceReviewTeam = {
       PROVIDE_FEEDBACK_NEED_BIZ_CASE:
         'Provided GRT Feedback and progressed to business case',
       ISSUE_LCID: 'Issued Lifecycle ID with no further governance',
+      EXTEND_LCID: 'Lifecycle ID extended',
       BIZ_CASE_NEEDS_CHANGES:
         'Requested business case changes (not ready for GRT)',
       PROVIDE_GRT_FEEDBACK_BIZ_CASE_DRAFT:
@@ -134,7 +138,20 @@ const governanceReviewTeam = {
       GUIDE_RECEIVED_CLOSE: 'Guide received. Closed the request.'
     },
     showEmail: 'Show Email',
-    hideEmail: 'Hide Email'
+    hideEmail: 'Hide Email',
+    extendLcid: {
+      newExpirationDate: 'New expiration date',
+      oldExpirationDate: 'Old expiration date',
+      newScope: 'New Scope',
+      oldScope: 'Old Scope',
+      newNextSteps: 'New Next Steps',
+      oldNextSteps: 'Old Next Steps',
+      newCostBaseline: 'New Cost Baseline',
+      oldCostBaseline: 'Old Cost Baseline',
+      noScope: 'No Scope Specified',
+      noNextSteps: 'No Next Steps Specified',
+      noCostBaseline: 'No Cost Baseline Specified'
+    }
   },
   dates: {
     heading: 'Dates',
@@ -151,19 +168,27 @@ const governanceReviewTeam = {
     openIntake: 'Open intake request',
     openBusiness: 'Open business case',
     openNotes: 'Open admin team notes',
-    openDecision: 'Open decision'
+    openDecision: 'Open decision',
+    openLcid: 'Open LCID'
   },
   back: {
     allRequests: 'Back to all requests'
+  },
+  lifecycleID: {
+    title: 'Lifecycle ID',
+    noLCID: 'No Lifecycle ID has been issued',
+    expiration: 'Lifecycle ID Expiration',
+    scope: 'Lifecycle ID Scope',
+    nextSteps: 'Next Steps',
+    costBaseline: 'Project Cost Baseline'
   },
   decision: {
     title: 'Decision',
     titleApproved: 'Decision - Approved',
     titleRejected: 'Decision - Rejected',
     titleClosed: 'Decision - Closed',
-    lcid: 'Lifecycle ID',
-    lcidExpiration: 'Lifecycle ID Expiration',
-    scope: 'Lifecycle ID Scope',
+    lcidIssued:
+      'LCID issued, see Lifecycle ID tab for more detailed information',
     nextSteps: 'Next Steps',
     rejectionReason: 'Rejection Reason',
     decisionSectionTitle: 'Decision Details',

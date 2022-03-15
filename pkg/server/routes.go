@@ -21,10 +21,13 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/cmsgov/easi-app/pkg/appconfig"
+	"github.com/cmsgov/easi-app/pkg/appcontext"
 	"github.com/cmsgov/easi-app/pkg/appses"
 	"github.com/cmsgov/easi-app/pkg/appvalidation"
 	"github.com/cmsgov/easi-app/pkg/authorization"
 	"github.com/cmsgov/easi-app/pkg/cedar/cedarldap"
+
+	cedarcore "github.com/cmsgov/easi-app/pkg/cedar/core"
 	cedarintake "github.com/cmsgov/easi-app/pkg/cedar/intake"
 	"github.com/cmsgov/easi-app/pkg/email"
 	"github.com/cmsgov/easi-app/pkg/flags"
@@ -81,7 +84,7 @@ func (s *Server) routes(
 		s.logger.Fatal("Failed to create LaunchDarkly client", zap.Error(err))
 	}
 
-	// set up CEDAR client
+	// set up CEDAR intake client
 	publisher := cedarintake.NewClient(
 		s.Config.GetString(appconfig.CEDARAPIURL),
 		s.Config.GetString(appconfig.CEDARAPIKey),
@@ -102,6 +105,14 @@ func (s *Server) routes(
 	if s.environment.Local() || s.environment.Test() {
 		cedarLDAPClient = local.NewCedarLdapClient(s.logger)
 	}
+
+	// set up CEDAR core API client
+	coreClient := cedarcore.NewClient(
+		appcontext.WithLogger(context.Background(), s.logger),
+		s.Config.GetString(appconfig.CEDARAPIURL),
+		s.Config.GetString(appconfig.CEDARAPIKey),
+		ldClient,
+	)
 
 	// set up Email Client
 	sesConfig := s.NewSESConfig()
@@ -196,6 +207,14 @@ func (s *Server) routes(
 					store.UpdateBusinessCase,
 				),
 			),
+			CreateActionExtendLifecycleID: services.NewCreateActionExtendLifecycleID(
+				serviceConfig,
+				saveAction,
+				cedarLDAPClient.FetchUserInfo,
+				store.FetchSystemIntakeByID,
+				store.UpdateSystemIntake,
+				emailClient.SendSystemIntakeReviewEmail,
+			),
 			IssueLifecycleID: services.NewUpdateLifecycleFields(
 				serviceConfig,
 				services.AuthorizeRequireGRTJobCode,
@@ -219,10 +238,10 @@ func (s *Server) routes(
 				serviceConfig,
 				services.AuthorizeUserIsIntakeRequester,
 				store.UpdateSystemIntake,
-				func(c context.Context, si *models.SystemIntake) (string, error) {
-					// quick adapter to retrofit the new interface to take the place
-					// of the old interface
-					err := publisher.PublishSnapshot(c, si, nil, nil, nil, nil)
+				// quick adapter to retrofit the new interface to take the place
+				// of the old interface
+				func(ctx context.Context, si *models.SystemIntake) (string, error) {
+					err := publisher.PublishSystemIntake(ctx, *si)
 					return "", err
 				},
 				saveAction,
@@ -233,6 +252,7 @@ func (s *Server) routes(
 		&s3Client,
 		&emailClient,
 		ldClient,
+		coreClient,
 	)
 	gqlDirectives := generated.DirectiveRoot{HasRole: func(ctx context.Context, obj interface{}, next graphql.Resolver, role model.Role) (res interface{}, err error) {
 		hasRole, err := services.HasRole(ctx, role)
@@ -361,10 +381,10 @@ func (s *Server) routes(
 					serviceConfig,
 					services.AuthorizeUserIsIntakeRequester,
 					store.UpdateSystemIntake,
-					func(c context.Context, si *models.SystemIntake) (string, error) {
-						// quick adapter to retrofit the new interface to take the place
-						// of the old interface
-						err := publisher.PublishSnapshot(c, si, nil, nil, nil, nil)
+					// quick adapter to retrofit the new interface to take the place
+					// of the old interface
+					func(ctx context.Context, si *models.SystemIntake) (string, error) {
+						err := publisher.PublishSystemIntake(ctx, *si)
 						return "", err
 					},
 					saveAction,

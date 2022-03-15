@@ -5,12 +5,9 @@ import { withRouter } from 'react-router-dom';
 import { Alert } from '@trussworks/react-uswds';
 import { useFlags } from 'launchdarkly-react-client-sdk';
 
-import Footer from 'components/Footer';
-import Header from 'components/Header';
 import LinkCard from 'components/LinkCard';
 import MainContent from 'components/MainContent';
 import PageHeading from 'components/PageHeading';
-import PageWrapper from 'components/PageWrapper';
 import RequestRepository from 'components/RequestRepository';
 import useMessage from 'hooks/useMessage';
 import { AppState } from 'reducers/rootReducer';
@@ -36,7 +33,7 @@ const Home = () => {
         return (
           // Changed GRT table from grid-container to just slight margins. This is take up
           // entire screen to better fit the more expansive data in the table.
-          <div className="padding-x-4">
+          <div>
             {message && (
               <div className="grid-container margin-top-6">
                 <Alert type="success" slim role="alert">
@@ -87,6 +84,8 @@ const Home = () => {
               <h2 className="margin-top-4">
                 {t('home:requestsTable.heading')}
               </h2>
+            </div>
+            <div className="tablet:grid-col-12">
               <Table />
             </div>
           </div>
@@ -100,13 +99,7 @@ const Home = () => {
     );
   };
 
-  return (
-    <PageWrapper>
-      <Header />
-      <MainContent className="margin-bottom-5">{renderView()}</MainContent>
-      <Footer />
-    </PageWrapper>
-  );
+  return <MainContent className="margin-bottom-5">{renderView()}</MainContent>;
 };
 
 export default withRouter(Home);

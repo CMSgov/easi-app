@@ -23,6 +23,18 @@ export interface GetAdminNotesAndActions_systemIntake_notes {
   author: GetAdminNotesAndActions_systemIntake_notes_author;
 }
 
+export interface GetAdminNotesAndActions_systemIntake_actions_lcidExpirationChange {
+  __typename: "SystemIntakeLCIDExpirationChange";
+  previousDate: Time;
+  newDate: Time;
+  previousScope: string | null;
+  newScope: string | null;
+  previousNextSteps: string | null;
+  newNextSteps: string | null;
+  previousCostBaseline: string | null;
+  newCostBaseline: string | null;
+}
+
 export interface GetAdminNotesAndActions_systemIntake_actions_actor {
   __typename: "SystemIntakeActionActor";
   name: string;
@@ -35,11 +47,13 @@ export interface GetAdminNotesAndActions_systemIntake_actions {
   createdAt: Time;
   feedback: string | null;
   type: SystemIntakeActionType;
+  lcidExpirationChange: GetAdminNotesAndActions_systemIntake_actions_lcidExpirationChange | null;
   actor: GetAdminNotesAndActions_systemIntake_actions_actor;
 }
 
 export interface GetAdminNotesAndActions_systemIntake {
   __typename: "SystemIntake";
+  lcid: string | null;
   notes: GetAdminNotesAndActions_systemIntake_notes[];
   actions: GetAdminNotesAndActions_systemIntake_actions[];
 }

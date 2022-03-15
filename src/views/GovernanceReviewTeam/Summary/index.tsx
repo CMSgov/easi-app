@@ -6,7 +6,8 @@ import {
   Breadcrumb,
   BreadcrumbBar,
   BreadcrumbLink,
-  Button
+  Button,
+  IconError
 } from '@trussworks/react-uswds';
 import classnames from 'classnames';
 import { DateTime } from 'luxon';
@@ -18,11 +19,13 @@ import { RadioField, RadioGroup } from 'components/shared/RadioField';
 import cmsDivisionsAndOffices from 'constants/enums/cmsDivisionsAndOffices';
 import { UpdateSystemIntakeAdminLead } from 'queries/types/UpdateSystemIntakeAdminLead';
 import UpdateSystemIntakeAdminLeadQuery from 'queries/UpdateSystemIntakeAdminLeadQuery';
+import { RequestType } from 'types/systemIntake';
 import { formatDate } from 'utils/date';
 import {
   isIntakeClosed,
   isIntakeOpen,
-  translateRequestType
+  translateRequestType,
+  translateStatus
 } from 'utils/systemIntake';
 
 type RequestSummaryProps = {
@@ -32,7 +35,7 @@ type RequestSummaryProps = {
     component: string | null;
   };
   requestName: string;
-  requestType: string;
+  requestType: RequestType;
   status: string;
   adminLead: string | null;
   submittedAt: DateTime;
@@ -73,10 +76,10 @@ const RequestSummary = ({
       return adminLead;
     }
     return (
-      <>
-        <i className="fa fa-exclamation-circle text-secondary margin-right-05" />
+      <div className="display-flex flex-align-center">
+        <IconError className="text-secondary margin-right-05" />
         {t('governanceReviewTeam:adminLeads.notAssigned')}
-      </>
+      </div>
     );
   };
 
@@ -161,12 +164,11 @@ const RequestSummary = ({
               >
                 {isIntakeClosed(status) ? t('status.closed') : t('status.open')}
               </dd>
-              {lcid && (
-                <>
-                  <dt>{t('intake:lifecycleId')}:&nbsp;</dt>
-                  <dd data-testid="grt-lcid">{lcid}</dd>
-                </>
-              )}
+              <>
+                <dt data-testid="grt-current-status">
+                  {translateStatus(status, lcid)}
+                </dt>
+              </>
             </div>
             <div className="text-gray-90">
               <dt className="text-bold">{t('intake:fields.adminLead')}</dt>

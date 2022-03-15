@@ -12,7 +12,7 @@ describe('Accessibility Requests', () => {
     cy.visit('/508/requests/new');
     cy.contains('h1', 'Request 508 testing');
     cy.contains('label', "Choose the application you'd like to test");
-    cy.get('#508Request-IntakeId')
+    cy.get('#508Request-IntakeComboBox')
       .type('TACO - 000000{enter}')
       .should('have.value', 'TACO - 000000');
     cy.contains('button', 'Send 508 testing request').click();
@@ -30,7 +30,7 @@ describe('Accessibility Requests', () => {
     cy.contains('.usa-button', 'Upload a document');
 
     cy.get('.accessibility-request__side-nav').within(() => {
-      cy.contains('h2', 'Test Dates and Scores');
+      cy.contains('h3', 'Test dates and scores');
       cy.get('.accessibility-request__other-details').within(() => {
         cy.contains('dt', 'Submission date');
         const dateString = formatDate(new Date().toISOString());
@@ -46,8 +46,8 @@ describe('Accessibility Requests', () => {
         cy.contains('dd', '000000');
       });
 
-      cy.contains('a', '508 testing templates (opens in a new tab)');
-      cy.contains('a', 'Steps involved in 508 testing (opens in a new tab)');
+      cy.contains('a', '508 testing templates');
+      cy.contains('a', 'Steps involved in 508 testing');
       cy.contains('button', 'Remove this request from EASi');
     });
   });
@@ -55,8 +55,8 @@ describe('Accessibility Requests', () => {
   it('has the correct page order when clicking through 508 team home page', () => {
     cy.localLogin({ name: 'A11Y', role: 'EASI_D_508_USER' });
 
-    cy.contains('button', 'User A11Y').click();
-    cy.contains('button', 'Make 508 request').click();
+    cy.contains('div', 'User A11Y');
+    cy.contains('a', 'Section 508').click();
     cy.location().should(loc => {
       expect(loc.pathname).to.eq('/508/making-a-request');
     });

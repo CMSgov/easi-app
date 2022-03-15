@@ -2,14 +2,10 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
 import { Redirect, Route, Switch } from 'react-router-dom';
-import { SecureRoute } from '@okta/okta-react';
-import { Link } from '@trussworks/react-uswds';
+import { IconLaunch, Link } from '@trussworks/react-uswds';
 import { useFlags } from 'launchdarkly-react-client-sdk';
 
-import Footer from 'components/Footer';
-import Header from 'components/Header';
 import MainContent from 'components/MainContent';
-import PageWrapper from 'components/PageWrapper';
 import {
   REPORT_PROBLEM_ACCESSIBILITY_TEAM_SURVEY,
   REPORT_PROBLEM_BASIC_USER_SURVEY
@@ -21,6 +17,7 @@ import NewTestDateView from 'views/TestDate/NewTestDate';
 import UpdateTestDateView from 'views/TestDate/UpdateTestDate';
 
 import Create from './AccessibilityRequest/Create';
+import CreateCedar from './AccessibilityRequest/CreateCedar';
 import AccessibilityRequestsDocumentsNew from './AccessibilityRequest/Documents/New';
 import List from './AccessibilityRequest/List';
 import AccessibilityRequestDetailPage from './AccessibilityRequestDetailPage';
@@ -30,15 +27,23 @@ import MakingARequest from './MakingARequest';
 import TestingTemplates from './TestingTemplates';
 
 const NewRequest = (
-  <SecureRoute
+  <Route
     key="create-508-request"
     path="/508/requests/new"
     exact
     component={Create}
   />
 );
+const NewRequestCedar = (
+  <Route
+    key="create-508-request"
+    path="/508/requests/new"
+    exact
+    component={CreateCedar}
+  />
+);
 const AllRequests = (
-  <SecureRoute
+  <Route
     key="list-508-requests"
     path="/508/requests/all"
     exact
@@ -47,7 +52,7 @@ const AllRequests = (
 );
 
 const AccessibilityTestingOverview = (
-  <SecureRoute
+  <Route
     key="508-request-testing-overview"
     path="/508/testing-overview"
     exact
@@ -56,7 +61,7 @@ const AccessibilityTestingOverview = (
 );
 
 const MakingANewRequest = (
-  <SecureRoute
+  <Route
     key="making-a-508-request"
     path="/508/making-a-request"
     exact
@@ -65,7 +70,7 @@ const MakingANewRequest = (
 );
 
 const AccessibilityTestingTemplates = (
-  <SecureRoute
+  <Route
     key="508-testing-templates"
     path="/508/templates"
     exact
@@ -74,21 +79,21 @@ const AccessibilityTestingTemplates = (
 );
 
 const NewDocument = (
-  <SecureRoute
+  <Route
     key="upload-508-document"
     path="/508/requests/:accessibilityRequestId/documents/new"
     component={AccessibilityRequestsDocumentsNew}
   />
 );
 const UpdateTestDate = (
-  <SecureRoute
+  <Route
     key="update-508-test-date"
     path="/508/requests/:accessibilityRequestId/test-date/:testDateId"
     component={UpdateTestDateView}
   />
 );
 const NewTestDate = (
-  <SecureRoute
+  <Route
     key="new-508-test-date"
     path="/508/requests/:accessibilityRequestId/test-date"
     component={NewTestDateView}
@@ -96,7 +101,7 @@ const NewTestDate = (
 );
 
 const RequestStatusChange = (
-  <SecureRoute
+  <Route
     key="change-508-request-status"
     path="/508/requests/:accessibilityRequestId/change-status"
     component={ChangeRequestStatus}
@@ -113,7 +118,7 @@ const DocumentsRedirect = (
 );
 
 const RequestDetails = (
-  <SecureRoute
+  <Route
     exact
     key="508-request-detail"
     path={[
@@ -135,9 +140,15 @@ const Default = <Route path="*" key="508-not-found" component={NotFound} />;
 const ReportProblemLinkArea = ({ url }: { url: string }) => {
   const { t } = useTranslation('accessibility');
   return (
-    <div className="grid-container width-full padding-bottom-2 report-problem-link-area">
-      <Link href={url} target="_blank" rel="noopener noreferrer">
+    <div className="grid-container width-full padding-bottom-4 report-problem-link-area">
+      <Link
+        href={url}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="line-height-body-4"
+      >
         {t('reportProblem')}
+        <IconLaunch className="margin-left-05 margin-bottom-2px text-tbottom" />
       </Link>
     </div>
   );
@@ -151,14 +162,12 @@ const PageTemplate = ({
   surveyUrl: string;
 }) => {
   return (
-    <PageWrapper>
-      <Header />
+    <>
       <MainContent className="margin-bottom-5">
         <Switch>{children}</Switch>
       </MainContent>
       <ReportProblemLinkArea url={surveyUrl} />
-      <Footer />
-    </PageWrapper>
+    </>
   );
 };
 
@@ -172,7 +181,7 @@ const Accessibility = () => {
       return (
         <PageTemplate surveyUrl={REPORT_PROBLEM_ACCESSIBILITY_TEAM_SURVEY}>
           {[
-            NewRequest,
+            flags.cedar508Requests ? NewRequestCedar : NewRequest,
             AllRequests,
             AccessibilityTestingOverview,
             MakingANewRequest,
@@ -191,7 +200,7 @@ const Accessibility = () => {
     return (
       <PageTemplate surveyUrl={REPORT_PROBLEM_BASIC_USER_SURVEY}>
         {[
-          NewRequest,
+          flags.cedar508Requests ? NewRequestCedar : NewRequest,
           AccessibilityTestingOverview,
           MakingANewRequest,
           AccessibilityTestingTemplates,

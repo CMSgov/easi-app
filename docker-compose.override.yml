@@ -18,12 +18,14 @@ services:
     image: easi-backend:latest
     volumes:
       - ./:/easi
-    entrypoint: air
+    entrypoint: air ${AIR_CONFIG}
     ports:
       - 8080:8080
+      - 2345:2345 #for dlv debugging
     environment:
       - LOCAL_AUTH_ENABLED
   easi_client:
+    profiles: ["frontend"]
     build:
       context: .
       dockerfile: Dockerfile.client

@@ -16,7 +16,8 @@ const action = {
     rejectIntake: 'Project not approved by GRB',
     sendEmail: 'Send email',
     guideReceivedClose: 'Decomission guide received. Close the request',
-    notRespondingClose: 'Project team not responding. Close the request'
+    notRespondingClose: 'Project team not responding. Close the request',
+    extendLifecycleID: 'Extend Lifecycle ID'
   },
   issueLCID: {
     backLink: 'Change',
@@ -32,6 +33,9 @@ const action = {
     scopeLabel: 'Scope of Lifecycle ID',
     scopeHelpText:
       'Tell the requester what is covered by this Lifecycle ID and what work it limits the project team to.',
+    costBaselineLabel: 'Project Cost Baseline (Optional)',
+    costBaselineHelpText:
+      'Enter the current cost baseline for the project for the first two planned fiscal years of the project',
     lcid: {
       new: 'Generate a new Lifecycle ID',
       helpText:
@@ -46,6 +50,28 @@ const action = {
       day: 'Day',
       year: 'Year'
     }
+  },
+  extendLcid: {
+    back: 'Change',
+    heading: 'Actions on request',
+    subheading: 'How to proceed?',
+    action: 'Extend Lifecycle ID',
+    currentLcid: 'Lifecycle ID',
+    currentLcidExpiration: 'Current expiration date',
+    expirationDate: {
+      label: 'New expiration date',
+      helpText: 'For example 08 02 1776',
+      month: 'Month',
+      day: 'Day',
+      year: 'Year'
+    },
+    currentScope: 'Current Scope',
+    currentNextSteps: 'Current Next Steps',
+    currentCostBaseline: 'Current Project Cost Baseline (Optional)',
+    noCostBaseline: 'There is no Cost Baseline associated with this LCID',
+    submissionInfo:
+      'An email will automatically be sent to the Business Owner letting them know of the new expiration date.',
+    submit: 'Extend Lifecycle ID'
   },
   rejectIntake: {
     backLink: 'Change',

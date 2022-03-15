@@ -9,6 +9,9 @@ import {
 import { LoginCallback, SecureRoute } from '@okta/okta-react';
 import { useFlags } from 'launchdarkly-react-client-sdk';
 
+import Footer from 'components/Footer';
+import Header from 'components/Header';
+import PageWrapper from 'components/PageWrapper';
 import { MessageProvider } from 'hooks/useMessage';
 import Accessibility from 'views/Accessibility';
 import AccessibilityStatement from 'views/AccessibilityStatement';
@@ -20,6 +23,7 @@ import GovernanceOverview from 'views/GovernanceOverview';
 import GovernanceReviewTeam from 'views/GovernanceReviewTeam';
 import GovernanceTaskList from 'views/GovernanceTaskList';
 import GovernanceFeedback from 'views/GovernanceTaskList/Feedback';
+import LcidInfo from 'views/GovernanceTaskList/LcidInfo';
 import RequestDecision from 'views/GovernanceTaskList/RequestDecision';
 import Home from 'views/Home';
 import Login from 'views/Login';
@@ -32,10 +36,16 @@ import PrivacyPolicy from 'views/PrivacyPolicy';
 import RequestTypeForm from 'views/RequestTypeForm';
 import Sandbox from 'views/Sandbox';
 import SystemIntake from 'views/SystemIntake';
+import SystemList from 'views/SystemList';
+import SystemProfile from 'views/SystemProfile';
 import TermsAndConditions from 'views/TermsAndConditions';
 import TimeOutWrapper from 'views/TimeOutWrapper';
 import UserInfo from 'views/User';
 import UserInfoWrapper from 'views/UserInfoWrapper';
+
+import { NavContextProvider } from '../../components/Header/navContext';
+
+import shouldScroll from './scrollConfig';
 
 import './index.scss';
 
@@ -45,7 +55,9 @@ const AppRoutes = () => {
 
   // Scroll to top
   useLayoutEffect(() => {
-    window.scrollTo(0, 0);
+    if (shouldScroll(location.pathname)) {
+      window.scrollTo(0, 0);
+    }
   }, [location.pathname]);
 
   return (
@@ -58,6 +70,7 @@ const AppRoutes = () => {
       <SecureRoute path="/my-requests" component={MyRequests} />
 
       {/* 508 / Accessibility Team Routes */}
+      <Redirect exact from="/508" to="/508/making-a-request" />
       <SecureRoute path="/508" component={Accessibility} />
 
       {/* GRT/GRB Routes */}
@@ -102,6 +115,11 @@ const AppRoutes = () => {
         path="/governance-task-list/:systemId/request-decision"
         component={RequestDecision}
       />
+      <SecureRoute
+        exact
+        path="/governance-task-list/:systemId/lcid-info"
+        component={LcidInfo}
+      />
       <Redirect exact from="/system/new" to="/system/request-type" />
       <Redirect
         exact
@@ -112,6 +130,23 @@ const AppRoutes = () => {
         path="/system/:systemId/:formPage"
         component={SystemIntake}
       />
+      {flags.systemProfile && (
+        <SecureRoute exact path="/systems" component={SystemList} />
+      )}
+      {flags.systemProfile && (
+        <SecureRoute
+          path="/systems/:systemId"
+          exact
+          component={SystemProfile}
+        />
+      )}
+      {flags.systemProfile && (
+        <SecureRoute
+          path="/systems/:systemId/:subinfo/:top?"
+          exact
+          component={SystemProfile}
+        />
+      )}
       <Redirect
         exact
         from="/business/:businessCaseId"
@@ -138,6 +173,9 @@ const AppRoutes = () => {
 
       {/* Misc Routes */}
       {flags.sandbox && <Route path="/sandbox" exact component={Sandbox} />}
+      {flags.sandbox && (
+        <Route path="/sandbox/:systemId" exact component={SystemProfile} />
+      )}
 
       <Route path="/implicit/callback" component={LoginCallback} />
 
@@ -167,7 +205,13 @@ const App = () => {
             <FlagsWrapper>
               <UserInfoWrapper>
                 <TimeOutWrapper>
-                  <AppRoutes />
+                  <NavContextProvider>
+                    <PageWrapper>
+                      <Header />
+                      <AppRoutes />
+                      <Footer />
+                    </PageWrapper>
+                  </NavContextProvider>
                 </TimeOutWrapper>
               </UserInfoWrapper>
             </FlagsWrapper>

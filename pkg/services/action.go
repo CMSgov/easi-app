@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"errors"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/guregu/null"
@@ -82,7 +83,7 @@ func NewSubmitSystemIntake(
 	config Config,
 	authorize func(context.Context, *models.SystemIntake) (bool, error),
 	update func(context.Context, *models.SystemIntake) (*models.SystemIntake, error),
-	validateAndSubmit func(context.Context, *models.SystemIntake) (string, error),
+	submitToCEDAR func(context.Context, *models.SystemIntake) (string, error),
 	saveAction func(context.Context, *models.Action) error,
 	emailReviewer func(ctx context.Context, requestName string, intakeID uuid.UUID) error,
 ) ActionExecuter {
@@ -108,13 +109,21 @@ func NewSubmitSystemIntake(
 			return err
 		}
 
+		// Send SystemIntake to CEDAR Intake API
 		intake.SubmittedAt = &updatedTime
-		alfabetID, validateAndSubmitErr := validateAndSubmit(ctx, intake)
-		if validateAndSubmitErr != nil {
-			return validateAndSubmitErr
+		alfabetID, submitToCEDARErr := submitToCEDAR(ctx, intake)
+		if submitToCEDARErr != nil {
+			appcontext.ZLogger(ctx).Error("Submission to CEDAR failed", zap.Error(submitToCEDARErr))
+		} else {
+			// If submission to CEDAR was successful, update the intake with the alfabetID
+			// AlfabetID can be null if:
+			// - The intake was not submitted to CEDAR (due to the feature flag being off
+			// or the Intake being imported from SharePoint)
+			// - An error is encountered when sending the data to CEDAR.
+			intake.AlfabetID = null.StringFrom(alfabetID)
 		}
-		intake.AlfabetID = null.StringFrom(alfabetID)
 
+		// Store in the `actions` table
 		err = saveAction(ctx, action)
 		if err != nil {
 			return &apperrors.QueryError{
@@ -124,6 +133,7 @@ func NewSubmitSystemIntake(
 			}
 		}
 
+		// Update the SystemIntake in the DB
 		intake, err = update(ctx, intake)
 		if err != nil {
 			return &apperrors.QueryError{
@@ -132,6 +142,7 @@ func NewSubmitSystemIntake(
 				Operation: apperrors.QuerySave,
 			}
 		}
+
 		// only send an email when everything went ok
 		err = emailReviewer(ctx, intake.ProjectName.String, intake.ID)
 		if err != nil {
@@ -353,6 +364,86 @@ func NewCreateActionUpdateStatus(
 		if err != nil {
 			return nil, err
 		}
+
+		return intake, err
+	}
+}
+
+// NewCreateActionExtendLifecycleID returns a function that
+// persists an action and updates an intake's LCID
+func NewCreateActionExtendLifecycleID(
+	config Config,
+	saveAction func(context.Context, *models.Action) error,
+	fetchUserInfo func(context.Context, string) (*models.UserInfo, error),
+	fetchSystemIntake func(context.Context, uuid.UUID) (*models.SystemIntake, error),
+	updateSystemIntake func(context.Context, *models.SystemIntake) (*models.SystemIntake, error),
+	sendReviewEmail func(ctx context.Context, emailText string, recipientAddress models.EmailAddress, intakeID uuid.UUID) error,
+) func(context.Context, *models.Action, uuid.UUID, *time.Time, *string, string, *string) (*models.SystemIntake, error) {
+	return func(
+		ctx context.Context,
+		action *models.Action,
+		id uuid.UUID,
+		expirationDate *time.Time,
+		nextSteps *string,
+		scope string,
+		costBaseline *string,
+	) (*models.SystemIntake, error) {
+
+		intake, err := fetchSystemIntake(ctx, id)
+		if err != nil {
+			return nil, err
+		}
+
+		action.LCIDExpirationChangeNewDate = expirationDate
+		action.LCIDExpirationChangePreviousDate = intake.LifecycleExpiresAt
+
+		action.LCIDExpirationChangeNewScope = null.StringFrom(scope)
+		action.LCIDExpirationChangePreviousScope = null.StringFrom(intake.LifecycleScope.String)
+
+		action.LCIDExpirationChangeNewNextSteps = null.StringFromPtr(nextSteps)
+		action.LCIDExpirationChangePreviousNextSteps = null.StringFrom(intake.DecisionNextSteps.String)
+
+		action.LCIDExpirationChangeNewCostBaseline = null.StringFromPtr(costBaseline)
+		action.LCIDExpirationChangePreviousCostBaseline = null.StringFrom(intake.LifecycleCostBaseline.String)
+
+		actionErr := saveAction(ctx, action)
+		if actionErr != nil {
+			return nil, actionErr
+		}
+
+		intake.LifecycleExpiresAt = expirationDate
+
+		// TODO: set scope, next steps, etc. as well
+
+		intake.Status = models.SystemIntakeStatusLCIDISSUED
+
+		intake.LifecycleScope = null.StringFrom(scope)
+		intake.DecisionNextSteps = null.StringFromPtr(nextSteps)
+		intake.LifecycleCostBaseline = null.StringFromPtr(costBaseline)
+
+		_, updateErr := updateSystemIntake(ctx, intake)
+		if updateErr != nil {
+			return nil, updateErr
+		}
+
+		requesterInfo, err := fetchUserInfo(ctx, intake.EUAUserID.ValueOrZero())
+		if err != nil {
+			return nil, err
+		}
+		if requesterInfo == nil || requesterInfo.Email == "" {
+			return nil, &apperrors.ExternalAPIError{
+				Err:       errors.New("requester info fetch was not successful when submitting an action"),
+				Model:     intake,
+				ModelID:   intake.ID.String(),
+				Operation: apperrors.Fetch,
+				Source:    "CEDAR LDAP",
+			}
+		}
+
+		// err = sendReviewEmail(ctx, action.Feedback.String, requesterInfo.Email, intake.ID)
+		// if err != nil {
+		// 	return nil, err
+		// }
 
 		return intake, err
 	}

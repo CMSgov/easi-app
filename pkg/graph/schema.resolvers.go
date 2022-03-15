@@ -6,6 +6,7 @@ package graph
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/url"
 	"strconv"
 	"time"
@@ -13,9 +14,11 @@ import (
 	"github.com/google/uuid"
 	"github.com/guregu/null"
 	"github.com/vektah/gqlparser/v2/gqlerror"
+	"golang.org/x/sync/errgroup"
 
 	"github.com/cmsgov/easi-app/pkg/appcontext"
 	"github.com/cmsgov/easi-app/pkg/apperrors"
+	cedarcore "github.com/cmsgov/easi-app/pkg/cedar/core"
 	"github.com/cmsgov/easi-app/pkg/flags"
 	"github.com/cmsgov/easi-app/pkg/graph/generated"
 	"github.com/cmsgov/easi-app/pkg/graph/model"
@@ -93,7 +96,10 @@ func (r *accessibilityRequestResolver) RelevantTestDate(ctx context.Context, obj
 }
 
 func (r *accessibilityRequestResolver) System(ctx context.Context, obj *models.AccessibilityRequest) (*models.System, error) {
-	system, systemErr := r.store.FetchSystemByIntakeID(ctx, obj.IntakeID)
+	if obj.IntakeID == nil {
+		return nil, nil
+	}
+	system, systemErr := r.store.FetchSystemByIntakeID(ctx, *obj.IntakeID)
 	if systemErr != nil {
 		return nil, systemErr
 	}
@@ -115,6 +121,10 @@ func (r *accessibilityRequestResolver) StatusRecord(ctx context.Context, obj *mo
 
 func (r *accessibilityRequestResolver) Notes(ctx context.Context, obj *models.AccessibilityRequest) ([]*models.AccessibilityRequestNote, error) {
 	return r.store.FetchAccessibilityRequestNotesByRequestID(ctx, obj.ID)
+}
+
+func (r *accessibilityRequestResolver) CedarSystemID(ctx context.Context, obj *models.AccessibilityRequest) (*string, error) {
+	return obj.CedarSystemID.Ptr(), nil
 }
 
 func (r *accessibilityRequestDocumentResolver) DocumentType(ctx context.Context, obj *models.AccessibilityRequestDocument) (*model.AccessibilityRequestDocumentType, error) {
@@ -260,6 +270,158 @@ func (r *businessCaseResolver) SystemIntake(ctx context.Context, obj *models.Bus
 	return r.store.FetchSystemIntakeByID(ctx, obj.SystemIntakeID)
 }
 
+func (r *cedarDataCenterResolver) ID(ctx context.Context, obj *models.CedarDataCenter) (*string, error) {
+	return obj.ID.Ptr(), nil
+}
+
+func (r *cedarDataCenterResolver) Name(ctx context.Context, obj *models.CedarDataCenter) (*string, error) {
+	return obj.Name.Ptr(), nil
+}
+
+func (r *cedarDataCenterResolver) Version(ctx context.Context, obj *models.CedarDataCenter) (*string, error) {
+	return obj.Version.Ptr(), nil
+}
+
+func (r *cedarDataCenterResolver) Description(ctx context.Context, obj *models.CedarDataCenter) (*string, error) {
+	return obj.Description.Ptr(), nil
+}
+
+func (r *cedarDataCenterResolver) State(ctx context.Context, obj *models.CedarDataCenter) (*string, error) {
+	return obj.State.Ptr(), nil
+}
+
+func (r *cedarDataCenterResolver) Status(ctx context.Context, obj *models.CedarDataCenter) (*string, error) {
+	return obj.Status.Ptr(), nil
+}
+
+func (r *cedarDataCenterResolver) StartDate(ctx context.Context, obj *models.CedarDataCenter) (*time.Time, error) {
+	return obj.StartDate.Ptr(), nil
+}
+
+func (r *cedarDataCenterResolver) EndDate(ctx context.Context, obj *models.CedarDataCenter) (*time.Time, error) {
+	return obj.EndDate.Ptr(), nil
+}
+
+func (r *cedarDataCenterResolver) Address1(ctx context.Context, obj *models.CedarDataCenter) (*string, error) {
+	return obj.Address1.Ptr(), nil
+}
+
+func (r *cedarDataCenterResolver) Address2(ctx context.Context, obj *models.CedarDataCenter) (*string, error) {
+	return obj.Address2.Ptr(), nil
+}
+
+func (r *cedarDataCenterResolver) City(ctx context.Context, obj *models.CedarDataCenter) (*string, error) {
+	return obj.City.Ptr(), nil
+}
+
+func (r *cedarDataCenterResolver) AddressState(ctx context.Context, obj *models.CedarDataCenter) (*string, error) {
+	return obj.AddressState.Ptr(), nil
+}
+
+func (r *cedarDataCenterResolver) Zip(ctx context.Context, obj *models.CedarDataCenter) (*string, error) {
+	return obj.Zip.Ptr(), nil
+}
+
+func (r *cedarDeploymentResolver) StartDate(ctx context.Context, obj *models.CedarDeployment) (*time.Time, error) {
+	return obj.StartDate.Ptr(), nil
+}
+
+func (r *cedarDeploymentResolver) EndDate(ctx context.Context, obj *models.CedarDeployment) (*time.Time, error) {
+	return obj.EndDate.Ptr(), nil
+}
+
+func (r *cedarDeploymentResolver) IsHotSite(ctx context.Context, obj *models.CedarDeployment) (*string, error) {
+	return obj.IsHotSite.Ptr(), nil
+}
+
+func (r *cedarDeploymentResolver) Description(ctx context.Context, obj *models.CedarDeployment) (*string, error) {
+	return obj.Description.Ptr(), nil
+}
+
+func (r *cedarDeploymentResolver) ContractorName(ctx context.Context, obj *models.CedarDeployment) (*string, error) {
+	return obj.ContractorName.Ptr(), nil
+}
+
+func (r *cedarDeploymentResolver) SystemVersion(ctx context.Context, obj *models.CedarDeployment) (*string, error) {
+	return obj.SystemVersion.Ptr(), nil
+}
+
+func (r *cedarDeploymentResolver) HasProductionData(ctx context.Context, obj *models.CedarDeployment) (*string, error) {
+	return obj.HasProductionData.Ptr(), nil
+}
+
+func (r *cedarDeploymentResolver) DeploymentType(ctx context.Context, obj *models.CedarDeployment) (*string, error) {
+	return obj.DeploymentType.Ptr(), nil
+}
+
+func (r *cedarDeploymentResolver) SystemName(ctx context.Context, obj *models.CedarDeployment) (*string, error) {
+	return obj.SystemName.Ptr(), nil
+}
+
+func (r *cedarDeploymentResolver) DeploymentElementID(ctx context.Context, obj *models.CedarDeployment) (*string, error) {
+	return obj.DeploymentElementID.Ptr(), nil
+}
+
+func (r *cedarDeploymentResolver) State(ctx context.Context, obj *models.CedarDeployment) (*string, error) {
+	return obj.State.Ptr(), nil
+}
+
+func (r *cedarDeploymentResolver) Status(ctx context.Context, obj *models.CedarDeployment) (*string, error) {
+	return obj.Status.Ptr(), nil
+}
+
+func (r *cedarDeploymentResolver) WanType(ctx context.Context, obj *models.CedarDeployment) (*string, error) {
+	return obj.WanType.Ptr(), nil
+}
+
+func (r *cedarRoleResolver) AssigneeUsername(ctx context.Context, obj *models.CedarRole) (*string, error) {
+	return obj.AssigneeUsername.Ptr(), nil
+}
+
+func (r *cedarRoleResolver) AssigneeEmail(ctx context.Context, obj *models.CedarRole) (*string, error) {
+	return obj.AssigneeEmail.Ptr(), nil
+}
+
+func (r *cedarRoleResolver) AssigneeOrgID(ctx context.Context, obj *models.CedarRole) (*string, error) {
+	return obj.AssigneeOrgID.Ptr(), nil
+}
+
+func (r *cedarRoleResolver) AssigneeOrgName(ctx context.Context, obj *models.CedarRole) (*string, error) {
+	return obj.AssigneeOrgName.Ptr(), nil
+}
+
+func (r *cedarRoleResolver) AssigneeFirstName(ctx context.Context, obj *models.CedarRole) (*string, error) {
+	return obj.AssigneeFirstName.Ptr(), nil
+}
+
+func (r *cedarRoleResolver) AssigneeLastName(ctx context.Context, obj *models.CedarRole) (*string, error) {
+	return obj.AssigneeLastName.Ptr(), nil
+}
+
+func (r *cedarRoleResolver) AssigneePhone(ctx context.Context, obj *models.CedarRole) (*string, error) {
+	return obj.AssigneePhone.Ptr(), nil
+}
+
+func (r *cedarRoleResolver) AssigneeDesc(ctx context.Context, obj *models.CedarRole) (*string, error) {
+	return obj.AssigneeDesc.Ptr(), nil
+}
+
+func (r *cedarRoleResolver) RoleTypeName(ctx context.Context, obj *models.CedarRole) (*string, error) {
+	return obj.RoleTypeName.Ptr(), nil
+}
+
+func (r *cedarRoleResolver) RoleTypeDesc(ctx context.Context, obj *models.CedarRole) (*string, error) {
+	return obj.RoleTypeDesc.Ptr(), nil
+}
+
+func (r *cedarRoleResolver) RoleID(ctx context.Context, obj *models.CedarRole) (*string, error) {
+	return obj.RoleID.Ptr(), nil
+}
+
+func (r *cedarRoleResolver) ObjectType(ctx context.Context, obj *models.CedarRole) (*string, error) {
+	return obj.ObjectType.Ptr(), nil
+}
+
 func (r *mutationResolver) AddGRTFeedbackAndKeepBusinessCaseInDraft(ctx context.Context, input model.AddGRTFeedbackInput) (*model.AddGRTFeedbackPayload, error) {
 	grtFeedback, err := r.service.AddGRTFeedback(
 		ctx,
@@ -330,16 +492,38 @@ func (r *mutationResolver) CreateAccessibilityRequest(ctx context.Context, input
 		return nil, err
 	}
 
-	intake, err := r.store.FetchSystemIntakeByID(ctx, input.IntakeID)
-	if err != nil {
-		return nil, err
+	if input.IntakeID == nil && (input.CedarSystemID == nil || len(*input.CedarSystemID) == 0) {
+		return nil, errors.New("Either a system intake ID or a CEDAR system ID is required to create a 508 request")
 	}
 
-	request, err := r.store.CreateAccessibilityRequestAndInitialStatusRecord(ctx, &models.AccessibilityRequest{
+	newRequest := &models.AccessibilityRequest{
 		EUAUserID: requesterEUAID,
-		Name:      input.Name,
-		IntakeID:  input.IntakeID,
-	})
+	}
+
+	var systemName string
+	if input.IntakeID != nil {
+		intake, intakeErr := r.store.FetchSystemIntakeByID(ctx, *input.IntakeID)
+		if intakeErr != nil {
+			return nil, intakeErr
+		}
+		newRequest.IntakeID = &intake.ID
+		systemName = intake.ProjectName.String
+	}
+
+	cedarSystemID := null.StringFromPtr(input.CedarSystemID)
+	cedarSystemIDStr := cedarSystemID.ValueOrZero()
+	if input.CedarSystemID != nil && len(*input.CedarSystemID) > 0 {
+		cedarSystem, cedarSystemErr := r.cedarCoreClient.GetSystem(ctx, cedarSystemIDStr)
+		if cedarSystemErr != nil {
+			return nil, cedarSystemErr
+		}
+		newRequest.CedarSystemID = null.StringFromPtr(input.CedarSystemID)
+		systemName = cedarSystem.Name
+	}
+
+	newRequest.Name = systemName
+
+	request, err := r.store.CreateAccessibilityRequestAndInitialStatusRecord(ctx, newRequest)
 	if err != nil {
 		return nil, err
 	}
@@ -348,7 +532,7 @@ func (r *mutationResolver) CreateAccessibilityRequest(ctx context.Context, input
 		ctx,
 		requesterInfo.CommonName,
 		request.Name,
-		intake.ProjectName.String,
+		systemName,
 		request.ID,
 	)
 	if err != nil {
@@ -594,6 +778,19 @@ func (r *mutationResolver) UpdateAccessibilityRequestStatus(ctx context.Context,
 	}, nil
 }
 
+func (r *mutationResolver) UpdateAccessibilityRequestCedarSystem(ctx context.Context, input *model.UpdateAccessibilityRequestCedarSystemInput) (*model.UpdateAccessibilityRequestCedarSystemPayload, error) {
+	_, err := r.cedarCoreClient.GetSystem(ctx, input.CedarSystemID)
+	if err != nil {
+		return nil, err
+	}
+
+	updatedRequest, err := r.store.UpdateAccessibilityRequestCedarSystem(ctx, input.ID, null.StringFrom(input.CedarSystemID))
+	return &model.UpdateAccessibilityRequestCedarSystemPayload{
+		ID:                   updatedRequest.ID,
+		AccessibilityRequest: updatedRequest,
+	}, err
+}
+
 func (r *mutationResolver) CreateSystemIntakeActionBusinessCaseNeeded(ctx context.Context, input model.BasicActionInput) (*model.UpdateSystemIntakePayload, error) {
 	intake, err := r.service.CreateActionUpdateStatus(
 		ctx,
@@ -730,6 +927,56 @@ func (r *mutationResolver) CreateSystemIntakeActionSendEmail(ctx context.Context
 	}, err
 }
 
+func (r *mutationResolver) CreateSystemIntakeActionExtendLifecycleID(ctx context.Context, input model.CreateSystemIntakeActionExtendLifecycleIDInput) (*model.CreateSystemIntakeActionExtendLifecycleIDPayload, error) {
+	requesterEUAID := appcontext.Principal(ctx).ID()
+	requesterInfo, err := r.service.FetchUserInfo(ctx, requesterEUAID)
+	if err != nil {
+		return nil, err
+	}
+
+	if input.ExpirationDate == nil {
+		return &model.CreateSystemIntakeActionExtendLifecycleIDPayload{
+			UserErrors: []*model.UserError{{Message: "Must provide a valid future date", Path: []string{"expirationDate"}}},
+		}, nil
+	}
+
+	if input.Scope == "" {
+		return &model.CreateSystemIntakeActionExtendLifecycleIDPayload{
+			UserErrors: []*model.UserError{{Message: "Must provide a non-empty scope", Path: []string{"scope"}}},
+		}, nil
+	}
+
+	intake, err := r.service.CreateActionExtendLifecycleID(
+		ctx, &models.Action{
+			IntakeID:   &input.ID,
+			ActionType: models.ActionTypeEXTENDLCID,
+		}, input.ID, input.ExpirationDate, input.NextSteps, input.Scope, input.CostBaseline,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	err = r.emailClient.SendExtendLCIDEmail(
+		ctx,
+		requesterInfo.Email,
+		input.ID,
+		intake.ProjectName.String,
+		input.ExpirationDate,
+		input.Scope,
+		*input.NextSteps,
+		*input.CostBaseline,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &model.CreateSystemIntakeActionExtendLifecycleIDPayload{
+		SystemIntake: intake,
+	}, nil
+}
+
 func (r *mutationResolver) CreateSystemIntakeNote(ctx context.Context, input model.CreateSystemIntakeNoteInput) (*model.SystemIntakeNote, error) {
 	note, err := r.store.CreateNote(ctx, &models.Note{
 		AuthorEUAID:    appcontext.Principal(ctx).ID(),
@@ -809,11 +1056,12 @@ func (r *mutationResolver) IssueLifecycleID(ctx context.Context, input model.Iss
 	intake, err := r.service.IssueLifecycleID(
 		ctx,
 		&models.SystemIntake{
-			ID:                 input.IntakeID,
-			LifecycleExpiresAt: &input.ExpiresAt,
-			LifecycleScope:     null.StringFrom(input.Scope),
-			DecisionNextSteps:  null.StringFrom(*input.NextSteps),
-			LifecycleID:        null.StringFrom(*input.Lcid),
+			ID:                    input.IntakeID,
+			LifecycleExpiresAt:    &input.ExpiresAt,
+			LifecycleScope:        null.StringFrom(input.Scope),
+			DecisionNextSteps:     null.StringFrom(*input.NextSteps),
+			LifecycleID:           null.StringFrom(*input.Lcid),
+			LifecycleCostBaseline: null.StringFromPtr(input.CostBaseline),
 		},
 		&models.Action{
 			IntakeID: &input.IntakeID,
@@ -975,10 +1223,21 @@ func (r *mutationResolver) UpdateSystemIntakeRequestDetails(ctx context.Context,
 	if err != nil {
 		return nil, err
 	}
+	intake.ProcessStatus = null.StringFromPtr(input.CurrentStage)
 	intake.ProjectName = null.StringFromPtr(input.RequestName)
 	intake.BusinessNeed = null.StringFromPtr(input.BusinessNeed)
 	intake.Solution = null.StringFromPtr(input.BusinessSolution)
 	intake.EASupportRequest = null.BoolFromPtr(input.NeedsEaSupport)
+
+	cedarSystemID := null.StringFromPtr(input.CedarSystemID)
+	cedarSystemIDStr := cedarSystemID.ValueOrZero()
+	if input.CedarSystemID != nil && len(*input.CedarSystemID) > 0 {
+		_, err = r.cedarCoreClient.GetSystem(ctx, cedarSystemIDStr)
+		if err != nil {
+			return nil, err
+		}
+		intake.CedarSystemID = null.StringFromPtr(input.CedarSystemID)
+	}
 
 	savedIntake, err := r.store.UpdateSystemIntake(ctx, intake)
 	return &model.UpdateSystemIntakePayload{
@@ -991,8 +1250,6 @@ func (r *mutationResolver) UpdateSystemIntakeContractDetails(ctx context.Context
 	if err != nil {
 		return nil, err
 	}
-
-	intake.ProcessStatus = null.StringFromPtr(input.CurrentStage)
 
 	if input.FundingSource != nil {
 		if null.BoolFromPtr(input.FundingSource.IsFunded).ValueOrZero() {
@@ -1051,6 +1308,27 @@ func (r *mutationResolver) UpdateSystemIntakeContractDetails(ctx context.Context
 	return &model.UpdateSystemIntakePayload{
 		SystemIntake: savedIntake,
 	}, err
+}
+
+func (r *mutationResolver) CreateCedarSystemBookmark(ctx context.Context, input model.CreateCedarSystemBookmarkInput) (*model.CreateCedarSystemBookmarkPayload, error) {
+	bookmark := models.CedarSystemBookmark{
+		EUAUserID:     appcontext.Principal(ctx).ID(),
+		CedarSystemID: input.CedarSystemID,
+	}
+	createdBookmark, err := r.store.CreateCedarSystemBookmark(ctx, &bookmark)
+	return &model.CreateCedarSystemBookmarkPayload{
+		CedarSystemBookmark: createdBookmark,
+	}, err
+}
+
+func (r *mutationResolver) DeleteCedarSystemBookmark(ctx context.Context, input model.CreateCedarSystemBookmarkInput) (*model.DeleteCedarSystemBookmarkPayload, error) {
+	_, err := r.store.DeleteCedarSystemBookmark(ctx, &models.CedarSystemBookmark{
+		CedarSystemID: input.CedarSystemID,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &model.DeleteCedarSystemBookmarkPayload{CedarSystemID: input.CedarSystemID}, nil
 }
 
 func (r *queryResolver) AccessibilityRequest(ctx context.Context, id uuid.UUID) (*models.AccessibilityRequest, error) {
@@ -1164,6 +1442,109 @@ func (r *queryResolver) CurrentUser(ctx context.Context) (*model.CurrentUser, er
 	return &currentUser, nil
 }
 
+func (r *queryResolver) CedarSystem(ctx context.Context, id string) (*models.CedarSystem, error) {
+	cedarSystem, err := r.cedarCoreClient.GetSystem(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	return cedarSystem, nil
+}
+
+func (r *queryResolver) CedarSystems(ctx context.Context) ([]*models.CedarSystem, error) {
+	cedarSystems, err := r.cedarCoreClient.GetSystemSummary(ctx, true)
+	if err != nil {
+		return nil, err
+	}
+	return cedarSystems, nil
+}
+
+func (r *queryResolver) CedarSystemBookmarks(ctx context.Context) ([]*models.CedarSystemBookmark, error) {
+	cedarSystemBookmarks, err := r.store.FetchCedarSystemBookmarks(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return cedarSystemBookmarks, nil
+}
+
+func (r *queryResolver) Deployments(ctx context.Context, systemID string, deploymentType *string, state *string, status *string) ([]*models.CedarDeployment, error) {
+	var optionalParams *cedarcore.GetDeploymentsOptionalParams
+	if deploymentType != nil || state != nil || status != nil {
+		optionalParams = &cedarcore.GetDeploymentsOptionalParams{}
+
+		if deploymentType != nil {
+			optionalParams.DeploymentType = null.StringFromPtr(deploymentType)
+		}
+
+		if state != nil {
+			optionalParams.State = null.StringFromPtr(state)
+		}
+
+		if status != nil {
+			optionalParams.Status = null.StringFromPtr(status)
+		}
+	}
+
+	cedarDeployments, err := r.cedarCoreClient.GetDeployments(ctx, systemID, optionalParams)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(cedarDeployments) == 0 {
+		return nil, &apperrors.ResourceNotFoundError{Err: fmt.Errorf("no deployments found"), Resource: []*models.CedarDeployment{}}
+	}
+
+	return cedarDeployments, nil
+}
+
+func (r *queryResolver) Roles(ctx context.Context, systemID string, roleTypeID *string) ([]*models.CedarRole, error) {
+	cedarRoles, err := r.cedarCoreClient.GetRolesBySystem(ctx, systemID, null.StringFromPtr(roleTypeID))
+	if err != nil {
+		return nil, err
+	}
+
+	if len(cedarRoles) == 0 {
+		return nil, &apperrors.ResourceNotFoundError{Err: fmt.Errorf("no roles found"), Resource: []*models.CedarRole{}}
+	}
+
+	return cedarRoles, nil
+}
+
+func (r *queryResolver) DetailedCedarSystemInfo(ctx context.Context, id string) (*model.DetailedCedarSystem, error) {
+	g := new(errgroup.Group)
+	var cedarSystem *models.CedarSystem
+	var errS error
+	g.Go(func() error {
+		cedarSystem, errS = r.cedarCoreClient.GetSystem(ctx, id)
+		return errS
+	})
+
+	var cedarRoles []*models.CedarRole
+	var errR error
+	g.Go(func() error {
+		cedarRoles, errS = r.cedarCoreClient.GetRolesBySystem(ctx, id, null.String{})
+		return errR
+	})
+
+	var cedarDeployments []*models.CedarDeployment
+	var errD error
+
+	g.Go(func() error {
+		cedarDeployments, errD = r.cedarCoreClient.GetDeployments(ctx, id, nil)
+		return errD
+	})
+	if err := g.Wait(); err != nil {
+		return nil, err
+	}
+
+	dCedarSys := model.DetailedCedarSystem{
+		CedarSystem: cedarSystem,
+		Roles:       cedarRoles,
+		Deployments: cedarDeployments,
+	}
+
+	return &dCedarSys, nil
+}
+
 func (r *systemIntakeResolver) Actions(ctx context.Context, obj *models.SystemIntake) ([]*model.SystemIntakeAction, error) {
 	actions, actionsErr := r.store.GetActionsByRequestID(ctx, obj.ID)
 	if actionsErr != nil {
@@ -1181,6 +1562,19 @@ func (r *systemIntakeResolver) Actions(ctx context.Context, obj *models.SystemIn
 			},
 			Feedback:  action.Feedback.Ptr(),
 			CreatedAt: *action.CreatedAt,
+		}
+
+		if action.LCIDExpirationChangeNewDate != nil && action.LCIDExpirationChangePreviousDate != nil {
+			graphAction.LcidExpirationChange = &model.SystemIntakeLCIDExpirationChange{
+				NewDate:              *action.LCIDExpirationChangeNewDate,
+				PreviousDate:         *action.LCIDExpirationChangePreviousDate,
+				NewScope:             action.LCIDExpirationChangeNewScope.Ptr(),
+				PreviousScope:        action.LCIDExpirationChangePreviousScope.Ptr(),
+				NewNextSteps:         action.LCIDExpirationChangeNewNextSteps.Ptr(),
+				PreviousNextSteps:    action.LCIDExpirationChangePreviousNextSteps.Ptr(),
+				NewCostBaseline:      action.LCIDExpirationChangeNewCostBaseline.Ptr(),
+				PreviousCostBaseline: action.LCIDExpirationChangePreviousCostBaseline.Ptr(),
+			}
 		}
 		results = append(results, &graphAction)
 	}
@@ -1378,6 +1772,10 @@ func (r *systemIntakeResolver) LcidScope(ctx context.Context, obj *models.System
 	return obj.LifecycleScope.Ptr(), nil
 }
 
+func (r *systemIntakeResolver) LcidCostBaseline(ctx context.Context, obj *models.SystemIntake) (*string, error) {
+	return obj.LifecycleCostBaseline.Ptr(), nil
+}
+
 func (r *systemIntakeResolver) NeedsEaSupport(ctx context.Context, obj *models.SystemIntake) (*bool, error) {
 	return obj.EASupportRequest.Ptr(), nil
 }
@@ -1457,6 +1855,10 @@ func (r *systemIntakeResolver) LastAdminNote(ctx context.Context, obj *models.Sy
 	}, nil
 }
 
+func (r *systemIntakeResolver) CedarSystemID(ctx context.Context, obj *models.SystemIntake) (*string, error) {
+	return obj.CedarSystemID.Ptr(), nil
+}
+
 // AccessibilityRequest returns generated.AccessibilityRequestResolver implementation.
 func (r *Resolver) AccessibilityRequest() generated.AccessibilityRequestResolver {
 	return &accessibilityRequestResolver{r}
@@ -1475,6 +1877,19 @@ func (r *Resolver) AccessibilityRequestNote() generated.AccessibilityRequestNote
 // BusinessCase returns generated.BusinessCaseResolver implementation.
 func (r *Resolver) BusinessCase() generated.BusinessCaseResolver { return &businessCaseResolver{r} }
 
+// CedarDataCenter returns generated.CedarDataCenterResolver implementation.
+func (r *Resolver) CedarDataCenter() generated.CedarDataCenterResolver {
+	return &cedarDataCenterResolver{r}
+}
+
+// CedarDeployment returns generated.CedarDeploymentResolver implementation.
+func (r *Resolver) CedarDeployment() generated.CedarDeploymentResolver {
+	return &cedarDeploymentResolver{r}
+}
+
+// CedarRole returns generated.CedarRoleResolver implementation.
+func (r *Resolver) CedarRole() generated.CedarRoleResolver { return &cedarRoleResolver{r} }
+
 // Mutation returns generated.MutationResolver implementation.
 func (r *Resolver) Mutation() generated.MutationResolver { return &mutationResolver{r} }
 
@@ -1488,6 +1903,9 @@ type accessibilityRequestResolver struct{ *Resolver }
 type accessibilityRequestDocumentResolver struct{ *Resolver }
 type accessibilityRequestNoteResolver struct{ *Resolver }
 type businessCaseResolver struct{ *Resolver }
+type cedarDataCenterResolver struct{ *Resolver }
+type cedarDeploymentResolver struct{ *Resolver }
+type cedarRoleResolver struct{ *Resolver }
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
 type systemIntakeResolver struct{ *Resolver }

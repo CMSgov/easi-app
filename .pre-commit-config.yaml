@@ -1,11 +1,5 @@
 ---
 repos:
-  - repo: git://github.com/igorshubovych/markdownlint-cli
-    rev: v0.27.1
-    hooks:
-      - id: markdownlint
-        entry: markdownlint --ignore docs/adr/index.md
-
   - repo: git://github.com/detailyang/pre-commit-shell
     rev: 1.0.5
     hooks:
@@ -30,7 +24,11 @@ repos:
             vendor/|
             docs/adr/index.md
           )$
-      - id: circleci-validate
+
+  - repo: git://github.com/Bahjat/pre-commit-golang
+    rev: c3086eea8af86847dbdff2e46b85a5fe3c9d9656
+    hooks:
+      - id: go-fmt-import
 
   - repo: git://github.com/golangci/golangci-lint
     rev: v1.41.1
@@ -65,7 +63,25 @@ repos:
         name: check-code-generation
         entry: scripts/pre-commit-check-code-generation
         language: script
-        files: (pkg/graph/schema.graphql|pkg/graph/schema.resolvers.go|src/queries/*.ts)
+        files: "pkg/graph/schema\\.graphql|pkg/graph/schema\\.resolvers\\.go|src/queries/.*\\.ts"
+
+  # for some reason, trying to call "go run cmd/intake_schema_gen/main.go" directly from this config doesn't work;
+  # so call scripts/gen_intake_schema, which calls that command and works 
+  - repo: local
+    hooks:
+      - id: check-intake-schema-generation
+        name: check-intake-schema-generation
+        entry: scripts/gen_intake_schema
+        language: script
+        files: cmd/gen_intake_schema/main\.go|pkg/cedar/intake/models/.*\.go|pkg/cedar/intake/schemas/.*\.json
+
+  - repo: local
+    hooks:
+      - id: preprocess-intake-swagger
+        name: preprocess-intake-swagger
+        entry: scripts/generate_cedar_intake_client
+        language: script
+        files: pkg/cedar/intake/cedar_intake.json
 
   - repo: git://github.com/awslabs/git-secrets
     rev: 80230afa8c8bdeac766a0fece36f95ffaa0be778
@@ -73,3 +89,9 @@ repos:
       - id: git-secrets
         entry: git-secrets --pre_commit_hook
 
+  - repo: git://github.com/pre-commit/pre-commit-hooks
+    rev: v4.1.0
+    hooks:
+      - id: end-of-file-fixer
+        name: Add newlines to end of files
+        files: \.(sql|scss|md|js|ts|tsx|go)$

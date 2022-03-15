@@ -1,7 +1,16 @@
 import React, { useRef } from 'react';
 import { useHistory } from 'react-router-dom';
 import { useMutation } from '@apollo/client';
-import { Button, Link } from '@trussworks/react-uswds';
+import {
+  Button,
+  Dropdown,
+  IconNavigateBefore,
+  Label,
+  Link,
+  Radio,
+  Textarea,
+  TextInput
+} from '@trussworks/react-uswds';
 import classnames from 'classnames';
 import { Field, Form, Formik, FormikProps } from 'formik';
 import { DateTime } from 'luxon';
@@ -15,17 +24,11 @@ import {
   DateInputMonth,
   DateInputYear
 } from 'components/shared/DateInput';
-import { DropdownField, DropdownItem } from 'components/shared/DropdownField';
 import { ErrorAlert, ErrorAlertMessage } from 'components/shared/ErrorAlert';
 import FieldErrorMsg from 'components/shared/FieldErrorMsg';
 import FieldGroup from 'components/shared/FieldGroup';
 import HelpText from 'components/shared/HelpText';
-import Label from 'components/shared/Label';
-import { RadioField } from 'components/shared/RadioField';
-import TextAreaField from 'components/shared/TextAreaField';
-import TextField from 'components/shared/TextField';
 import fundingSources from 'constants/enums/fundingSources';
-import processStages from 'constants/enums/processStages';
 import { yesNoMap } from 'data/common';
 import GetSystemIntakeQuery from 'queries/GetSystemIntakeQuery';
 import { UpdateSystemIntakeContractDetails as UpdateSystemIntakeContractDetailsQuery } from 'queries/SystemIntakeQueries';
@@ -46,9 +49,8 @@ const ContractDetails = ({ systemIntake }: ContractDetailsProps) => {
   const history = useHistory();
   const formikRef = useRef<FormikProps<ContractDetailsForm>>(null);
 
-  const { id, currentStage, fundingSource, costs, contract } = systemIntake;
+  const { id, fundingSource, costs, contract } = systemIntake;
   const initialValues: ContractDetailsForm = {
-    currentStage: currentStage || '',
     fundingSource: {
       isFunded: fundingSource.isFunded,
       fundingNumber: fundingSource.fundingNumber || '',
@@ -105,14 +107,14 @@ const ContractDetails = ({ systemIntake }: ContractDetailsProps) => {
       month: Number(values.contract.startDate.month),
       year: Number(values.contract.startDate.year),
       zone: 'UTC'
-    });
+    }).toISO();
 
     const endDate = DateTime.fromObject({
       day: Number(values.contract.endDate.day),
       month: Number(values.contract.endDate.month),
       year: Number(values.contract.endDate.year),
       zone: 'UTC'
-    });
+    }).toISO();
 
     return {
       id,
@@ -174,43 +176,6 @@ const ContractDetails = ({ systemIntake }: ContractDetailsProps) => {
               </div>
               <Form>
                 <FieldGroup
-                  className="margin-bottom-4"
-                  scrollElement="currentStage"
-                  error={!!flatErrors.currentStage}
-                >
-                  <Label htmlFor="IntakeForm-CurrentStage">
-                    Where are you in the process?
-                  </Label>
-                  <HelpText id="IntakeForm-ProcessHelp" className="margin-y-1">
-                    This helps the governance team provide the right type of
-                    guidance for your request
-                  </HelpText>
-                  <FieldErrorMsg>{flatErrors.CurrentStage}</FieldErrorMsg>
-                  <Field
-                    as={DropdownField}
-                    error={!!flatErrors.currentStage}
-                    id="IntakeForm-CurrentStage"
-                    name="currentStage"
-                    aria-describedby="IntakeForm-ProcessHelp"
-                  >
-                    <Field
-                      as={DropdownItem}
-                      name="Select an option"
-                      value=""
-                      disabled
-                    />
-                    {processStages.map(stage => (
-                      <Field
-                        as={DropdownItem}
-                        key={`ProcessStageComponent-${stage.value}`}
-                        name={stage.name}
-                        value={stage.name}
-                      />
-                    ))}
-                  </Field>
-                </FieldGroup>
-
-                <FieldGroup
                   scrollElement="fundingSource.isFunded"
                   error={!!flatErrors['fundingSource.isFunded']}
                 >
@@ -230,7 +195,7 @@ const ContractDetails = ({ systemIntake }: ContractDetailsProps) => {
                       {flatErrors['fundingSource.isFunded']}
                     </FieldErrorMsg>
                     <Field
-                      as={RadioField}
+                      as={Radio}
                       checked={values.fundingSource.isFunded === true}
                       id="IntakeForm-HasFundingSourceYes"
                       name="fundingSource.isFunded"
@@ -259,8 +224,7 @@ const ContractDetails = ({ systemIntake }: ContractDetailsProps) => {
                             {flatErrors['fundingSource.source']}
                           </FieldErrorMsg>
                           <Field
-                            as={DropdownField}
-                            error={!!flatErrors['fundingSource.source']}
+                            as={Dropdown}
                             id="IntakeForm-FundingSource"
                             name="fundingSource.source"
                             // manual onChange to catch case where user selects 'Unknown' funding source
@@ -280,19 +244,16 @@ const ContractDetails = ({ systemIntake }: ContractDetailsProps) => {
                               }
                             }}
                           >
-                            <Field
-                              as={DropdownItem}
-                              name="Select an option"
-                              value=""
-                              disabled
-                            />
+                            <option value="" disabled>
+                              Select an option
+                            </option>
                             {fundingSources.map(source => (
-                              <Field
-                                as={DropdownItem}
+                              <option
                                 key={source.split(' ').join('-')}
-                                name={source}
                                 value={source}
-                              />
+                              >
+                                {source}
+                              </option>
                             ))}
                           </Field>
                         </FieldGroup>
@@ -311,7 +272,7 @@ const ContractDetails = ({ systemIntake }: ContractDetailsProps) => {
                           </FieldErrorMsg>
                           <Field
                             className="width-card-lg"
-                            as={TextField}
+                            as={TextInput}
                             error={!!flatErrors['fundingSource.fundingNumber']}
                             id="IntakeForm-FundingNumber"
                             maxLength={6}
@@ -344,7 +305,7 @@ const ContractDetails = ({ systemIntake }: ContractDetailsProps) => {
                       </div>
                     )}
                     <Field
-                      as={RadioField}
+                      as={Radio}
                       checked={values.fundingSource.isFunded === false}
                       id="IntakeForm-HasFundingSourceNo"
                       name="fundingSource.isFunded"
@@ -372,14 +333,14 @@ const ContractDetails = ({ systemIntake }: ContractDetailsProps) => {
                       currently spending to meet your business need?
                     </legend>
                     <HelpText id="IntakeForm-IncreasedCostsHelp">
-                      This information helps the team decide on the right
-                      approval process for this request
+                      Compare the first year of new contract spending to current
+                      annual spending
                     </HelpText>
                     <FieldErrorMsg>
                       {flatErrors['costs.isExpectingIncrease']}
                     </FieldErrorMsg>
                     <Field
-                      as={RadioField}
+                      as={Radio}
                       checked={values.costs.isExpectingIncrease === 'YES'}
                       id="IntakeForm-CostsExpectingIncreaseYes"
                       name="costs.isExpectingIncrease"
@@ -406,14 +367,14 @@ const ContractDetails = ({ systemIntake }: ContractDetailsProps) => {
                             increase?
                           </Label>
                           <HelpText id="IntakeForm-ExpectedIncreaseHelp">
-                            Compare the first year of new contract spending to
-                            current annual spending
+                            This information helps the team decide on the right
+                            approval process for this request
                           </HelpText>
                           <FieldErrorMsg>
                             {flatErrors['costs.expectedIncreaseAmount']}
                           </FieldErrorMsg>
                           <Field
-                            as={TextAreaField}
+                            as={Textarea}
                             className="system-intake__cost-amount"
                             error={!!flatErrors['costs.expectedIncreaseAmount']}
                             id="IntakeForm-CostsExpectedIncrease"
@@ -425,7 +386,7 @@ const ContractDetails = ({ systemIntake }: ContractDetailsProps) => {
                       </div>
                     )}
                     <Field
-                      as={RadioField}
+                      as={Radio}
                       checked={values.costs.isExpectingIncrease === 'NO'}
                       id="IntakeForm-CostsExpectingIncreaseNo"
                       name="costs.isExpectingIncrease"
@@ -437,7 +398,7 @@ const ContractDetails = ({ systemIntake }: ContractDetailsProps) => {
                       }}
                     />
                     <Field
-                      as={RadioField}
+                      as={Radio}
                       checked={values.costs.isExpectingIncrease === 'NOT_SURE'}
                       id="IntakeForm-CostsExpectingIncreaseNotSure"
                       name="costs.isExpectingIncrease"
@@ -472,7 +433,7 @@ const ContractDetails = ({ systemIntake }: ContractDetailsProps) => {
                       {flatErrors['contract.hasContract']}
                     </FieldErrorMsg>
                     <Field
-                      as={RadioField}
+                      as={Radio}
                       checked={values.contract.hasContract === 'HAVE_CONTRACT'}
                       id="IntakeForm-ContractHaveContract"
                       name="contract.hasContract"
@@ -500,7 +461,7 @@ const ContractDetails = ({ systemIntake }: ContractDetailsProps) => {
                             {flatErrors['contract.contractor']}
                           </FieldErrorMsg>
                           <Field
-                            as={TextField}
+                            as={TextInput}
                             error={!!flatErrors['contract.contractor']}
                             id="IntakeForm-Contractor"
                             maxLength={100}
@@ -521,7 +482,7 @@ const ContractDetails = ({ systemIntake }: ContractDetailsProps) => {
                             {flatErrors['contract.vehicle']}
                           </FieldErrorMsg>
                           <Field
-                            as={TextField}
+                            as={TextInput}
                             error={!!flatErrors['contract.vehicle']}
                             id="IntakeForm-Vehicle"
                             maxLength={100}
@@ -685,7 +646,7 @@ const ContractDetails = ({ systemIntake }: ContractDetailsProps) => {
                       </div>
                     )}
                     <Field
-                      as={RadioField}
+                      as={Radio}
                       checked={values.contract.hasContract === 'IN_PROGRESS'}
                       id="IntakeForm-ContractInProgress"
                       name="contract.hasContract"
@@ -712,7 +673,7 @@ const ContractDetails = ({ systemIntake }: ContractDetailsProps) => {
                             {flatErrors['contract.contractor']}
                           </FieldErrorMsg>
                           <Field
-                            as={TextField}
+                            as={TextInput}
                             error={!!flatErrors['contract.contractor']}
                             id="IntakeForm-Contractor"
                             maxLength={100}
@@ -733,7 +694,7 @@ const ContractDetails = ({ systemIntake }: ContractDetailsProps) => {
                             {flatErrors['contract.vehicle']}
                           </FieldErrorMsg>
                           <Field
-                            as={TextField}
+                            as={TextInput}
                             error={!!flatErrors['contract.vehicle']}
                             id="IntakeForm-Vehicle"
                             maxLength={100}
@@ -917,7 +878,7 @@ const ContractDetails = ({ systemIntake }: ContractDetailsProps) => {
                       </div>
                     )}
                     <Field
-                      as={RadioField}
+                      as={Radio}
                       checked={values.contract.hasContract === 'NOT_STARTED'}
                       id="IntakeForm-ContractNotStarted"
                       name="contract.hasContract"
@@ -936,7 +897,7 @@ const ContractDetails = ({ systemIntake }: ContractDetailsProps) => {
                       }}
                     />
                     <Field
-                      as={RadioField}
+                      as={Radio}
                       checked={values.contract.hasContract === 'NOT_NEEDED'}
                       id="IntakeForm-ContractNotNeeded"
                       name="contract.hasContract"
@@ -1013,8 +974,8 @@ const ContractDetails = ({ systemIntake }: ContractDetailsProps) => {
                       });
                     }}
                   >
-                    <span>
-                      <i className="fa fa-angle-left" /> Save & Exit
+                    <span className="display-flex flex-align-center">
+                      <IconNavigateBefore /> Save & Exit
                     </span>
                   </Button>
                 </div>

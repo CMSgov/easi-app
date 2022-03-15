@@ -22,11 +22,14 @@ import (
 	ld "gopkg.in/launchdarkly/go-server-sdk.v5"
 
 	"github.com/cmsgov/easi-app/pkg/appconfig"
+	"github.com/cmsgov/easi-app/pkg/appcontext"
+	cedarcore "github.com/cmsgov/easi-app/pkg/cedar/core"
 	"github.com/cmsgov/easi-app/pkg/email"
 	"github.com/cmsgov/easi-app/pkg/graph/generated"
 	"github.com/cmsgov/easi-app/pkg/graph/model"
 	"github.com/cmsgov/easi-app/pkg/local"
 	"github.com/cmsgov/easi-app/pkg/models"
+	"github.com/cmsgov/easi-app/pkg/services"
 	"github.com/cmsgov/easi-app/pkg/storage"
 	"github.com/cmsgov/easi-app/pkg/testhelpers"
 	"github.com/cmsgov/easi-app/pkg/upload"
@@ -143,6 +146,10 @@ func TestGraphQLTestSuite(t *testing.T) {
 		t.FailNow()
 	}
 
+	cedarLdapClient := local.NewCedarLdapClient(logger)
+
+	cedarCoreClient := cedarcore.NewClient(appcontext.WithLogger(context.Background(), logger), "fake", "fake", ldClient)
+
 	directives := generated.DirectiveRoot{HasRole: func(ctx context.Context, obj interface{}, next graphql.Resolver, role model.Role) (res interface{}, err error) {
 		return next(ctx)
 	}}
@@ -168,13 +175,27 @@ func TestGraphQLTestSuite(t *testing.T) {
 		return nil
 	}
 
+	saveAction := services.NewSaveAction(
+		store.CreateAction,
+		cedarLdapClient.FetchUserInfo,
+	)
+
+	serviceConfig := services.NewConfig(logger, ldClient)
+
 	var resolverService ResolverService
 	resolverService.IssueLifecycleID = issueLifecycleID
 	resolverService.SubmitIntake = submitIntake
-	cedarLdapClient := local.NewCedarLdapClient(logger)
 	resolverService.FetchUserInfo = cedarLdapClient.FetchUserInfo
+	resolverService.CreateActionExtendLifecycleID = services.NewCreateActionExtendLifecycleID(
+		serviceConfig,
+		saveAction,
+		cedarLdapClient.FetchUserInfo,
+		store.FetchSystemIntakeByID,
+		store.UpdateSystemIntake,
+		emailClient.SendSystemIntakeReviewEmail,
+	)
 
-	resolver := NewResolver(store, resolverService, &s3Client, &emailClient, ldClient)
+	resolver := NewResolver(store, resolverService, &s3Client, &emailClient, ldClient, cedarCoreClient)
 	schema := generated.NewExecutableSchema(generated.Config{Resolvers: resolver, Directives: directives})
 	graphQLClient := client.New(handler.NewDefaultServer(schema))
 

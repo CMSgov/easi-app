@@ -3,6 +3,9 @@
         "apollographql.vscode-apollo",
         "esbenp.prettier-vscode",
         "dbaeumer.vscode-eslint",
-        "golang.go"
+        "golang.go",
+        "ms-azuretools.vscode-docker",
+        "eamodio.gitlens",
+        "bierner.markdown-mermaid"
     ]
   }

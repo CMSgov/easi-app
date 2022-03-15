@@ -10,6 +10,12 @@ type UserInfoWrapperProps = {
   children: React.ReactNode;
 };
 
+type oktaUserProps = {
+  name?: string;
+  euaId?: string;
+  groups?: string[];
+};
+
 const UserInfoWrapper = ({ children }: UserInfoWrapperProps) => {
   const dispatch = useDispatch();
   const { authState, oktaAuth } = useOktaAuth();
@@ -20,7 +26,7 @@ const UserInfoWrapper = ({ children }: UserInfoWrapperProps) => {
       window.localStorage[localAuthStorageKey] &&
       JSON.parse(window.localStorage[localAuthStorageKey]).favorLocalAuth
     ) {
-      const oktaUser = await oktaAuth.getUser();
+      const oktaUser: oktaUserProps = await oktaAuth.getUser();
       const user = {
         name: oktaUser.name,
         euaId: oktaUser.euaId || '',
@@ -28,24 +34,13 @@ const UserInfoWrapper = ({ children }: UserInfoWrapperProps) => {
       };
       dispatch(setUser(user));
     } else {
-      const tokenManager = await oktaAuth.tokenManager;
-      const accessToken = await tokenManager.get('accessToken');
-      const idToken = await tokenManager.get('idToken');
-      if (accessToken && idToken) {
-        const accessTokenValue = accessToken.value;
-        const decodedBearerToken = JSON.parse(
-          atob(accessTokenValue.split('.')[1])
-        );
-
-        const idTokenValue = idToken.value;
-        const decodedIdToken = JSON.parse(atob(idTokenValue.split('.')[1]));
-        const user = {
-          name: (decodedIdToken && decodedIdToken.name) || '',
-          euaId: (decodedIdToken && decodedIdToken.preferred_username) || '',
-          groups: (decodedBearerToken && decodedBearerToken.groups) || []
-        };
-        dispatch(setUser(user));
-      }
+      const user = {
+        name: authState?.idToken?.claims.name,
+        euaId: authState?.idToken?.claims.preferred_username,
+        // @ts-ignore
+        groups: authState?.accessToken?.claims.groups || []
+      };
+      dispatch(setUser(user));
     }
   };
 

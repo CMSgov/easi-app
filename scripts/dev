@@ -46,8 +46,10 @@ needs "psql", install_with: "brew install postgresql"
 needs "air", install_with: "go get -u github.com/cosmtrek/air"
 needs "gotest", install_with: "go get -u github.com/rakyll/gotest"
 needs "goimports", install_with: "go get -u golang.org/x/tools/cmd/goimports"
-needs "circleci", install_with: "brew install circleci"
 needs "pgcli", install_with: "brew install pgcli"
+
+needs "swagger"
+needs "jq"
 
 # Gracefully handle folks trying to explore using common help flags
 ["--help", "-help", "--h", "-h"].each do |flag|
@@ -108,42 +110,94 @@ end
 
 ### Tasks
 
-def up(*args)
+def up(frontend_included, *args, debug:false, wait:false)
+  conf=" "
+  if debug
+    conf =ENV["AIR_CONFIG_DEBUG"]
+    if wait
+      conf =ENV["AIR_CONFIG_DEBUG_WAIT"]
+    end      
+  end
   environment = {
-    "COMPOSE_HTTP_TIMEOUT" => "120"
+    "COMPOSE_HTTP_TIMEOUT" => "120",
+    "AIR_CONFIG" =>conf,
   }
-  command = "docker-compose up --build"
+  command = "docker-compose #{"--profile frontend" if frontend_included } up --build"
 
   if args.any?
     command = "#{command} #{args.join(' ')}"
   end
-
   sh(environment, command, verbose: true)
 
-  wait_for_success("Waiting for the back end to build...", "curl --silent --output /dev/null -m 1 localhost:8080/api/v1/healthcheck")
-  wait_for_success("Waiting for the front end to build...", "curl --silent --output /dev/null -m 1 localhost:3000")
+  if !wait
+    wait_for_success("Waiting for the back end to build...", "curl --silent --output /dev/null -m 1 localhost:8080/api/v1/healthcheck")  
+  else
+    check = "echo '{\"method\":\"RPCServer.State\",\"params\":[],\"id\":1}' | nc -w 1 localhost 2345 | grep 'result' -q" 
+    wait_for_success("Waiting for backend debug server...", check) 
+    puts "✨ Make sure to connect the debugger, or the backend service won't start ✨ "
+  end
+
+  if frontend_included
+    wait_for_success("Waiting for the front end to build...", "curl --silent --output /dev/null -m 1 localhost:3000")
+  end
 end
 
 desc "Starts all services in the project"
 task :up do
-  up("-d")
+  up(true, "-d")
 end
 
 namespace :up do
   desc "Starts all services in the project in the foreground"
   task :watch do
-    up
+    up(true)
+  end
+
+  desc "Starts all services in the project. With backend DEBUGGING"    
+  task :debug do
+    up(true, "-d", debug: true)
+  end
+  desc "Starts all services in the project. With backend DEBUGGING, and also will wait to start the backend service until the debugger attaches"    
+  namespace :debug do
+    task :wait do
+      up(true, "-d", debug: true, wait: true)
+    end
+  end
+
+  desc "Starts all services except the frontend (runs more quickly, if frontend isn't needed)"
+  task :backend do
+    up(false, "-d")
+  end
+
+  desc "Starts all services in the foreground except the frontend (runs more quickly, if frontend isn't needed)"
+  namespace :backend do
+    task :watch do
+      up(false)
+    end
+
+    desc "Starts all services in the foreground except the frontend (runs more quickly, if frontend isn't needed). With DEBUGGING"    
+    task :debug do
+      up(false, "-d", debug: true)
+    end
+    desc "Starts all services in the foreground except the frontend (runs more quickly, if frontend isn't needed). With DEBUGGING, and also will wait to start the backend service until the debugger attaches"    
+    namespace :debug do
+      task :wait do
+        up(false, "-d", debug: true, wait: true)
+      end
+
+    end
+
   end
 end
 
 desc "Stops all services in the project"
 task :down do
-  sh "docker-compose down"
+  sh "docker-compose --profile frontend down"
 end
 
 desc "Restart the specified container"
 task restart: :consume_args do |t, args|
-  yml = `docker-compose config`
+  yml = `docker-compose --profile frontend config`
   config = YAML.load(yml)["services"]
   services = config.keys.sort
 
@@ -165,7 +219,7 @@ task :tailscale do
   environment = {
     "COMPOSE_HTTP_TIMEOUT" => "120"
   }
-  command = "docker-compose -f docker-compose.yml -f docker-compose.override.yml -f docker-compose.tailscale.yml up"
+  command = "docker-compose --profile frontend -f docker-compose.yml -f docker-compose.override.yml -f docker-compose.tailscale.yml up"
   sh(environment, command, verbose: true)
 end
 
@@ -350,16 +404,16 @@ multitask test: ["test:go", "test:js"]
 namespace :test do
   desc "Runs Go tests"
   task :go => "db:clean" do
-    sh "gotest -short -count=1 -p=1 ./..."
+    sh "go test -short -count=1 -p=1 ./..."
   end
   namespace :go do
     desc "Runs Go tests, including long ones"
     task :long => "db:clean" do
-      sh "gotest -count=1 -p=1 ./..."
+      sh "go test -count=1 -p=1 ./..."
     end
-    desc "Run targeted Go tests (pass packages as additional options)"
+    desc "Run targeted Go tests (pass full package name as additional options)"
     task :only => ["db:clean", :consume_args] do |t, args|
-      sh "gotest", "-short", "-count=1", "-v", "-p=1", *args
+      sh "go", "test", "-short", "-count=1", "-v", "-p=1", *args
     end
   end
 

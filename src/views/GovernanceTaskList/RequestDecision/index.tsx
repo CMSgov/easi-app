@@ -1,6 +1,7 @@
-import React, { useEffect } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Link, useParams } from 'react-router-dom';
+import { useQuery } from '@apollo/client';
 import {
   Breadcrumb,
   BreadcrumbBar,
@@ -8,13 +9,14 @@ import {
   Link as UswdsLink
 } from '@trussworks/react-uswds';
 
-import Footer from 'components/Footer';
-import Header from 'components/Header';
 import MainContent from 'components/MainContent';
 import PageHeading from 'components/PageHeading';
-import PageWrapper from 'components/PageWrapper';
-import { AppState } from 'reducers/rootReducer';
-import { fetchSystemIntake } from 'types/routines';
+import PageLoading from 'components/PageLoading';
+import GetSystemIntakeQuery from 'queries/GetSystemIntakeQuery';
+import {
+  GetSystemIntake,
+  GetSystemIntakeVariables
+} from 'queries/types/GetSystemIntake';
 
 import Approved from './Approved';
 import Rejected from './Rejected';
@@ -22,46 +24,50 @@ import Rejected from './Rejected';
 import './index.scss';
 
 const RequestDecision = () => {
-  const dispatch = useDispatch();
-  const systemIntake = useSelector(
-    (state: AppState) => state.systemIntake.systemIntake
+  const { systemId } = useParams<{ systemId: string }>();
+  const { t } = useTranslation('taskList');
+
+  const { loading, data } = useQuery<GetSystemIntake, GetSystemIntakeVariables>(
+    GetSystemIntakeQuery,
+    {
+      variables: {
+        id: systemId
+      }
+    }
   );
 
-  const { systemId } = useParams<{ systemId: string }>();
-
-  useEffect(() => {
-    dispatch(fetchSystemIntake(systemId));
-  }, [dispatch, systemId]);
+  const systemIntake = data?.systemIntake;
 
   return (
-    <PageWrapper className="governance-task-list">
-      <Header />
-      <MainContent className="grid-container margin-bottom-7">
-        <div className="grid-row">
-          <BreadcrumbBar variant="wrap">
-            <Breadcrumb>
-              <BreadcrumbLink asCustom={Link} to="/">
-                <span>Home</span>
-              </BreadcrumbLink>
-            </Breadcrumb>
-            <Breadcrumb>
-              <BreadcrumbLink
-                asCustom={Link}
-                to={`/governance-task-list/${systemId}`}
-              >
-                <span>Get governance approval</span>
-              </BreadcrumbLink>
-            </Breadcrumb>
-            <Breadcrumb current>Decision and next steps</Breadcrumb>
-          </BreadcrumbBar>
-        </div>
+    <MainContent className="governance-task-list grid-container margin-bottom-7">
+      <div className="grid-row">
+        <BreadcrumbBar variant="wrap">
+          <Breadcrumb>
+            <BreadcrumbLink asCustom={Link} to="/">
+              <span>{t('navigation.home')}</span>
+            </BreadcrumbLink>
+          </Breadcrumb>
+          <Breadcrumb>
+            <BreadcrumbLink
+              asCustom={Link}
+              to={`/governance-task-list/${systemId}`}
+            >
+              <span>{t('navigation.governanceTaskList')}</span>
+            </BreadcrumbLink>
+          </Breadcrumb>
+          <Breadcrumb current>{t('navigation.nextSteps')}</Breadcrumb>
+        </BreadcrumbBar>
+      </div>
+      {loading && <PageLoading />}
+
+      {data?.systemIntake && (
         <div className="grid-row">
           <div className="tablet:grid-col-9">
             <PageHeading>Decision and next steps</PageHeading>
-            {systemIntake.status === 'LCID_ISSUED' && (
+            {systemIntake?.status === 'LCID_ISSUED' && (
               <Approved intake={systemIntake} />
             )}
-            {systemIntake.status === 'NOT_APPROVED' && (
+            {systemIntake?.status === 'NOT_APPROVED' && (
               <Rejected intake={systemIntake} />
             )}
           </div>
@@ -79,9 +85,8 @@ const RequestDecision = () => {
             </div>
           </div>
         </div>
-      </MainContent>
-      <Footer />
-    </PageWrapper>
+      )}
+    </MainContent>
   );
 };
 

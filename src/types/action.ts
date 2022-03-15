@@ -63,7 +63,19 @@ export type SubmitLifecycleIdForm = {
   expirationDateYear?: string;
   scope?: string;
   nextSteps?: string;
+  costBaseline?: string;
   feedback?: string;
+};
+
+// TODO: look into combining the submit and extend LCID?
+export type ExtendLifecycleIdForm = {
+  expirationDateMonth?: string;
+  expirationDateDay?: string;
+  expirationDateYear?: string;
+  scope?: string;
+  nextSteps?: string;
+  costBaseline?: string;
+  // TODO: add feedback here?
 };
 
 export type RejectIntakeForm = {
