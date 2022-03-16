@@ -30,6 +30,9 @@ type ContractDate = {
 
 export const formatContractDate = (date: ContractDate): string => {
   const { month, day, year } = date;
+  if (!month || !day || !year) {
+    return '';
+  }
 
   const parts = [month, day, year];
   return parts
