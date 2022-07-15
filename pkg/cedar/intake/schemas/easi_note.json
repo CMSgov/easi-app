@@ -1,14 +1,8 @@
 {
-  "$schema": "http://json-schema.org/draft-04/schema#",
-  "$ref": "#/definitions/EASINote",
-  "title": "EASINoteV01",
-  "definitions": {
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$ref": "#/$defs/EASINote",
+  "$defs": {
     "EASINote": {
-      "required": [
-        "authorEUA",
-        "content",
-        "intakeId"
-      ],
       "properties": {
         "authorEUA": {
           "type": "string"
@@ -21,7 +15,13 @@
         }
       },
       "additionalProperties": false,
-      "type": "object"
+      "type": "object",
+      "required": [
+        "authorEUA",
+        "content",
+        "intakeId"
+      ]
     }
-  }
+  },
+  "title": "EASINoteV01"
 }

@@ -1,28 +1,8 @@
 {
-  "$schema": "http://json-schema.org/draft-04/schema#",
-  "$ref": "#/definitions/EASIIntake",
-  "title": "EASIIntakeV04",
-  "definitions": {
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$ref": "#/$defs/EASIIntake",
+  "$defs": {
     "EASIIntake": {
-      "required": [
-        "intakeId",
-        "businessNeed",
-        "businessOwner",
-        "businessOwnerComponent",
-        "component",
-        "costIncrease",
-        "existingContract",
-        "processStatus",
-        "productManager",
-        "productManagerComponent",
-        "projectName",
-        "requestType",
-        "requester",
-        "solution",
-        "status",
-        "submittedAt",
-        "userEUA"
-      ],
       "properties": {
         "intakeId": {
           "type": "string",
@@ -322,7 +302,27 @@
         }
       },
       "additionalProperties": false,
-      "type": "object"
+      "type": "object",
+      "required": [
+        "intakeId",
+        "businessNeed",
+        "businessOwner",
+        "businessOwnerComponent",
+        "component",
+        "costIncrease",
+        "existingContract",
+        "processStatus",
+        "productManager",
+        "productManagerComponent",
+        "projectName",
+        "requestType",
+        "requester",
+        "solution",
+        "status",
+        "submittedAt",
+        "userEUA"
+      ]
     }
-  }
+  },
+  "title": "EASIIntakeV04"
 }

@@ -1,15 +1,8 @@
 {
-  "$schema": "http://json-schema.org/draft-04/schema#",
-  "$ref": "#/definitions/EASIGrtFeedback",
-  "title": "EASIGrtFeedbackV02",
-  "definitions": {
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$ref": "#/$defs/EASIGrtFeedback",
+  "$defs": {
     "EASIGrtFeedback": {
-      "required": [
-        "feedbackId",
-        "feedback",
-        "feedbackType",
-        "intakeId"
-      ],
       "properties": {
         "feedbackId": {
           "type": "string",
@@ -29,7 +22,14 @@
         }
       },
       "additionalProperties": false,
-      "type": "object"
+      "type": "object",
+      "required": [
+        "feedbackId",
+        "feedback",
+        "feedbackType",
+        "intakeId"
+      ]
     }
-  }
+  },
+  "title": "EASIGrtFeedbackV02"
 }

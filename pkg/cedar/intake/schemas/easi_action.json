@@ -1,15 +1,8 @@
 {
-  "$schema": "http://json-schema.org/draft-04/schema#",
-  "$ref": "#/definitions/EASIAction",
-  "title": "EASIActionV01",
-  "definitions": {
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$ref": "#/$defs/EASIAction",
+  "$defs": {
     "EASIAction": {
-      "required": [
-        "actionType",
-        "actorEUA",
-        "feedback",
-        "intakeId"
-      ],
       "properties": {
         "actionType": {
           "type": "string"
@@ -25,7 +18,14 @@
         }
       },
       "additionalProperties": false,
-      "type": "object"
+      "type": "object",
+      "required": [
+        "actionType",
+        "actorEUA",
+        "feedback",
+        "intakeId"
+      ]
     }
-  }
+  },
+  "title": "EASIActionV01"
 }

@@ -7,15 +7,24 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/alecthomas/jsonschema"
+	"github.com/invopop/jsonschema"
 
 	intakemodels "github.com/cmsgov/easi-app/pkg/cedar/intake/models"
 	"github.com/cmsgov/easi-app/pkg/cedar/intake/translation"
 )
 
 func generateSchema(object interface{}, version translation.SchemaVersion, filename string) {
-	schema := jsonschema.Reflect(object)
+	// don't add top-level "id" value; if that's present, it interferes with resolving refs/definitions
+	// see https://stackoverflow.com/a/34984106
+	reflector := jsonschema.Reflector{
+		Anonymous: true,
+	}
+
+	schema := reflector.Reflect(object)
 	schema.Title = string(version)
+
+	// by default, schema version is generated with plain HTTP; it should be HTTPS
+	schema.Version = "https://json-schema.org/draft/2020-12/schema"
 
 	marshaledSchema, err := schema.MarshalJSON()
 	if err != nil {

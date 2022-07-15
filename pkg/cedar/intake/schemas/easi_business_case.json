@@ -1,13 +1,8 @@
 {
-  "$schema": "http://json-schema.org/draft-04/schema#",
-  "$ref": "#/definitions/EASIBizCase",
-  "title": "EASIBizCaseV03",
-  "definitions": {
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$ref": "#/$defs/EASIBizCase",
+  "$defs": {
     "EASIBizCase": {
-      "required": [
-        "businessCaseId",
-        "userEUA"
-      ],
       "properties": {
         "archivedAt": {
           "type": "string",
@@ -39,8 +34,7 @@
         },
         "businessSolutions": {
           "items": {
-            "$schema": "http://json-schema.org/draft-04/schema#",
-            "$ref": "#/definitions/EASIBusinessSolution"
+            "$ref": "#/$defs/EASIBusinessSolution"
           },
           "type": "array",
           "description": "Array Business Solutions (preferred and alternatives)"
@@ -111,12 +105,13 @@
         }
       },
       "additionalProperties": false,
-      "type": "object"
+      "type": "object",
+      "required": [
+        "businessCaseId",
+        "userEUA"
+      ]
     },
     "EASIBusinessSolution": {
-      "required": [
-        "solutionType"
-      ],
       "properties": {
         "acquisitionApproach": {
           "type": "string",
@@ -169,8 +164,7 @@
         },
         "lifecycleCostLines": {
           "items": {
-            "$schema": "http://json-schema.org/draft-04/schema#",
-            "$ref": "#/definitions/EASILifecycleCost"
+            "$ref": "#/$defs/EASILifecycleCost"
           },
           "type": "array",
           "description": "Array of LifecycleCostLines (costs associated with upcoming Fiscal Years) for this business solution"
@@ -194,12 +188,12 @@
           ]
         },
         "solutionType": {
+          "type": "string",
           "enum": [
             "preferred",
             "alternativeA",
             "alternativeB"
           ],
-          "type": "string",
           "description": "Which solution is this (preferred or alternatives)",
           "examples": [
             "preferred"
@@ -221,7 +215,10 @@
         }
       },
       "additionalProperties": false,
-      "type": "object"
+      "type": "object",
+      "required": [
+        "solutionType"
+      ]
     },
     "EASILifecycleCost": {
       "properties": {
@@ -265,5 +262,6 @@
       "additionalProperties": false,
       "type": "object"
     }
-  }
+  },
+  "title": "EASIBizCaseV03"
 }
