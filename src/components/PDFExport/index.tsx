@@ -1,11 +1,11 @@
 import React, { useRef } from 'react';
 import axios from 'axios';
 import classNames from 'classnames';
-import { Base64 } from 'js-base64';
+import html2pdf from 'html2pdf.js';
+// import { Base64 } from 'js-base64';
 import escape from 'lodash';
 
-import { downloadBlob } from 'utils/downloadFile';
-
+// import { downloadBlob } from 'utils/downloadFile';
 import downloadSVG from './download.svg';
 
 type PDFExportProps = {
@@ -16,26 +16,26 @@ type PDFExportProps = {
   linkPosition?: 'top' | 'bottom';
 };
 
-function generatePDF(filename: string, content: string) {
-  axios
-    .request({
-      url: `${process.env.REACT_APP_API_ADDRESS}/pdf/generate`,
-      responseType: 'blob',
-      method: 'POST',
-      data: {
-        html: Base64.encode(content),
-        filename: 'input.html'
-      }
-    })
-    .then(response => {
-      const blob = new Blob([response.data], { type: 'application/pdf' });
-      downloadBlob(filename, blob);
-    })
-    .catch(e => {
-      // TODO add error handling: display a modal if things fail?
-      console.error(e); // eslint-disable-line
-    });
-}
+// function generatePDF(filename: string, content: string) {
+//   axios
+//     .request({
+//       url: `${process.env.REACT_APP_API_ADDRESS}/pdf/generate`,
+//       responseType: 'blob',
+//       method: 'POST',
+//       data: {
+//         html: Base64.encode(content),
+//         filename: 'input.html'
+//       }
+//     })
+//     .then(response => {
+//       const blob = new Blob([response.data], { type: 'application/pdf' });
+//       downloadBlob(filename, blob);
+//     })
+//     .catch(e => {
+//       // TODO add error handling: display a modal if things fail?
+//       console.error(e); // eslint-disable-line
+//     });
+// }
 
 const downloadRefAsPDF = (
   title: string,
@@ -77,7 +77,11 @@ const downloadRefAsPDF = (
         </body>
       </html>`;
 
-      generatePDF(filename, markupToRender);
+      // generatePDF(filename, markupToRender);
+      // TODO: Style is all wrong??
+      const rendering = document.createElement('div');
+      rendering.innerHTML = markupToRender;
+      html2pdf(rendering);
     })
     .catch(e => {
       console.error(e); // eslint-disable-line
