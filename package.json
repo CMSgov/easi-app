@@ -40,6 +40,7 @@
     "detect-browser": "^5.0.0",
     "font-awesome": "^4.7.0",
     "formik": "^2.1.6",
+    "graphql": "^16.6.0",
     "i18next": "^19.8.5",
     "i18next-browser-languagedetector": "^5.0.0",
     "istanbul-lib-coverage": "^3.0.0",
@@ -88,7 +89,8 @@
     "cypress:run": "cypress run",
     "generate": "apollo client:codegen --passthroughCustomScalars --localSchemaFile=pkg/graph/schema.graphql --target typescript  --tagName=gql --addTypename --globalTypesFile=src/types/graphql-global-types.ts types",
     "storybook": "start-storybook -p 6006 -s public",
-    "build-storybook": "build-storybook -s public"
+    "build-storybook": "build-storybook -s public",
+    "generate-two": "graphql-codegen --config codegen.yml"
   },
   "nyc": {
     "reporter": [
@@ -114,6 +116,12 @@
   "devDependencies": {
     "@cypress/instrument-cra": "^1.1.0",
     "@cypress/webpack-preprocessor": "^5.4.1",
+    "@graphql-codegen/cli": "2.11.6",
+    "@graphql-codegen/introspection": "2.2.1",
+    "@graphql-codegen/typed-document-node": "^2.3.3",
+    "@graphql-codegen/typescript": "^2.7.3",
+    "@graphql-codegen/typescript-operations": "^2.5.3",
+    "@graphql-codegen/typescript-react-apollo": "^3.3.3",
     "@storybook/addon-actions": "^6.3.1",
     "@storybook/addon-controls": "^6.3.1",
     "@storybook/addon-essentials": "^6.3.1",
