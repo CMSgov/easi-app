@@ -1,6 +1,6 @@
-package integration
+package servicedep
 
-// integration is a package for testing application routes
+// servicedep is a package for testing application routes
 // it should attempt to mock as few dependencies as possible
 // and simulate production application use
 

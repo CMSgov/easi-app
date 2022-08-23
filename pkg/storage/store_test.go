@@ -53,6 +53,10 @@ func (s StoreTestSuite) emptyDatabaseTables() error {
 }
 
 func TestStoreTestSuite(t *testing.T) {
+	if testing.Short() {
+		return
+	}
+
 	config := testhelpers.NewConfig()
 
 	logger := zap.NewNop()

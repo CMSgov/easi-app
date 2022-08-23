@@ -24,9 +24,7 @@ func TestAuthorizationTestSuite(t *testing.T) {
 		logger: zap.NewNop(),
 	}
 
-	if false && !testing.Short() {
-		suite.Run(t, testSuite)
-	}
+	suite.Run(t, testSuite)
 }
 
 func (s AuthorizationTestSuite) TestAllowsAuthenticatedRequests() {
@@ -43,6 +41,8 @@ func (s AuthorizationTestSuite) TestAllowsAuthenticatedRequests() {
 	middleware := requirePrincipalMiddleware(s.logger, testHandler)
 	middleware.ServeHTTP(rr, req)
 
+	result := rr.Result()
+	s.Equal(200, result.StatusCode)
 	s.True(handlerRun)
 }
 
@@ -68,7 +68,7 @@ func (s AuthorizationTestSuite) TestRejectsAnonymousRequests() {
 
 	result := rr.Result()
 
-	s.Equal(403, result.Status)
+	s.Equal(401, result.StatusCode)
 
 	decoder := json.NewDecoder(result.Body)
 	decodeErr := decoder.Decode(&payload)

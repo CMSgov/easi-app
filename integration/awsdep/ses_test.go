@@ -1,16 +1,14 @@
-package appses
+package awsdep
 
 import (
 	"context"
-	"fmt"
 	"testing"
 
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/ses"
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/zap"
 
 	"github.com/cmsgov/easi-app/pkg/appconfig"
+	"github.com/cmsgov/easi-app/pkg/appses"
 	"github.com/cmsgov/easi-app/pkg/models"
 	"github.com/cmsgov/easi-app/pkg/testhelpers"
 )
@@ -18,40 +16,33 @@ import (
 type SESTestSuite struct {
 	suite.Suite
 	logger *zap.Logger
-	sender Sender
+	sender appses.Sender
 }
 
 func TestSESTestSuite(t *testing.T) {
-	// since this is an external service,
-	// skip when testing with --short
-	if testing.Short() {
-		return
-	}
-
 	logger := zap.NewNop()
 	config := testhelpers.NewConfig()
 
-	env, err := appconfig.NewEnvironment(config.GetString(appconfig.EnvironmentKey))
-	if err != nil {
-		fmt.Printf("Failed to get environment: %v", err)
-		t.Fail()
+	sourceARN := config.GetString(appconfig.AWSSESSourceARNKey)
+	source := config.GetString(appconfig.AWSSESSourceKey)
+	sessionToken := config.GetString("AWS_SESSION_TOKEN")
+
+	if sourceARN == "" {
+		t.Fatal(appconfig.AWSSESSourceARNKey + " is not set")
 	}
-	if env.Local() {
-		fmt.Println("Skipping AWS SES test in local environment")
-		return
+	if source == "" {
+		t.Fatal(appconfig.AWSSESSourceKey + " is not set")
+	}
+	if sessionToken == "" {
+		t.Fatal("AWS_SESSION_TOKEN" + " is not set")
 	}
 
-	sesConfig := Config{
-		SourceARN: config.GetString(appconfig.AWSSESSourceARNKey),
-		Source:    config.GetString(appconfig.AWSSESSourceKey),
+	sesConfig := appses.Config{
+		SourceARN: sourceARN,
+		Source:    source,
 	}
 
-	sesSession := session.Must(session.NewSession())
-	client := ses.New(sesSession)
-	sender := Sender{
-		client,
-		sesConfig,
-	}
+	sender := appses.NewSender(sesConfig)
 
 	sesTestSuite := &SESTestSuite{
 		Suite:  suite.Suite{},

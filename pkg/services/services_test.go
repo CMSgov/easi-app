@@ -24,6 +24,10 @@ type ServicesTestSuite struct {
 }
 
 func TestServicesTestSuite(t *testing.T) {
+	if testing.Short() {
+		return
+	}
+
 	config := testhelpers.NewConfig()
 	logger := zap.NewNop()
 

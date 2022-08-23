@@ -103,6 +103,10 @@ func (m mockS3Client) GetObjectTagging(input *s3.GetObjectTaggingInput) (*s3.Get
 }
 
 func TestGraphQLTestSuite(t *testing.T) {
+	if testing.Short() {
+		return
+	}
+
 	config := testhelpers.NewConfig()
 
 	logger, loggerErr := zap.NewDevelopment()
