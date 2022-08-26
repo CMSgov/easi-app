@@ -151,23 +151,54 @@ const intake = {
     requester: 'Requester',
     requesterComponent: 'Requester Component',
     businessOwner: {
-      name: 'CMS Business Owner Name',
+      name: 'CMS Business Owner',
       helpText:
         'This person owns a line of business related to this request and will champion the request moving forward',
-      component: 'CMS Business Owner Component'
+      nameField: 'CMS Business Owner name',
+      component: 'CMS Business Owner component',
+      email: 'CMS Business Owner email'
     },
     productManager: {
       name: 'CMS Project/Product Manager, or lead',
       helpText:
         'This person may be contacted for follow ups and to understand the state of the contract',
-      component: 'CMS Product Manager Component'
+      nameField: 'CMS Project/Product Manager, or lead name',
+      component: 'CMS Product Manager component',
+      email: 'CMS Product Manager email'
     },
     isso: {
       label:
         'Does your project have an Information System Security Officer (ISSO)?',
       helpText:
         'If yes, please tell us the name of your Information System Security Officer so we can get in touch with them',
-      name: 'ISSO Name'
+      name: 'ISSO Name',
+      component: 'ISSO Component',
+      email: 'ISSO email'
+    },
+    additionalContacts: {
+      titleContacts: 'Additional contacts',
+      titleRecipients: 'Choose recipients',
+      recipientsSelected: '{{count}} recipients selected',
+      showMore: 'Show {{count}} more recipients',
+      showFewer: 'Show {{count}} fewer recipients',
+      delete: 'Delete {{type}}',
+      add: 'Add another {{type}}',
+      edit: 'Edit {{type}}',
+      name: 'New {{type}} name',
+      component: 'New {{type}} component',
+      select: 'Select an option',
+      role: 'New {{type}} role',
+      save: 'Save',
+      addContact: 'Add {{type}}',
+      errors: {
+        commonName: "Enter the {{type}}'s name",
+        component: "Select the {{type}}'s component",
+        role: "Select the {{type}}'s role"
+      }
+    },
+    governanceTeam: {
+      helpText:
+        "For the checkboxes below, select all the teams you've collaborated with. Please disclose the name of the person on each team you've worked with."
     },
     collaboration: {
       label: 'For this request, I have started collaborating/consulting with:',
@@ -175,6 +206,55 @@ const intake = {
       oneOrMore: '1 or more of the following in OIT (select all that apply)',
       none: 'No one in OIT'
     }
+  },
+  contractDetails: {
+    fundingSources: {
+      label: 'Which existing funding sources will fund this project?',
+      helpText:
+        'If you are unsure, please get in touch with your Contracting Officer Representative (COR). If this will not use an existing funding source, skip this question.',
+      addFundingSource: 'Add a funding source',
+      addAnotherFundingSource: 'Add another funding source',
+      fundingNumber: 'Funding number',
+      fundingNumberHelpText: 'Must be 6 digits long',
+      fundingNumberLink:
+        'You can find your funding number in the CMS Operating Plan page',
+      fundingSource: 'Funding source',
+      fundingSources: 'Funding sources',
+      errors: {
+        fundingNumberMinDigits: 'Funding number must be exactly 6 digits',
+        fundingNumberDigits: 'Funding number can only contain digits',
+        fundingNumberUnique: 'Funding number must be unique',
+        fundingSource: 'Select a funding source'
+      }
+    }
+  },
+  review: {
+    notSubmitted: 'Not yet submitted',
+    systemRequest: 'System Request',
+    submissionDate: 'Submission Date',
+    contactDetails: 'Contact Details',
+    requesterComponent: 'Requester Component',
+    cmsBusinessOwnerName: "CMS Business Owner's Name",
+    cmsBusinessOwnerComponent: 'CMS Business Owner Component',
+    cmsProjectManagerName: 'CMS Project/Product Manager or lead',
+    cmsProjectManagerComponent: 'CMS Project/Product manager or lead Component',
+    isso:
+      'Does your project have an Information System Security Officer (ISSO)?',
+    collaborating: 'I have started collaborating with',
+    requestDetails: 'Request Details',
+    projectName: 'Project Name',
+    businessNeed: 'What is your business need?',
+    solving: 'How are you thinking of solving it?',
+    process: 'Where are you in the process?',
+    eaSupport: 'Do you need Enterprise Architecture (EA) support?',
+    contractDetails: 'Contract Details',
+    costs:
+      'Do the costs for this request exceed what you are currently spending to meet your business need?',
+    increase: 'Approximately how much do you expect the cost to increase?',
+    contract: 'Do you already have a contract in place to support this effort?',
+    contractors: 'Contractors',
+    contractVehicle: 'Contract vehicle',
+    performance: 'Period of performance'
   }
 };
 

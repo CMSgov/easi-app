@@ -11,13 +11,13 @@ const SystemIntakeValidationSchema: any = {
       component: Yup.string().required("Select the Requester's component")
     }),
     businessOwner: Yup.object().shape({
-      name: Yup.string()
+      commonName: Yup.string()
         .trim()
         .required("Enter the Business or Product Owner's name"),
       component: Yup.string().required('Select a Business Owner Component')
     }),
     productManager: Yup.object().shape({
-      name: Yup.string()
+      commonName: Yup.string()
         .trim()
         .required('Enter the CMS Project/Product Manager or Lead name'),
       component: Yup.string().required(
@@ -28,9 +28,13 @@ const SystemIntakeValidationSchema: any = {
       isPresent: Yup.boolean()
         .nullable()
         .required('Select Yes or No to indicate if you have an ISSO'),
-      name: Yup.string().when('isPresent', {
+      commonName: Yup.string().when('isPresent', {
         is: true,
         then: Yup.string().trim().required('Tell us the name of your ISSO')
+      }),
+      component: Yup.string().when('isPresent', {
+        is: true,
+        then: Yup.string().required('Select an ISSO component')
       })
     }),
     governanceTeams: Yup.object().shape({
@@ -86,36 +90,6 @@ const SystemIntakeValidationSchema: any = {
       .required('Tell us if you need Enterprise Architecture (EA) support')
   }),
   contractDetails: Yup.object().shape({
-    fundingSource: Yup.object().shape({
-      isFunded: Yup.boolean()
-        .nullable()
-        .required('Select Yes or No to indicate if you have funding'),
-      fundingNumber: Yup.string().when(
-        ['isFunded', 'source'],
-        (isFunded, source, schema) => {
-          // when() typescript def issue
-          // https://github.com/jquense/yup/issues/1529
-
-          if (!isFunded) return schema;
-
-          // Funding number is optional if the source is Unknown
-          const conditionalSchema = schema
-            .trim()
-            .length(6, 'Funding number must be exactly 6 digits')
-            .matches(/^\d+$/, 'Funding number can only contain digits');
-          if (source === 'Unknown') {
-            return conditionalSchema.optional();
-          }
-          return conditionalSchema.required(
-            'Tell us your funding number. This is a six digit number and starts with 00'
-          );
-        }
-      ),
-      source: Yup.string().when('isFunded', {
-        is: true,
-        then: Yup.string().required('Tell us your funding source')
-      })
-    }),
     costs: Yup.object().shape({
       isExpectingIncrease: Yup.string().required(
         'Tell us whether you are expecting costs for this request to increase'

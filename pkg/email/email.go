@@ -8,13 +8,18 @@ import (
 	"net/url"
 	"path"
 
+	"github.com/hashicorp/go-multierror"
+
+	"github.com/cmsgov/easi-app/pkg/apperrors"
 	"github.com/cmsgov/easi-app/pkg/models"
 )
 
 // Config holds EASi application specific configs for SES
 type Config struct {
 	GRTEmail               models.EmailAddress
+	ITInvestmentEmail      models.EmailAddress
 	AccessibilityTeamEmail models.EmailAddress
+	EASIHelpEmail          models.EmailAddress
 	URLHost                string
 	URLScheme              string
 	TemplateDirectory      string
@@ -44,6 +49,9 @@ type templates struct {
 	intakeNoEUAIDTemplate                      templateCaller
 	changeAccessibilityRequestStatus           templateCaller
 	newAccessibilityRequestNote                templateCaller
+	helpSendFeedback                           templateCaller
+	helpCantFindSomething                      templateCaller
+	helpReportAProblem                         templateCaller
 }
 
 // sender is an interface for swapping out email provider implementations
@@ -183,6 +191,27 @@ func NewClient(config Config, sender sender) (Client, error) {
 	}
 	appTemplates.newAccessibilityRequestNote = newAccessibilityRequestNoteTemplate
 
+	helpSendFeedbackTemplateName := "help_send_feedback.gohtml"
+	helpSendFeedbackTemplate := rawTemplates.Lookup(helpSendFeedbackTemplateName)
+	if helpSendFeedbackTemplate == nil {
+		return Client{}, templateError(helpSendFeedbackTemplateName)
+	}
+	appTemplates.helpSendFeedback = helpSendFeedbackTemplate
+
+	helpCantFindSomethingTemplateName := "help_cant_find_something.gohtml"
+	helpCantFindSomethingTemplate := rawTemplates.Lookup(helpCantFindSomethingTemplateName)
+	if helpCantFindSomethingTemplate == nil {
+		return Client{}, templateError(helpCantFindSomethingTemplateName)
+	}
+	appTemplates.helpCantFindSomething = helpCantFindSomethingTemplate
+
+	helpReportAProblemTemplateName := "help_report_a_problem.gohtml"
+	helpReportAProblemTemplate := rawTemplates.Lookup(helpReportAProblemTemplateName)
+	if helpReportAProblemTemplate == nil {
+		return Client{}, templateError(helpReportAProblemTemplateName)
+	}
+	appTemplates.helpReportAProblem = helpReportAProblemTemplate
+
 	client := Client{
 		config:    config,
 		templates: appTemplates,
@@ -205,4 +234,40 @@ func (c Client) urlFromPath(path string) string {
 func (c Client) SendTestEmail(ctx context.Context) error {
 	testToAddress := models.NewEmailAddress("success@simulator.amazonses.com")
 	return c.sender.Send(ctx, testToAddress, nil, "test", "test")
+}
+
+// helper method to consolidate logic/error handling for sending emails to multiple recipients
+func (c Client) sendEmailToMultipleRecipients(ctx context.Context, recipients models.EmailNotificationRecipients, subject string, body string) error {
+	allRecipients := recipients.RegularRecipientEmails
+	if recipients.ShouldNotifyITGovernance {
+		allRecipients = append(allRecipients, c.config.GRTEmail)
+	}
+
+	if recipients.ShouldNotifyITInvestment {
+		allRecipients = append(allRecipients, c.config.ITInvestmentEmail)
+	}
+
+	errorGroup := multierror.Group{}
+	for _, recipient := range allRecipients {
+		// make a copy of recipient for the closure passed in to errorGroup.Go(); this copy won't change as we iterate over allRecipients
+		// see https://go.dev/doc/faq#closures_and_goroutines
+		recipient := recipient
+
+		errorGroup.Go(func() error {
+			// make sure to use := here to create a new (local) err, instead of reusing the same err across goroutines
+			err := c.sender.Send(
+				ctx,
+				recipient,
+				nil,
+				subject,
+				body,
+			)
+			if err != nil {
+				return &apperrors.NotificationError{Err: err, DestinationType: apperrors.DestinationTypeEmail}
+			}
+			return nil
+		})
+	}
+
+	return errorGroup.Wait().ErrorOrNil()
 }

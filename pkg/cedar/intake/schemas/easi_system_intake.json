@@ -2,6 +2,36 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$ref": "#/$defs/EASIIntake",
   "$defs": {
+    "EASIFundingSource": {
+      "properties": {
+        "fundingSourceId": {
+          "type": "string",
+          "description": "Unique ID of this funding source",
+          "examples": [
+            "91e5c1f3-11fb-4124-805c-adbdd02c5395"
+          ]
+        },
+        "fundingNumber": {
+          "type": "string",
+          "description": "six digit funding number",
+          "examples": [
+            "123456"
+          ]
+        },
+        "fundingSource": {
+          "type": "string",
+          "description": "Source of funding",
+          "examples": [
+            "Prog Ops"
+          ]
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "fundingSourceId"
+      ]
+    },
     "EASIIntake": {
       "properties": {
         "intakeId": {
@@ -145,6 +175,13 @@
           "examples": [
             "Prog Ops"
           ]
+        },
+        "fundingSources": {
+          "items": {
+            "$ref": "#/$defs/EASIFundingSource"
+          },
+          "type": "array",
+          "description": "Array of funding sources"
         },
         "grbDate": {
           "type": "string",
@@ -324,5 +361,5 @@
       ]
     }
   },
-  "title": "EASIIntakeV04"
+  "title": "EASIIntakeV05"
 }
