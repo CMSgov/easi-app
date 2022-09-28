@@ -81,7 +81,14 @@ const downloadRefAsPDF = (
       // TODO: Style is all wrong??
       const rendering = document.createElement('div');
       rendering.innerHTML = markupToRender;
-      html2pdf(rendering);
+      html2pdf(rendering, {
+        filename,
+        margin: [4, 12, 4, 12],
+        pagebreak: {
+          mode: ['css', 'legacy'],
+          avoid: 'div'
+        }
+      });
     })
     .catch(e => {
       console.error(e); // eslint-disable-line
@@ -102,31 +109,32 @@ const PDFExport = ({
   const divEl = useRef<HTMLDivElement>(null);
 
   return (
-    <div className="easi-pdf-export" ref={divEl}>
-      {linkPosition === 'bottom' && children}
+    <>
+      <div className="easi-pdf-export" ref={divEl}>
+        {linkPosition === 'bottom' && children}
 
-      <div
-        className={classNames('easi-pdf-export__controls', {
-          'margin-top-6': linkPosition === 'bottom'
-        })}
-      >
-        <button
-          className="usa-button usa-button--unstyled easi-no-print"
-          type="button"
-          onClick={() => downloadRefAsPDF(title, filename, divEl)}
-        >
-          <img
-            src={downloadSVG}
-            alt=""
-            aria-hidden="true"
-            className="margin-right-1"
-          />
-          {label || 'Download PDF'}
-        </button>
+        <div
+          className={classNames('easi-pdf-export__controls', {
+            'margin-top-6': linkPosition === 'bottom'
+          })}
+        />
+
+        {linkPosition === 'top' && children}
       </div>
-
-      {linkPosition === 'top' && children}
-    </div>
+      <button
+        className="usa-button usa-button--unstyled easi-no-print"
+        type="button"
+        onClick={() => downloadRefAsPDF(title, filename, divEl)}
+      >
+        <img
+          src={downloadSVG}
+          alt=""
+          aria-hidden="true"
+          className="margin-right-1"
+        />
+        {label || 'Download PDF'}
+      </button>
+    </>
   );
 };
 
