@@ -131,6 +131,11 @@ export enum SystemIntakeStatus {
   WITHDRAWN = "WITHDRAWN",
 }
 
+export enum TRBRequestStatus {
+  CLOSED = "CLOSED",
+  OPEN = "OPEN",
+}
+
 /**
  * The type of test added to a 508/accessibility request
  */
@@ -148,6 +153,7 @@ export interface AddGRTFeedbackInput {
   feedback: string;
   intakeID: UUID;
   shouldSendEmail: boolean;
+  notificationRecipients?: EmailNotificationRecipients | null;
 }
 
 /**
@@ -157,6 +163,7 @@ export interface BasicActionInput {
   feedback: string;
   intakeId: UUID;
   shouldSendEmail: boolean;
+  notificationRecipients?: EmailNotificationRecipients | null;
 }
 
 /**
@@ -207,6 +214,17 @@ export interface CreateSystemIntakeActionExtendLifecycleIdInput {
   scope: string;
   costBaseline?: string | null;
   shouldSendEmail: boolean;
+  notificationRecipients?: EmailNotificationRecipients | null;
+}
+
+/**
+ * The data needed to associate a contact with a system intake
+ */
+export interface CreateSystemIntakeContactInput {
+  euaUserId: string;
+  systemIntakeId: UUID;
+  component: string;
+  role: string;
 }
 
 /**
@@ -252,10 +270,23 @@ export interface DeleteAccessibilityRequestInput {
 }
 
 /**
+ * The data needed to delete a system intake contact
+ */
+export interface DeleteSystemIntakeContactInput {
+  id: UUID;
+}
+
+/**
  * The input required to delete a test date/score
  */
 export interface DeleteTestDateInput {
   id: UUID;
+}
+
+export interface EmailNotificationRecipients {
+  regularRecipientEmails: EmailAddress[];
+  shouldNotifyITGovernance: boolean;
+  shouldNotifyITInvestment: boolean;
 }
 
 /**
@@ -280,6 +311,7 @@ export interface IssueLifecycleIdInput {
   scope: string;
   costBaseline?: string | null;
   shouldSendEmail: boolean;
+  notificationRecipients?: EmailNotificationRecipients | null;
 }
 
 /**
@@ -291,10 +323,36 @@ export interface RejectIntakeInput {
   nextSteps?: string | null;
   reason: string;
   shouldSendEmail: boolean;
+  notificationRecipients?: EmailNotificationRecipients | null;
 }
 
 /**
- * Input to submit an intake for review 
+ * The inputs to the user feedback form
+ */
+export interface SendFeedbackEmailInput {
+  isAnonymous: boolean;
+  canBeContacted: boolean;
+  easiServicesUsed: string[];
+  cmsRole: string;
+  systemEasyToUse: string;
+  didntNeedHelpAnswering: string;
+  questionsWereRelevant: string;
+  hadAccessToInformation: string;
+  howSatisfied: string;
+  howCanWeImprove: string;
+}
+
+export interface SendReportAProblemEmailInput {
+  isAnonymous: boolean;
+  canBeContacted: boolean;
+  easiService: string;
+  whatWereYouDoing: string;
+  whatWentWrong: string;
+  howSevereWasTheProblem: string;
+}
+
+/**
+ * Input to submit an intake for review
  */
 export interface SubmitIntakeInput {
   id: UUID;
@@ -325,7 +383,7 @@ export interface SystemIntakeContractInput {
   endDate?: Time | null;
   hasContract?: string | null;
   startDate?: Time | null;
-  vehicle?: string | null;
+  number?: string | null;
 }
 
 /**
@@ -337,12 +395,19 @@ export interface SystemIntakeCostsInput {
 }
 
 /**
- * Input data detailing how a system is funded
+ * Represents the source of funding for a system
  */
 export interface SystemIntakeFundingSourceInput {
   fundingNumber?: string | null;
-  isFunded?: boolean | null;
   source?: string | null;
+}
+
+/**
+ * The input required to specify the funding source(s) for a system intake
+ */
+export interface SystemIntakeFundingSourcesInput {
+  existingFunding?: boolean | null;
+  fundingSources: SystemIntakeFundingSourceInput[];
 }
 
 /**
@@ -424,11 +489,22 @@ export interface UpdateSystemIntakeContactDetailsInput {
 }
 
 /**
+ * The data needed to update a contact associated with a system intake
+ */
+export interface UpdateSystemIntakeContactInput {
+  id: UUID;
+  euaUserId: string;
+  systemIntakeId: UUID;
+  component: string;
+  role: string;
+}
+
+/**
  * Input data for updating contract details related to a system request
  */
 export interface UpdateSystemIntakeContractDetailsInput {
   id: UUID;
-  fundingSource?: SystemIntakeFundingSourceInput | null;
+  fundingSources?: SystemIntakeFundingSourcesInput | null;
   costs?: SystemIntakeCostsInput | null;
   contract?: SystemIntakeContractInput | null;
 }

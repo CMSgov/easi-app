@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link, useHistory, useParams } from 'react-router-dom';
+import { Link, useHistory, useLocation, useParams } from 'react-router-dom';
 import { DocumentNode, useMutation } from '@apollo/client';
 import { Button } from '@trussworks/react-uswds';
 import { Field, Form, Formik, FormikProps } from 'formik';
@@ -11,8 +11,10 @@ import FieldErrorMsg from 'components/shared/FieldErrorMsg';
 import FieldGroup from 'components/shared/FieldGroup';
 import Label from 'components/shared/Label';
 import TextAreaField from 'components/shared/TextAreaField';
+import useSystemIntake from 'hooks/useSystemIntake';
 import { ActionForm } from 'types/action';
 import { BasicActionInput } from 'types/graphql-global-types';
+import { SystemIntakeContactProps } from 'types/systemIntake';
 import flattenErrors from 'utils/flattenErrors';
 import { actionSchema } from 'validations/actionSchema';
 
@@ -30,20 +32,29 @@ type SubmitActionProps = {
 
 const SubmitAction = ({ actionName, query }: SubmitActionProps) => {
   const { systemId } = useParams<{ systemId: string }>();
+  const { systemIntake } = useSystemIntake(systemId);
   const { t } = useTranslation('action');
   const history = useHistory();
+
   const [shouldSendEmail, setShouldSendEmail] = useState<boolean>(true);
+  const [
+    activeContact,
+    setActiveContact
+  ] = useState<SystemIntakeContactProps | null>(null);
 
   const [mutate, mutationResult] = useMutation<ActionInput>(query);
 
+  const { pathname } = useLocation();
+
   const dispatchSave = (values: ActionForm) => {
-    const { feedback } = values;
+    const { feedback, notificationRecipients } = values;
     mutate({
       variables: {
         input: {
           intakeId: systemId,
           feedback,
-          shouldSendEmail
+          shouldSendEmail,
+          notificationRecipients
         }
       }
     }).then(response => {
@@ -54,7 +65,14 @@ const SubmitAction = ({ actionName, query }: SubmitActionProps) => {
   };
 
   const initialValues: ActionForm = {
-    feedback: ''
+    feedback: '',
+    notificationRecipients: {
+      regularRecipientEmails: [systemIntake?.requester?.email!].filter(e => e),
+      shouldNotifyITGovernance: true,
+      shouldNotifyITInvestment:
+        pathname.endsWith('no-governance') ||
+        pathname.endsWith('not-it-request')
+    }
   };
 
   const backLink = `/governance-review-team/${systemId}/actions`;
@@ -74,7 +92,8 @@ const SubmitAction = ({ actionName, query }: SubmitActionProps) => {
           setErrors,
           handleSubmit,
           submitForm,
-          setFieldValue
+          setFieldValue,
+          values
         } = formikProps;
         const flatErrors = flattenErrors(errors);
         return (
@@ -127,7 +146,19 @@ const SubmitAction = ({ actionName, query }: SubmitActionProps) => {
                   window.scrollTo(0, 0);
                 }}
               >
-                <EmailRecipientsFields className="margin-top-3" />
+                <EmailRecipientsFields
+                  className="margin-top-3"
+                  systemIntakeId={systemId}
+                  activeContact={activeContact}
+                  setActiveContact={setActiveContact}
+                  recipients={values.notificationRecipients}
+                  setRecipients={recipients =>
+                    setFieldValue('notificationRecipients', recipients)
+                  }
+                  error={
+                    flatErrors['notificationRecipients.regularRecipientEmails']
+                  }
+                />
                 <FieldGroup
                   scrollElement="feedback"
                   error={!!flatErrors.feedback}
@@ -152,12 +183,12 @@ const SubmitAction = ({ actionName, query }: SubmitActionProps) => {
                   <Button
                     className="margin-top-2"
                     type="submit"
-                    // disabled={isSubmitting}
                     onClick={() => {
                       setErrors({});
                       setShouldSendEmail(true);
                       setFieldValue('skipEmail', false);
                     }}
+                    disabled={!!activeContact}
                   >
                     {t('submitAction.submit')}
                   </Button>
@@ -171,6 +202,7 @@ const SubmitAction = ({ actionName, query }: SubmitActionProps) => {
                       // todo hack timeout to propagate skipEmail value to the validator before submission
                       setTimeout(submitForm);
                     }}
+                    disabled={!!activeContact}
                   />
                 </div>
               </Form>

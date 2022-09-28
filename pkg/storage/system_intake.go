@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/guregu/null"
 	"github.com/jmoiron/sqlx"
 	"go.uber.org/zap"
 
@@ -62,6 +63,7 @@ func (s *Store) CreateSystemIntake(ctx context.Context, intake *models.SystemInt
 			cost_increase_amount,
 			contractor,
 			contract_vehicle,
+			contract_number,
 			contract_start_month,
 			contract_start_year,
 			contract_end_month,
@@ -106,6 +108,7 @@ func (s *Store) CreateSystemIntake(ctx context.Context, intake *models.SystemInt
 			:cost_increase_amount,
 			:contractor,
 			:contract_vehicle,
+			:contract_number,
 			:contract_start_month,
 			:contract_start_year,
 			:contract_end_month,
@@ -134,6 +137,7 @@ func (s *Store) CreateSystemIntake(ctx context.Context, intake *models.SystemInt
 // UpdateSystemIntake does an upsert for a system intake
 func (s *Store) UpdateSystemIntake(ctx context.Context, intake *models.SystemIntake) (*models.SystemIntake, error) {
 	// We are explicitly not updating ID, EUAUserID and SystemIntakeID
+
 	const updateSystemIntakeSQL = `
 		UPDATE system_intakes
 		SET
@@ -169,6 +173,7 @@ func (s *Store) UpdateSystemIntake(ctx context.Context, intake *models.SystemInt
 			cost_increase_amount = :cost_increase_amount,
 			contractor = :contractor,
 			contract_vehicle = :contract_vehicle,
+			contract_number = :contract_number,
 			contract_start_date = :contract_start_date,
 			contract_end_date = :contract_end_date,
 			updated_at = :updated_at,
@@ -192,6 +197,7 @@ func (s *Store) UpdateSystemIntake(ctx context.Context, intake *models.SystemInt
 		updateSystemIntakeSQL,
 		intake,
 	)
+
 	if err != nil {
 		appcontext.ZLogger(ctx).Error(
 			fmt.Sprintf("Failed to update system intake %s", err),
@@ -242,6 +248,37 @@ func (s *Store) FetchSystemIntakeByID(ctx context.Context, id uuid.UUID) (*model
 		return nil, &apperrors.QueryError{
 			Err:       err,
 			Model:     id,
+			Operation: apperrors.QueryFetch,
+		}
+	}
+
+	sources := []*models.SystemIntakeFundingSource{}
+
+	// TODO: Rather than two separate queries/round-trips to the database, the funding sources should be
+	// queried via a single query that includes a left join on system_intake_funding_sources. This code
+	// works and can unblock frontend work that relies on this function, but should be revisited. I was
+	// hoping to find a clean way to be able to get the system intake properties out of a query that
+	// includes a join on the funding sources table, but the only way I figured out how to do that
+	// required explicitly specifying all of the system intake columns, which seemed less than ideal
+	// given that any changes made to the models.SystemIntake struct would require also code changes to
+	// the code that would handle the joined query result.
+	err = s.db.SelectContext(ctx, &sources, `
+		SELECT *
+		FROM system_intake_funding_sources
+		WHERE system_intake_id=$1
+	`, id)
+
+	if err != nil {
+		return nil, err
+	}
+
+	intake.FundingSources = sources
+
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		appcontext.ZLogger(ctx).Error("Failed to fetch system intake contacts", zap.Error(err), zap.String("id", id.String()))
+		return nil, &apperrors.QueryError{
+			Err:       err,
+			Model:     models.SystemIntakeContact{},
 			Operation: apperrors.QueryFetch,
 		}
 	}
@@ -349,14 +386,15 @@ func generateLifecyclePrefix(t time.Time, loc *time.Location) string {
 }
 
 // GenerateLifecycleID returns what the next LCID is expected to be for the current date
-// 		The expected format is a 6-digit number in the form of "YYdddP" where
-// 			YY - the 2-digit YEAR
-// 			ddd - the 3-digit ORDINAL DATE, e.g. the number of days elapsed in the given year
-// 			P - the 1-digit count of how many LCIDs already generated for the given day
-// 		This routine assumes the LCIDs are being generated in Eastern Time Zone
-// 		(FYI - the "YYddd" construct is referred to as the "Julian Day" in mainframe
-// 		programmer circles, though this term seems to be a misappropriation of what
-// 		astronomers use to mean a count of days since 24 Nov in the year 4714 BC.)
+//
+//	The expected format is a 6-digit number in the form of "YYdddP" where
+//		YY - the 2-digit YEAR
+//		ddd - the 3-digit ORDINAL DATE, e.g. the number of days elapsed in the given year
+//		P - the 1-digit count of how many LCIDs already generated for the given day
+//	This routine assumes the LCIDs are being generated in Eastern Time Zone
+//	(FYI - the "YYddd" construct is referred to as the "Julian Day" in mainframe
+//	programmer circles, though this term seems to be a misappropriation of what
+//	astronomers use to mean a count of days since 24 Nov in the year 4714 BC.)
 func (s *Store) GenerateLifecycleID(ctx context.Context) (string, error) {
 	prefix := generateLifecyclePrefix(s.clock.Now(), s.easternTZ)
 
@@ -531,4 +569,91 @@ func (s *Store) UpdateSystemIntakeStatus(ctx context.Context, id uuid.UUID, newS
 	}
 
 	return s.FetchSystemIntakeByID(ctx, intake.ID)
+}
+
+// UpdateSystemIntakeLinkedContract updates the contract number that is linked to a system intake
+func (s *Store) UpdateSystemIntakeLinkedContract(ctx context.Context, id uuid.UUID, contractNumber null.String) (*models.SystemIntake, error) {
+	intake := struct {
+		ID             uuid.UUID
+		ContractNumber null.String `db:"contract_number"`
+		UpdatedAt      time.Time   `db:"updated_at"`
+	}{
+		ID:             id,
+		ContractNumber: contractNumber,
+		UpdatedAt:      time.Now(),
+	}
+
+	const updateSystemIntakeSQL = `
+		UPDATE system_intakes
+		SET
+			updated_at = :updated_at,
+			contract_number = :contract_number
+		WHERE system_intakes.id = :id
+	`
+
+	_, err := s.db.NamedExec(
+		updateSystemIntakeSQL,
+		intake,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return s.FetchSystemIntakeByID(ctx, id)
+}
+
+// UpdateSystemIntakeLinkedCedarSystem updates the CEDAR system ID that is linked to a system intake
+func (s *Store) UpdateSystemIntakeLinkedCedarSystem(ctx context.Context, id uuid.UUID, cedarSystemID null.String) (*models.SystemIntake, error) {
+	intake := struct {
+		ID            uuid.UUID
+		CedarSystemID null.String `db:"cedar_system_id"`
+		UpdatedAt     time.Time   `db:"updated_at"`
+	}{
+		ID:            id,
+		CedarSystemID: cedarSystemID,
+		UpdatedAt:     time.Now(),
+	}
+
+	const updateSystemIntakeSQL = `
+		UPDATE system_intakes
+		SET
+			updated_at = :updated_at,
+			cedar_system_id = :cedar_system_id
+		WHERE system_intakes.id = :id
+	`
+
+	_, err := s.db.NamedExec(
+		updateSystemIntakeSQL,
+		intake,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return s.FetchSystemIntakeByID(ctx, id)
+}
+
+// FetchRelatedSystemIntakes retrieves System Intakes that share a CEDAR system ID and/or a contract
+// number with a given System Intake
+func (s *Store) FetchRelatedSystemIntakes(ctx context.Context, id uuid.UUID) ([]*models.SystemIntake, error) {
+	intakes := []*models.SystemIntake{}
+
+	query := `
+		SELECT intakes_b.*
+		FROM system_intakes as intakes_a
+		JOIN system_intakes as intakes_b
+		ON
+			(intakes_a.cedar_system_id = intakes_b.cedar_system_id
+			OR intakes_a.contract_number = intakes_b.contract_number)
+		WHERE
+			intakes_a.id = $1 AND intakes_b.id != $1;
+	`
+
+	err := s.db.SelectContext(ctx, &intakes, query, id)
+	if err != nil {
+		return nil, err
+	}
+	return intakes, nil
 }

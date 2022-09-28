@@ -25,7 +25,9 @@ jest.mock('@okta/okta-react', () => ({
         getAccessToken: () => Promise.resolve('test-access-token'),
         getUser: () =>
           Promise.resolve({
-            name: 'John Doe'
+            name: 'John Doe',
+            euaUserId: 'ASDF',
+            email: 'john@local.fake'
           })
       }
     };
@@ -66,7 +68,8 @@ const intakeQuery = (intakeData: any) => {
               month: null,
               year: null
             },
-            vehicle: null
+            vehicle: null,
+            number: null
           },
           costs: {
             isExpectingIncrease: null,
@@ -85,11 +88,8 @@ const intakeQuery = (intakeData: any) => {
             isPresent: null,
             name: null
           },
-          fundingSource: {
-            fundingNumber: null,
-            isFunded: null,
-            source: null
-          },
+          existingFunding: null,
+          fundingSources: [],
           lcid: null,
           lcidExpiresAt: null,
           lcidScope: null,

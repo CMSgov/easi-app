@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useHistory, useParams } from 'react-router-dom';
 import { useMutation } from '@apollo/client';
-import { Button, Link as UswdsLink } from '@trussworks/react-uswds';
+import { Button } from '@trussworks/react-uswds';
 import { Field, Form, Formik, FormikProps } from 'formik';
 import { DateTime } from 'luxon';
 
@@ -21,9 +21,14 @@ import Label from 'components/shared/Label';
 import { RadioField } from 'components/shared/RadioField';
 import TextAreaField from 'components/shared/TextAreaField';
 import TextField from 'components/shared/TextField';
+import useSystemIntake from 'hooks/useSystemIntake';
 import IssueLifecycleIdQuery from 'queries/IssueLifecycleIdQuery';
-import { IssueLifecycleId as IssueLifecycleIdType } from 'queries/types/IssueLifecycleId';
+import {
+  IssueLifecycleId as IssueLifecycleIdType,
+  IssueLifecycleIdVariables
+} from 'queries/types/IssueLifecycleId';
 import { SubmitLifecycleIdForm } from 'types/action';
+import { SystemIntakeContactProps } from 'types/systemIntake';
 import flattenErrors from 'utils/flattenErrors';
 import { lifecycleIdSchema } from 'validations/actionSchema';
 
@@ -34,16 +39,22 @@ const RADIX = 10;
 
 const IssueLifecycleId = () => {
   const { systemId } = useParams<{ systemId: string }>();
+  const { systemIntake } = useSystemIntake(systemId);
   const history = useHistory();
   const { t } = useTranslation('action');
   const [shouldSendEmail, setShouldSendEmail] = useState<boolean>(true);
 
-  const [mutate, mutationResult] = useMutation<IssueLifecycleIdType>(
-    IssueLifecycleIdQuery,
-    {
-      errorPolicy: 'all'
-    }
-  );
+  const [mutate, mutationResult] = useMutation<
+    IssueLifecycleIdType,
+    IssueLifecycleIdVariables
+  >(IssueLifecycleIdQuery, {
+    errorPolicy: 'all'
+  });
+
+  const [
+    activeContact,
+    setActiveContact
+  ] = useState<SystemIntakeContactProps | null>(null);
 
   const backLink = `/governance-review-team/${systemId}/actions`;
 
@@ -54,7 +65,12 @@ const IssueLifecycleId = () => {
     expirationDateMonth: '',
     expirationDateYear: '',
     newLifecycleId: undefined,
-    feedback: ''
+    feedback: '',
+    notificationRecipients: {
+      regularRecipientEmails: [systemIntake?.requester?.email!].filter(e => e),
+      shouldNotifyITGovernance: true,
+      shouldNotifyITInvestment: true
+    }
   };
 
   const onSubmit = (values: SubmitLifecycleIdForm) => {
@@ -66,7 +82,8 @@ const IssueLifecycleId = () => {
       nextSteps,
       scope,
       costBaseline,
-      lifecycleId
+      lifecycleId,
+      notificationRecipients
     } = values;
     const expiresAt = DateTime.utc(
       parseInt(expirationDateYear, RADIX),
@@ -77,11 +94,12 @@ const IssueLifecycleId = () => {
       intakeId: systemId,
       expiresAt: expiresAt.toISO(),
       nextSteps,
-      scope,
+      scope: scope ?? '',
       costBaseline,
       lcid: lifecycleId,
       feedback,
-      shouldSendEmail
+      shouldSendEmail,
+      notificationRecipients
     };
 
     mutate({
@@ -366,7 +384,20 @@ const IssueLifecycleId = () => {
                   error={!!flatErrors.feedback}
                   className="margin-top-5"
                 >
-                  <EmailRecipientsFields />
+                  <EmailRecipientsFields
+                    systemIntakeId={systemId}
+                    activeContact={activeContact}
+                    setActiveContact={setActiveContact}
+                    recipients={values.notificationRecipients}
+                    setRecipients={recipients =>
+                      setFieldValue('notificationRecipients', recipients)
+                    }
+                    error={
+                      flatErrors[
+                        'notificationRecipients.regularRecipientEmails'
+                      ]
+                    }
+                  />
                   <Label
                     htmlFor="IssueLifecycleIdForm-Feedback"
                     className="margin-top-0 line-height-body-2 text-normal"
@@ -387,11 +418,11 @@ const IssueLifecycleId = () => {
                   <Button
                     className="margin-top-2"
                     type="submit"
-                    // disabled={isSubmitting}
                     onClick={() => {
                       setShouldSendEmail(true);
                       setFieldValue('skipEmail', false);
                     }}
+                    disabled={!!activeContact}
                   >
                     {t('submitAction.submit')}
                   </Button>
@@ -403,17 +434,10 @@ const IssueLifecycleId = () => {
                       setFieldValue('skipEmail', true);
                       setTimeout(submitForm);
                     }}
+                    disabled={!!activeContact}
                   />
                 </div>
               </Form>
-              <UswdsLink
-                href="https://www.surveymonkey.com/r/DF3Q9L2"
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="Open EASi survey in a new tab"
-              >
-                {t('general:feedback.whatYouThink')}
-              </UswdsLink>
             </div>
           </>
         );

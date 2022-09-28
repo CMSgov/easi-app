@@ -1,5 +1,7 @@
 import { DateTime } from 'luxon';
 
+import { GetSystemIntakeContacts_systemIntakeContacts_systemIntakeContacts as AugmentedSystemIntakeContact } from 'queries/types/GetSystemIntakeContacts';
+
 export type GovernanceCollaborationTeam = {
   collaborator: string;
   name: string;
@@ -96,12 +98,84 @@ export type SystemIntakeForm = {
   } | null;
 } & ContractDetailsForm;
 
-export type ContractDetailsForm = {
-  fundingSource: {
-    isFunded: boolean | null;
-    fundingNumber: string;
-    source: string;
+export type ContactDetailsForm = {
+  requester: {
+    name: string;
+    component: string;
   };
+  businessOwner: SystemIntakeContactProps;
+  productManager: SystemIntakeContactProps;
+  isso: SystemIntakeContactProps & { isPresent: boolean };
+  governanceTeams: {
+    isPresent: boolean | null;
+    teams:
+      | {
+          collaborator: string;
+          key: string;
+          name: string;
+        }[]
+      | null;
+  };
+};
+
+/** Single funding source */
+export type FundingSource = {
+  source: string | null;
+  fundingNumber: string | null;
+};
+
+/** Funding sources formatted for form */
+export type MultiFundingSource = {
+  fundingNumber: string;
+  sources: string[];
+};
+
+/** Funding sources object formatted for display */
+export type FormattedFundingSourcesObject = {
+  [number: string]: {
+    fundingNumber: string;
+    sources: string[];
+  };
+};
+
+/** Add, edit, or delete funding source */
+export type UpdateFundingSources =
+  | {
+      action: 'Add' | 'Delete';
+      data: MultiFundingSource;
+    }
+  | {
+      action: 'Edit';
+      data: {
+        initialFundingNumber: string;
+        fundingNumber: string;
+        sources: string[];
+      };
+    };
+
+/** Update active funding source in form */
+export type UpdateActiveFundingSource = {
+  action: 'Add' | 'Edit' | 'Reset';
+  data?: MultiFundingSource;
+};
+
+/** useIntakeFundingSources hook return type */
+export type UseIntakeFundingSources = {
+  fundingSources: [
+    fundingSources: FormattedFundingSourcesObject,
+    updateFundingSources: ({ action, data }: UpdateFundingSources) => void
+  ];
+  activeFundingSource: [
+    activeFundingSource: MultiFundingSource,
+    updateActiveFundingSource: (payload: UpdateActiveFundingSource) => void,
+    action: 'Add' | 'Edit' | 'Reset'
+  ];
+};
+
+/** Contract details form */
+export type ContractDetailsForm = {
+  existingFunding: boolean | null;
+  fundingSources: FundingSource[] | [];
   costs: {
     isExpectingIncrease: string;
     expectedIncreaseAmount: string;
@@ -109,7 +183,7 @@ export type ContractDetailsForm = {
   contract: {
     hasContract: string;
     contractor: string;
-    vehicle: string;
+    number: string;
     startDate: {
       month: string;
       day: string;
@@ -160,3 +234,55 @@ export type SubmitDatesForm = {
   grbDateMonth: string;
   grbDateYear: string;
 };
+
+/** Cedar contact properties */
+export type CedarContactProps = {
+  euaUserId: string;
+  commonName: string;
+  email?: string;
+};
+
+/** System intake contact properties */
+export type SystemIntakeContactProps = {
+  id?: string;
+  euaUserId: string;
+  systemIntakeId: string;
+  component: string;
+  role: string;
+  commonName: string;
+  email: string;
+};
+
+/** Formatted system intake contacts */
+export type FormattedContacts = {
+  businessOwner: SystemIntakeContactProps;
+  productManager: SystemIntakeContactProps;
+  isso: SystemIntakeContactProps;
+  additionalContacts: SystemIntakeContactProps[];
+};
+
+/** Function to create system intake contact */
+export type CreateContactType = (
+  contact: SystemIntakeContactProps
+) => Promise<AugmentedSystemIntakeContact | undefined>;
+
+/** Function to update system intake contact */
+export type UpdateContactType = (
+  contact: SystemIntakeContactProps
+) => Promise<AugmentedSystemIntakeContact[] | undefined>;
+
+/** Function to delete system intake contact */
+export type DeleteContactType = (
+  id: string
+) => Promise<AugmentedSystemIntakeContact[] | undefined>;
+
+/** useSystemIntakeContacts custom hook return type */
+export type UseSystemIntakeContactsType = {
+  contacts: FormattedContacts | null;
+  createContact: CreateContactType;
+  updateContact: UpdateContactType;
+  deleteContact: DeleteContactType;
+};
+
+/** System intake contact role keys */
+export type SystemIntakeRoleKeys = 'businessOwner' | 'productManager' | 'isso';

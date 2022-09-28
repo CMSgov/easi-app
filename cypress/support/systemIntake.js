@@ -5,17 +5,19 @@ cy.systemIntake = {
         .select('Center for Medicare')
         .should('have.value', 'Center for Medicare');
 
-      cy.get('#IntakeForm-BusinessOwner')
-        .type('Casey Doe')
-        .should('have.value', 'Casey Doe');
+      cy.get('#react-select-IntakeForm-BusinessOwnerName-input')
+        .type('Jerry Seinfeld, SF13')
+        .type('{downarrow}{enter}')
+        .should('have.value', 'Jerry Seinfeld, SF13');
 
       cy.get('#IntakeForm-BusinessOwnerComponent')
         .select('Center for Medicare')
         .should('have.value', 'Center for Medicare');
 
-      cy.get('#IntakeForm-ProductManager')
-        .type('Casey Doe')
-        .should('have.value', 'Casey Doe');
+      cy.get('#react-select-IntakeForm-ProductManagerName-input')
+        .type('Jerry Seinfeld, SF13')
+        .type('{downArrow}{enter}')
+        .should('have.value', 'Jerry Seinfeld, SF13');
 
       cy.get('#IntakeForm-ProductManagerComponent')
         .select('Center for Medicare')
@@ -39,6 +41,27 @@ cy.systemIntake = {
       cy.get('#IntakeForm-NeedsEaSupportNo')
         .check({ force: true })
         .should('be.checked');
+    }
+  },
+  contractDetails: {
+    addFundingSource: ({ fundingNumber, sources, restart }) => {
+      if (restart) cy.get('[data-testid="fundingSourcesAction-add"').click();
+
+      if (fundingNumber) {
+        cy.get('#IntakeForm-FundingNumber')
+          .clear()
+          .type(fundingNumber)
+          .should('have.value', fundingNumber);
+      }
+
+      if (sources) {
+        sources.forEach(source => {
+          cy.get('#IntakeForm-FundingSources').type(`${source}{enter}{esc}`);
+          cy.get(`[data-testid="multiselect-tag--${source}"]`);
+        });
+      }
+
+      cy.get('[data-testid="fundingSourcesAction-save"').click();
     }
   }
 };

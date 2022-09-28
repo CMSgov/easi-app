@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useHistory, useParams } from 'react-router-dom';
 import { useMutation } from '@apollo/client';
-import { Button, Link as UswdsLink } from '@trussworks/react-uswds';
+import { Button } from '@trussworks/react-uswds';
 import { Field, Form, Formik, FormikProps } from 'formik';
 
 import PageHeading from 'components/PageHeading';
@@ -12,12 +12,14 @@ import FieldGroup from 'components/shared/FieldGroup';
 import HelpText from 'components/shared/HelpText';
 import Label from 'components/shared/Label';
 import TextAreaField from 'components/shared/TextAreaField';
+import useSystemIntake from 'hooks/useSystemIntake';
 import RejectIntakeQuery from 'queries/RejectIntakeQuery';
 import {
   RejectIntake as RejectIntakeType,
   RejectIntakeVariables
 } from 'queries/types/RejectIntake';
 import { RejectIntakeForm } from 'types/action';
+import { SystemIntakeContactProps } from 'types/systemIntake';
 import flattenErrors from 'utils/flattenErrors';
 import { rejectIntakeSchema } from 'validations/actionSchema';
 
@@ -26,6 +28,7 @@ import EmailRecipientsFields from './EmailRecipientsFields';
 
 const RejectIntake = () => {
   const { systemId } = useParams<{ systemId: string }>();
+  const { systemIntake } = useSystemIntake(systemId);
   const history = useHistory();
   const { t } = useTranslation('action');
   const [shouldSendEmail, setShouldSendEmail] = useState<boolean>(true);
@@ -37,23 +40,34 @@ const RejectIntake = () => {
     errorPolicy: 'all'
   });
 
+  const [
+    activeContact,
+    setActiveContact
+  ] = useState<SystemIntakeContactProps | null>(null);
+
   const backLink = `/governance-review-team/${systemId}/actions`;
 
   const initialValues: RejectIntakeForm = {
     feedback: '',
     nextSteps: '',
-    reason: ''
+    reason: '',
+    notificationRecipients: {
+      regularRecipientEmails: [systemIntake?.requester?.email!].filter(e => e),
+      shouldNotifyITGovernance: true,
+      shouldNotifyITInvestment: false
+    }
   };
 
   const onSubmit = (values: RejectIntakeForm) => {
-    const { feedback, nextSteps, reason } = values;
+    const { feedback, nextSteps, reason, notificationRecipients } = values;
 
     const input = {
       feedback,
       intakeId: systemId,
       nextSteps,
       reason,
-      shouldSendEmail
+      shouldSendEmail,
+      notificationRecipients
     };
 
     mutate({
@@ -80,7 +94,8 @@ const RejectIntake = () => {
           setErrors,
           handleSubmit,
           submitForm,
-          setFieldValue
+          setFieldValue,
+          values
         } = formikProps;
         const flatErrors = flattenErrors(errors);
         return (
@@ -172,7 +187,20 @@ const RejectIntake = () => {
                   error={!!flatErrors.feedback}
                   className="margin-top-5"
                 >
-                  <EmailRecipientsFields />
+                  <EmailRecipientsFields
+                    systemIntakeId={systemId}
+                    activeContact={activeContact}
+                    setActiveContact={setActiveContact}
+                    recipients={values.notificationRecipients}
+                    setRecipients={recipients =>
+                      setFieldValue('notificationRecipients', recipients)
+                    }
+                    error={
+                      flatErrors[
+                        'notificationRecipients.regularRecipientEmails'
+                      ]
+                    }
+                  />
                   <Label
                     htmlFor="RejectIntakeForm-Feedback"
                     className="margin-top-0 line-height-body-2 text-normal"
@@ -204,6 +232,7 @@ const RejectIntake = () => {
                       setShouldSendEmail(true);
                       setFieldValue('skipEmail', false);
                     }}
+                    disabled={!!activeContact}
                   >
                     {t('rejectIntake.submit')}
                   </Button>
@@ -216,17 +245,10 @@ const RejectIntake = () => {
                       setFieldValue('skipEmail', true);
                       setTimeout(submitForm);
                     }}
+                    disabled={!!activeContact}
                   />
                 </div>
               </Form>
-              <UswdsLink
-                href="https://www.surveymonkey.com/r/DF3Q9L2"
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="Open EASi survey in a new tab"
-              >
-                {t('general:feedback.whatYouThink')}
-              </UswdsLink>
             </div>
           </>
         );

@@ -16,6 +16,7 @@ type Config struct {
 	GRTEmail               models.EmailAddress
 	ITInvestmentEmail      models.EmailAddress
 	AccessibilityTeamEmail models.EmailAddress
+	EASIHelpEmail          models.EmailAddress
 	URLHost                string
 	URLScheme              string
 	TemplateDirectory      string
@@ -45,11 +46,14 @@ type templates struct {
 	intakeNoEUAIDTemplate                      templateCaller
 	changeAccessibilityRequestStatus           templateCaller
 	newAccessibilityRequestNote                templateCaller
+	helpSendFeedback                           templateCaller
+	helpCantFindSomething                      templateCaller
+	helpReportAProblem                         templateCaller
 }
 
 // sender is an interface for swapping out email provider implementations
 type sender interface {
-	Send(ctx context.Context, toAddress models.EmailAddress, ccAddress *models.EmailAddress, subject string, body string) error
+	Send(ctx context.Context, toAddresses []models.EmailAddress, ccAddresses []models.EmailAddress, subject string, body string) error
 }
 
 // Client is an EASi SES client wrapper
@@ -184,6 +188,27 @@ func NewClient(config Config, sender sender) (Client, error) {
 	}
 	appTemplates.newAccessibilityRequestNote = newAccessibilityRequestNoteTemplate
 
+	helpSendFeedbackTemplateName := "help_send_feedback.gohtml"
+	helpSendFeedbackTemplate := rawTemplates.Lookup(helpSendFeedbackTemplateName)
+	if helpSendFeedbackTemplate == nil {
+		return Client{}, templateError(helpSendFeedbackTemplateName)
+	}
+	appTemplates.helpSendFeedback = helpSendFeedbackTemplate
+
+	helpCantFindSomethingTemplateName := "help_cant_find_something.gohtml"
+	helpCantFindSomethingTemplate := rawTemplates.Lookup(helpCantFindSomethingTemplateName)
+	if helpCantFindSomethingTemplate == nil {
+		return Client{}, templateError(helpCantFindSomethingTemplateName)
+	}
+	appTemplates.helpCantFindSomething = helpCantFindSomethingTemplate
+
+	helpReportAProblemTemplateName := "help_report_a_problem.gohtml"
+	helpReportAProblemTemplate := rawTemplates.Lookup(helpReportAProblemTemplateName)
+	if helpReportAProblemTemplate == nil {
+		return Client{}, templateError(helpReportAProblemTemplateName)
+	}
+	appTemplates.helpReportAProblem = helpReportAProblemTemplate
+
 	client := Client{
 		config:    config,
 		templates: appTemplates,
@@ -205,5 +230,19 @@ func (c Client) urlFromPath(path string) string {
 // SendTestEmail sends an email to a no-reply address
 func (c Client) SendTestEmail(ctx context.Context) error {
 	testToAddress := models.NewEmailAddress("success@simulator.amazonses.com")
-	return c.sender.Send(ctx, testToAddress, nil, "test", "test")
+	return c.sender.Send(ctx, []models.EmailAddress{testToAddress}, nil, "test", "test")
+}
+
+// helper method to get a list of all addresses from a models.EmailNotificationRecipients value
+func (c Client) listAllRecipients(recipients models.EmailNotificationRecipients) []models.EmailAddress {
+	allRecipients := recipients.RegularRecipientEmails
+	if recipients.ShouldNotifyITGovernance {
+		allRecipients = append(allRecipients, c.config.GRTEmail)
+	}
+
+	if recipients.ShouldNotifyITInvestment {
+		allRecipients = append(allRecipients, c.config.ITInvestmentEmail)
+	}
+
+	return allRecipients
 }

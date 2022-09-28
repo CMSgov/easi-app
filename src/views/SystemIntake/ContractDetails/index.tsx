@@ -1,12 +1,11 @@
 import React, { useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useHistory } from 'react-router-dom';
 import { useMutation } from '@apollo/client';
 import {
   Button,
-  Dropdown,
   IconNavigateBefore,
   Label,
-  Link,
   Radio,
   Textarea,
   TextInput
@@ -28,7 +27,7 @@ import { ErrorAlert, ErrorAlertMessage } from 'components/shared/ErrorAlert';
 import FieldErrorMsg from 'components/shared/FieldErrorMsg';
 import FieldGroup from 'components/shared/FieldGroup';
 import HelpText from 'components/shared/HelpText';
-import fundingSources from 'constants/enums/fundingSources';
+import intakeFundingSources from 'constants/enums/intakeFundingSources';
 import { yesNoMap } from 'data/common';
 import GetSystemIntakeQuery from 'queries/GetSystemIntakeQuery';
 import { UpdateSystemIntakeContractDetails as UpdateSystemIntakeContractDetailsQuery } from 'queries/SystemIntakeQueries';
@@ -41,6 +40,10 @@ import { ContractDetailsForm } from 'types/systemIntake';
 import flattenErrors from 'utils/flattenErrors';
 import SystemIntakeValidationSchema from 'validations/systemIntakeSchema';
 
+import FundingSources from './FundingSources';
+
+import './index.scss';
+
 type ContractDetailsProps = {
   systemIntake: SystemIntake;
 };
@@ -48,14 +51,12 @@ type ContractDetailsProps = {
 const ContractDetails = ({ systemIntake }: ContractDetailsProps) => {
   const history = useHistory();
   const formikRef = useRef<FormikProps<ContractDetailsForm>>(null);
+  const { t } = useTranslation('intake');
 
-  const { id, fundingSource, costs, contract } = systemIntake;
+  const { id, fundingSources, costs, contract, existingFunding } = systemIntake;
   const initialValues: ContractDetailsForm = {
-    fundingSource: {
-      isFunded: fundingSource.isFunded,
-      fundingNumber: fundingSource.fundingNumber || '',
-      source: fundingSource.source || ''
-    },
+    existingFunding,
+    fundingSources,
     costs: {
       expectedIncreaseAmount: costs.expectedIncreaseAmount || '',
       isExpectingIncrease: costs.isExpectingIncrease || ''
@@ -73,7 +74,7 @@ const ContractDetails = ({ systemIntake }: ContractDetailsProps) => {
         month: contract.startDate.month || '',
         year: contract.startDate.year || ''
       },
-      vehicle: contract.vehicle || ''
+      number: contract.number || ''
     }
   };
 
@@ -103,22 +104,26 @@ const ContractDetails = ({ systemIntake }: ContractDetailsProps) => {
 
   const formatContractDetailsPayload = (values: ContractDetailsForm) => {
     const startDate = DateTime.fromObject({
-      day: Number(values.contract.startDate.day),
-      month: Number(values.contract.startDate.month),
-      year: Number(values.contract.startDate.year),
+      day: Number(values.contract.startDate.day) || 0,
+      month: Number(values.contract.startDate.month) || 0,
+      year: Number(values.contract.startDate.year) || 0,
       zone: 'UTC'
     }).toISO();
 
     const endDate = DateTime.fromObject({
-      day: Number(values.contract.endDate.day),
-      month: Number(values.contract.endDate.month),
-      year: Number(values.contract.endDate.year),
+      day: Number(values.contract.endDate.day) || 0,
+      month: Number(values.contract.endDate.month) || 0,
+      year: Number(values.contract.endDate.year) || 0,
       zone: 'UTC'
     }).toISO();
 
     return {
       id,
-      ...values,
+      fundingSources: {
+        existingFunding: !!(values.fundingSources.length > 0),
+        fundingSources: values.fundingSources
+      },
+      costs: values.costs,
       contract: {
         ...values.contract,
         startDate,
@@ -176,124 +181,23 @@ const ContractDetails = ({ systemIntake }: ContractDetailsProps) => {
               </div>
               <Form>
                 <FieldGroup
-                  scrollElement="fundingSource.isFunded"
-                  error={!!flatErrors['fundingSource.isFunded']}
+                  scrollElement="fundingSources"
+                  error={!!flatErrors.fundingSources}
                 >
-                  <fieldset
-                    className="usa-fieldset margin-top-4"
-                    data-testid="funding-source-fieldset"
-                  >
-                    <legend className="usa-label margin-bottom-1">
-                      Will this project be funded out of an existing funding
-                      source?
-                    </legend>
-                    <HelpText id="Intake-Form-ExistingFundingHelp">
-                      If you are unsure, please get in touch with your
-                      Contracting Officer Representative
-                    </HelpText>
-                    <FieldErrorMsg>
-                      {flatErrors['fundingSource.isFunded']}
-                    </FieldErrorMsg>
-                    <Field
-                      as={Radio}
-                      checked={values.fundingSource.isFunded === true}
-                      id="IntakeForm-HasFundingSourceYes"
-                      name="fundingSource.isFunded"
-                      label="Yes"
-                      onChange={() => {
-                        setFieldValue('fundingSource.isFunded', true);
-                      }}
-                      aria-describedby="Intake-Form-ExistingFundingHelp"
-                      aria-expanded={values.fundingSource.isFunded === true}
-                      aria-controls="funding-source-container"
-                      value
-                    />
-                    {values.fundingSource.isFunded && (
-                      <div
-                        id="funding-source-container"
-                        className="margin-top-neg-2 margin-left-4 margin-bottom-1"
-                      >
-                        <FieldGroup
-                          scrollElement="fundingSource.source"
-                          error={!!flatErrors['fundingSource.source']}
-                        >
-                          <Label htmlFor="IntakeForm-FundingSource">
-                            Funding Source
-                          </Label>
-                          <FieldErrorMsg>
-                            {flatErrors['fundingSource.source']}
-                          </FieldErrorMsg>
-                          <Field
-                            as={Dropdown}
-                            id="IntakeForm-FundingSource"
-                            name="fundingSource.source"
-                          >
-                            <option value="" disabled>
-                              Select an option
-                            </option>
-                            {fundingSources.map(source => (
-                              <option
-                                key={source.split(' ').join('-')}
-                                value={source}
-                              >
-                                {source}
-                              </option>
-                            ))}
-                          </Field>
-                        </FieldGroup>
-                        <FieldGroup
-                          scrollElement="fundingSource.fundingNumber"
-                          error={!!flatErrors['fundingSource.fundingNumber']}
-                        >
-                          <Label htmlFor="IntakeForm-FundingNumber">
-                            Funding Number
-                          </Label>
-                          <HelpText id="IntakeForm-FundingNumberRestrictions">
-                            Funding number must be 6 digits long
-                          </HelpText>
-                          <FieldErrorMsg>
-                            {flatErrors['fundingSource.fundingNumber']}
-                          </FieldErrorMsg>
-                          <Field
-                            className="width-card-lg"
-                            as={TextInput}
-                            error={!!flatErrors['fundingSource.fundingNumber']}
-                            id="IntakeForm-FundingNumber"
-                            maxLength={6}
-                            name="fundingSource.fundingNumber"
-                            aria-describedby="IntakeForm-FundingNumberRestrictions IntakeForm-FundingNumberHelp"
-                          />
-                          <HelpText
-                            id="IntakeForm-FundingNumberHelp"
-                            className="margin-y-1"
-                          >
-                            <Link
-                              href="https://cmsintranet.share.cms.gov/JT/Pages/Budget.aspx"
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              variant="external"
-                            >
-                              You can find your funding number in the CMS
-                              Operating Plan page (opens in a new tab)
-                            </Link>
-                          </HelpText>
-                        </FieldGroup>
-                      </div>
-                    )}
-                    <Field
-                      as={Radio}
-                      checked={values.fundingSource.isFunded === false}
-                      id="IntakeForm-HasFundingSourceNo"
-                      name="fundingSource.isFunded"
-                      label="No"
-                      onChange={() => {
-                        setFieldValue('fundingSource.isFunded', false);
-                        setFieldValue('fundingSource.fundingNumber', '');
-                        setFieldValue('fundingSource.source', '');
-                      }}
-                      value={false}
-                    />
-                  </fieldset>
+                  <legend className="usa-label margin-bottom-1">
+                    {t('contractDetails.fundingSources.label')}
+                  </legend>
+                  <HelpText id="Intake-Form-ExistingFundingHelp">
+                    {t('contractDetails.fundingSources.helpText')}
+                  </HelpText>
+                  <Field
+                    as={FundingSources}
+                    id="IntakeForm-FundingSources"
+                    name="fundingSources"
+                    initialValues={values.fundingSources}
+                    setFieldValue={setFieldValue}
+                    fundingSourceOptions={intakeFundingSources}
+                  />
                 </FieldGroup>
 
                 <FieldGroup
@@ -445,24 +349,24 @@ const ContractDetails = ({ systemIntake }: ContractDetailsProps) => {
                           />
                         </FieldGroup>
                         <FieldGroup
-                          scrollElement="contract.vehicle"
-                          error={!!flatErrors['contract.vehicle']}
+                          scrollElement="contract.number"
+                          error={!!flatErrors['contract.number']}
                         >
                           <Label
                             className="system-intake__label-margin-top-1"
-                            htmlFor="IntakeForm-Vehicle"
+                            htmlFor="IntakeForm-Number"
                           >
-                            Contract vehicle
+                            {t('fields.contractNumber')}
                           </Label>
                           <FieldErrorMsg>
-                            {flatErrors['contract.vehicle']}
+                            {flatErrors['contract.number']}
                           </FieldErrorMsg>
                           <Field
                             as={TextInput}
-                            error={!!flatErrors['contract.vehicle']}
-                            id="IntakeForm-Vehicle"
+                            error={!!flatErrors['contract.number']}
+                            id="IntakeForm-Number"
                             maxLength={100}
-                            name="contract.vehicle"
+                            name="contract.number"
                           />
                         </FieldGroup>
 
@@ -657,24 +561,24 @@ const ContractDetails = ({ systemIntake }: ContractDetailsProps) => {
                           />
                         </FieldGroup>
                         <FieldGroup
-                          scrollElement="contract.vehicle"
-                          error={!!flatErrors['contract.vehicle']}
+                          scrollElement="contract.number"
+                          error={!!flatErrors['contract.number']}
                         >
                           <Label
                             className="system-intake__label-margin-top-1"
-                            htmlFor="IntakeForm-Vehicle"
+                            htmlFor="IntakeForm-Number"
                           >
-                            Contract vehicle
+                            {t('fields.contractNumber')}
                           </Label>
                           <FieldErrorMsg>
-                            {flatErrors['contract.vehicle']}
+                            {flatErrors['contract.number']}
                           </FieldErrorMsg>
                           <Field
                             as={TextInput}
-                            error={!!flatErrors['contract.vehicle']}
-                            id="IntakeForm-Vehicle"
+                            error={!!flatErrors['contract.number']}
+                            id="IntakeForm-Number"
                             maxLength={100}
-                            name="contract.vehicle"
+                            name="contract.number"
                           />
                         </FieldGroup>
 
@@ -863,7 +767,7 @@ const ContractDetails = ({ systemIntake }: ContractDetailsProps) => {
                       onChange={() => {
                         setFieldValue('contract.hasContract', 'NOT_STARTED');
                         setFieldValue('contract.contractor', '');
-                        setFieldValue('contract.vehicle', '');
+                        setFieldValue('contract.number', '');
                         setFieldValue('contract.startDate.month', '');
                         setFieldValue('contract.startDate.day', '');
                         setFieldValue('contract.startDate.year', '');
@@ -882,7 +786,7 @@ const ContractDetails = ({ systemIntake }: ContractDetailsProps) => {
                       onChange={() => {
                         setFieldValue('contract.hasContract', 'NOT_NEEDED');
                         setFieldValue('contract.contractor', '');
-                        setFieldValue('contract.vehicle', '');
+                        setFieldValue('contract.number', '');
                         setFieldValue('contract.startDate.month', '');
                         setFieldValue('contract.startDate.day', '');
                         setFieldValue('contract.startDate.year', '');

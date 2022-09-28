@@ -23,6 +23,15 @@ func (si *TranslatableSystemIntake) ObjectType() string {
 
 // CreateIntakeModel translates a SystemIntake into an IntakeInput
 func (si *TranslatableSystemIntake) CreateIntakeModel() (*wire.IntakeInput, error) {
+	fundingSources := make([]*intakemodels.EASIFundingSource, 0, len(si.FundingSources))
+	for _, fundingSource := range si.FundingSources {
+		fundingSources = append(fundingSources, &intakemodels.EASIFundingSource{
+			FundingSourceID: fundingSource.ID.String(),
+			Source:          fundingSource.Source.Ptr(),
+			FundingNumber:   fundingSource.FundingNumber.Ptr(),
+		})
+	}
+
 	obj := &intakemodels.EASIIntake{
 		IntakeID:                    si.ID.String(),
 		UserEUA:                     si.EUAUserID.ValueOrZero(),
@@ -41,6 +50,7 @@ func (si *TranslatableSystemIntake) CreateIntakeModel() (*wire.IntakeInput, erro
 		ProjectName:                 si.ProjectName.ValueOrZero(),
 		ProjectAcronym:              si.ProjectAcronym.Ptr(),
 		FundingSource:               si.FundingSource.Ptr(),
+		FundingSources:              fundingSources,
 		FundingNumber:               si.FundingNumber.Ptr(),
 		BusinessNeed:                si.BusinessNeed.ValueOrZero(),
 		Solution:                    si.Solution.ValueOrZero(),
@@ -50,6 +60,7 @@ func (si *TranslatableSystemIntake) CreateIntakeModel() (*wire.IntakeInput, erro
 		CostIncreaseAmount:          si.CostIncreaseAmount.Ptr(),
 		Contractor:                  si.Contractor.Ptr(),
 		ContractVehicle:             si.ContractVehicle.Ptr(),
+		ContractNumber:              si.ContractNumber.Ptr(),
 		RequesterEmailAddress:       si.RequesterEmailAddress.Ptr(),
 		LifecycleID:                 si.LifecycleID.Ptr(),
 		LifecycleScope:              si.LifecycleScope.Ptr(),

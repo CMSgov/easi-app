@@ -25,6 +25,7 @@ export default gql`
           year
         }
         vehicle
+        number
       }
       costs {
         isExpectingIncrease
@@ -53,10 +54,10 @@ export default gql`
         isPresent
         name
       }
-      fundingSource {
-        fundingNumber
-        isFunded
+      existingFunding
+      fundingSources {
         source
+        fundingNumber
       }
       lcid
       lcidExpiresAt

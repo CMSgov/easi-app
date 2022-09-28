@@ -9,11 +9,10 @@ import { UpdateSystemIntakeContractDetailsInput } from "./../../types/graphql-gl
 // GraphQL mutation operation: UpdateSystemIntakeContractDetails
 // ====================================================
 
-export interface UpdateSystemIntakeContractDetails_updateSystemIntakeContractDetails_systemIntake_fundingSource {
+export interface UpdateSystemIntakeContractDetails_updateSystemIntakeContractDetails_systemIntake_fundingSources {
   __typename: "SystemIntakeFundingSource";
-  fundingNumber: string | null;
-  isFunded: boolean | null;
   source: string | null;
+  fundingNumber: string | null;
 }
 
 export interface UpdateSystemIntakeContractDetails_updateSystemIntakeContractDetails_systemIntake_costs {
@@ -42,14 +41,14 @@ export interface UpdateSystemIntakeContractDetails_updateSystemIntakeContractDet
   endDate: UpdateSystemIntakeContractDetails_updateSystemIntakeContractDetails_systemIntake_contract_endDate;
   hasContract: string | null;
   startDate: UpdateSystemIntakeContractDetails_updateSystemIntakeContractDetails_systemIntake_contract_startDate;
-  vehicle: string | null;
+  number: string | null;
 }
 
 export interface UpdateSystemIntakeContractDetails_updateSystemIntakeContractDetails_systemIntake {
   __typename: "SystemIntake";
   id: UUID;
   currentStage: string | null;
-  fundingSource: UpdateSystemIntakeContractDetails_updateSystemIntakeContractDetails_systemIntake_fundingSource;
+  fundingSources: UpdateSystemIntakeContractDetails_updateSystemIntakeContractDetails_systemIntake_fundingSources[];
   costs: UpdateSystemIntakeContractDetails_updateSystemIntakeContractDetails_systemIntake_costs;
   contract: UpdateSystemIntakeContractDetails_updateSystemIntakeContractDetails_systemIntake_contract;
 }

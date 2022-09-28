@@ -26,13 +26,13 @@ type StoreTestSuite struct {
 
 // EqualTime uses time.Time's Equal() to check for equality
 // and wraps failures with useful error messages.
-func (s StoreTestSuite) EqualTime(expected, actual time.Time) {
+func (s *StoreTestSuite) EqualTime(expected, actual time.Time) {
 	if !actual.Equal(expected) {
 		s.Failf("times were not equal", "expected %v, got %v", expected, actual)
 	}
 }
 
-func (s StoreTestSuite) emptyDatabaseTables() error {
+func (s *StoreTestSuite) emptyDatabaseTables() error {
 	statement := `
 	DELETE FROM accessibility_request_status_records;
 	DELETE FROM accessibility_request_notes;
@@ -45,6 +45,7 @@ func (s StoreTestSuite) emptyDatabaseTables() error {
 	DELETE FROM business_cases;
 	DELETE FROM grt_feedback;
 	DELETE FROM system_intake_contacts;
+	DELETE FROM system_intake_funding_sources;
 	DELETE FROM system_intakes;
 `
 	_, err := s.db.Exec(statement)

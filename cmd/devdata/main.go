@@ -125,6 +125,18 @@ func main() {
 		i.ID = uuid.MustParse("20cbcfbf-6459-4c96-943b-e76b83122dbf")
 	})
 
+	makeSystemIntake("Intake with no contract vehicle or number", logger, store, func(i *models.SystemIntake) {
+		i.ID = uuid.MustParse("38e46d77-e474-4d15-a7c0-f6411221e2a4")
+		i.ContractVehicle = null.StringFromPtr(nil)
+		i.ContractNumber = null.StringFromPtr(nil)
+	})
+
+	makeSystemIntake("Intake with legacy Contract Vehicle", logger, store, func(i *models.SystemIntake) {
+		i.ID = uuid.MustParse("2ed89f9f-7fd9-4e92-89d2-cee170a44d0d")
+		i.ContractVehicle = null.StringFrom("Honda")
+		i.ContractNumber = null.StringFromPtr(nil)
+	})
+
 	intake := makeSystemIntake("Draft Business Case", logger, store, func(i *models.SystemIntake) {
 		i.Status = models.SystemIntakeStatusBIZCASEDRAFT
 	})
@@ -159,10 +171,37 @@ func main() {
 	makeBusinessCase("With LCID Issued", logger, store, intake, func(c *models.BusinessCase) {
 		c.Status = models.BusinessCaseStatusCLOSED
 	})
+
+	makeTRBRequest(models.TRBTNeedHelp, logger, store, func(t *models.TRBRequest) {
+		t.ID = uuid.MustParse("1afc9242-f244-47a3-9f91-4d6fedd8eb91")
+		t.Name = "My excellent question"
+	})
+
+	makeTRBRequest(models.TRBTFormalReview, logger, store, func(t *models.TRBRequest) {
+		t.ID = uuid.MustParse("9841c768-bdcd-4856-bae2-62cfdaffacf6")
+		t.Name = "TACO Review"
+		t.CreatedBy = "TACO"
+	})
+	makeTRBRequest(models.TRBTFormalReview, logger, store, func(t *models.TRBRequest) {
+		t.ID = uuid.MustParse("21f175b9-bcbe-41c1-9c07-9844869bc1ce")
+		t.Name = "Archived Request"
+		t.Archived = true
+	})
 }
 
 func makeSystemIntake(name string, logger *zap.Logger, store *storage.Store, callbacks ...func(*models.SystemIntake)) *models.SystemIntake {
 	ctx := appcontext.WithLogger(context.Background(), logger)
+
+	fundingSources := []*models.SystemIntakeFundingSource{
+		{
+			FundingNumber: null.StringFrom("123456"),
+			Source:        null.StringFrom("Research"),
+		},
+		{
+			FundingNumber: null.StringFrom("789012"),
+			Source:        null.StringFrom("DARPA"),
+		},
+	}
 
 	intake := models.SystemIntake{
 		EUAUserID: null.StringFrom("ABCD"),
@@ -182,10 +221,10 @@ func makeSystemIntake(name string, logger *zap.Logger, store *storage.Store, cal
 
 		ProjectName:     null.StringFrom(name),
 		ExistingFunding: null.BoolFrom(true),
-		FundingNumber:   null.StringFrom("123456"),
-		FundingSource:   null.StringFrom("Research"),
-		BusinessNeed:    null.StringFrom("A business need. TACO is a new tool for customers to access consolidated Active health information and facilitate the new Medicare process. The purpose is to provide a more integrated and unified customer service experience."),
-		Solution:        null.StringFrom("A solution. TACO is a new tool for customers to access consolidated Active health information and facilitate the new Medicare process. The purpose is to provide a more integrated and unified customer service experience."),
+		FundingSources:  fundingSources,
+
+		BusinessNeed: null.StringFrom("A business need. TACO is a new tool for customers to access consolidated Active health information and facilitate the new Medicare process. The purpose is to provide a more integrated and unified customer service experience."),
+		Solution:     null.StringFrom("A solution. TACO is a new tool for customers to access consolidated Active health information and facilitate the new Medicare process. The purpose is to provide a more integrated and unified customer service experience."),
 
 		ProcessStatus:      null.StringFrom("I have done some initial research"),
 		EASupportRequest:   null.BoolFrom(true),
@@ -195,7 +234,7 @@ func makeSystemIntake(name string, logger *zap.Logger, store *storage.Store, cal
 
 		ContractStartDate: date(2021, 1, 1),
 		ContractEndDate:   date(2023, 12, 31),
-		ContractVehicle:   null.StringFrom("Sole source"),
+		ContractNumber:    null.StringFrom("123456-7890"),
 		Contractor:        null.StringFrom("Contractor Name"),
 	}
 
@@ -233,6 +272,8 @@ func makeSystemIntake(name string, logger *zap.Logger, store *storage.Store, cal
 		Content:        null.StringFrom("a clever remark"),
 		CreatedAt:      &fiveMinutesAgo,
 	}))
+
+	must(store.UpdateSystemIntakeFundingSources(ctx, intake.ID, fundingSources))
 
 	return &intake
 }
@@ -348,4 +389,15 @@ func must(_ interface{}, err error) {
 func date(year, month, day int) *time.Time {
 	date := time.Date(year, time.Month(month), day, 0, 0, 0, 0, time.UTC)
 	return &date
+}
+
+func makeTRBRequest(rType models.TRBRequestType, logger *zap.Logger, store *storage.Store, callbacks ...func(*models.TRBRequest)) *models.TRBRequest {
+	trb := models.NewTRBRequest("EASI")
+	trb.Type = rType
+	trb.Status = models.TRBSOpen
+	for _, cb := range callbacks {
+		cb(trb)
+	}
+	ret, _ := store.TRBRequestCreate(logger, trb)
+	return ret
 }

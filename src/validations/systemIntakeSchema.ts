@@ -11,13 +11,13 @@ const SystemIntakeValidationSchema: any = {
       component: Yup.string().required("Select the Requester's component")
     }),
     businessOwner: Yup.object().shape({
-      name: Yup.string()
+      commonName: Yup.string()
         .trim()
         .required("Enter the Business or Product Owner's name"),
       component: Yup.string().required('Select a Business Owner Component')
     }),
     productManager: Yup.object().shape({
-      name: Yup.string()
+      commonName: Yup.string()
         .trim()
         .required('Enter the CMS Project/Product Manager or Lead name'),
       component: Yup.string().required(
@@ -28,9 +28,13 @@ const SystemIntakeValidationSchema: any = {
       isPresent: Yup.boolean()
         .nullable()
         .required('Select Yes or No to indicate if you have an ISSO'),
-      name: Yup.string().when('isPresent', {
+      commonName: Yup.string().when('isPresent', {
         is: true,
         then: Yup.string().trim().required('Tell us the name of your ISSO')
+      }),
+      component: Yup.string().when('isPresent', {
+        is: true,
+        then: Yup.string().required('Select an ISSO component')
       })
     }),
     governanceTeams: Yup.object().shape({
@@ -86,36 +90,6 @@ const SystemIntakeValidationSchema: any = {
       .required('Tell us if you need Enterprise Architecture (EA) support')
   }),
   contractDetails: Yup.object().shape({
-    fundingSource: Yup.object().shape({
-      isFunded: Yup.boolean()
-        .nullable()
-        .required('Select Yes or No to indicate if you have funding'),
-      fundingNumber: Yup.string().when(
-        ['isFunded', 'source'],
-        (isFunded, source, schema) => {
-          // when() typescript def issue
-          // https://github.com/jquense/yup/issues/1529
-
-          if (!isFunded) return schema;
-
-          // Funding number is optional if the source is Unknown
-          const conditionalSchema = schema
-            .trim()
-            .length(6, 'Funding number must be exactly 6 digits')
-            .matches(/^\d+$/, 'Funding number can only contain digits');
-          if (source === 'Unknown') {
-            return conditionalSchema.optional();
-          }
-          return conditionalSchema.required(
-            'Tell us your funding number. This is a six digit number and starts with 00'
-          );
-        }
-      ),
-      source: Yup.string().when('isFunded', {
-        is: true,
-        then: Yup.string().required('Tell us your funding source')
-      })
-    }),
     costs: Yup.object().shape({
       isExpectingIncrease: Yup.string().required(
         'Tell us whether you are expecting costs for this request to increase'
@@ -139,18 +113,25 @@ const SystemIntakeValidationSchema: any = {
           .trim()
           .required('Tell us whether you have selected a contractor(s)')
       }),
-      vehicle: Yup.string().when('hasContract', {
+      number: Yup.string().when('hasContract', {
         is: (val: string) => ['HAVE_CONTRACT', 'IN_PROGRESS'].includes(val),
-        then: Yup.string().trim().required('Tell us about the contract vehicle')
+        then: Yup.string().trim().required('Tell us about the contract number')
       }),
       startDate: Yup.mixed().when('hasContract', {
         is: (val: string) => ['HAVE_CONTRACT', 'IN_PROGRESS'].includes(val),
         then: Yup.object().shape({
           month: Yup.string()
             .trim()
+            .matches(/\d{1,2}/, 'Please enter a valid start month')
             .required('Tell us the contract start month'),
-          day: Yup.string().trim().required('Tell us the contract start day'),
-          year: Yup.string().trim().required('Tell us the contract start year'),
+          day: Yup.string()
+            .trim()
+            .matches(/\d{1,2}/, 'Please enter a valid start day')
+            .required('Tell us the contract start day'),
+          year: Yup.string()
+            .trim()
+            .matches(/\d{4}/, 'Please enter a valid start year')
+            .required('Tell us the contract start year'),
           validDate: Yup.string().when(['month', 'day', 'year'], {
             is: (month: string, day: string, year: string) => {
               if (
@@ -175,9 +156,18 @@ const SystemIntakeValidationSchema: any = {
       endDate: Yup.mixed().when('hasContract', {
         is: (val: string) => ['HAVE_CONTRACT', 'IN_PROGRESS'].includes(val),
         then: Yup.object().shape({
-          month: Yup.string().trim().required('Tell us the contract end month'),
-          day: Yup.string().trim().required('Tell us the contract end day'),
-          year: Yup.string().trim().required('Tell us the contract end year'),
+          month: Yup.string()
+            .trim()
+            .matches(/\d{1,2}/, 'Please enter a valid end month')
+            .required('Tell us the contract end month'),
+          day: Yup.string()
+            .trim()
+            .matches(/\d{1,2}/, 'Please enter a valid end day')
+            .required('Tell us the contract end day'),
+          year: Yup.string()
+            .trim()
+            .matches(/\d{4}/, 'Please enter a valid end year')
+            .required('Tell us the contract end year'),
           validDate: Yup.string().when(['month', 'day', 'year'], {
             is: (month: string, day: string, year: string) => {
               if (

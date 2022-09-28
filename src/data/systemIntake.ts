@@ -36,11 +36,8 @@ export const initialSystemIntakeForm: SystemIntakeForm = {
     isPresent: null,
     teams: []
   },
-  fundingSource: {
-    isFunded: null,
-    fundingNumber: '',
-    source: ''
-  },
+  existingFunding: null,
+  fundingSources: [],
   costs: {
     isExpectingIncrease: '',
     expectedIncreaseAmount: ''
@@ -48,7 +45,7 @@ export const initialSystemIntakeForm: SystemIntakeForm = {
   contract: {
     hasContract: '',
     contractor: '',
-    vehicle: '',
+    number: '',
     startDate: {
       month: '',
       day: '',
@@ -111,9 +108,8 @@ export const prepareSystemIntakeForApi = (systemIntake: SystemIntakeForm) => {
     ),
     eaCollaboratorName: getGovernanceCollaborator('Enterprise Architecture'),
     projectName: systemIntake.requestName,
-    existingFunding: systemIntake.fundingSource.isFunded,
-    fundingNumber: systemIntake.fundingSource.fundingNumber,
-    fundingSource: systemIntake.fundingSource.source,
+    existingFunding: systemIntake.existingFunding,
+    fundingSources: systemIntake.fundingSources,
     businessNeed: systemIntake.businessNeed,
     solution: systemIntake.businessSolution,
     processStatus: systemIntake.currentStage,
@@ -123,7 +119,7 @@ export const prepareSystemIntakeForApi = (systemIntake: SystemIntakeForm) => {
     costIncrease: systemIntake.costs.isExpectingIncrease,
     costIncreaseAmount: systemIntake.costs.expectedIncreaseAmount,
     contractor: systemIntake.contract.contractor,
-    contractVehicle: systemIntake.contract.vehicle,
+    contractNumber: systemIntake.contract.number,
     contractStartDate: DateTime.fromObject({
       day: Number(systemIntake.contract.startDate.day),
       month: Number(systemIntake.contract.startDate.month),
@@ -142,7 +138,7 @@ export const prepareSystemIntakeForApi = (systemIntake: SystemIntakeForm) => {
 };
 
 export const prepareSystemIntakeForApp = (
-  systemIntake: any
+  systemIntake: any // TODO: Specify type
 ): SystemIntakeForm => {
   const governanceTeams = () => {
     const teams: GovernanceCollaborationTeam[] = [];
@@ -188,14 +184,8 @@ export const prepareSystemIntakeForApp = (
       isPresent: governanceTeams().length !== 0 || null,
       teams: governanceTeams() || []
     },
-    fundingSource: {
-      isFunded:
-        systemIntake.existingFunding === null
-          ? null
-          : systemIntake.existingFunding,
-      fundingNumber: systemIntake.fundingNumber || '',
-      source: systemIntake.fundingSource || ''
-    },
+    existingFunding: systemIntake.existingFunding,
+    fundingSources: systemIntake.fundingSources || [],
     costs: {
       isExpectingIncrease: systemIntake.costIncrease || '',
       expectedIncreaseAmount: systemIntake.costIncreaseAmount || ''
@@ -203,7 +193,7 @@ export const prepareSystemIntakeForApp = (
     contract: {
       hasContract: systemIntake.existingContract || '',
       contractor: systemIntake.contractor || '',
-      vehicle: systemIntake.contractVehicle || '',
+      number: systemIntake.contractNumber || '',
       startDate: {
         month: contractStartDate.month
           ? contractStartDate.month.toString()
@@ -267,10 +257,12 @@ export const prepareSystemIntakeForApp = (
   };
 };
 
-export const convertIntakeToCSV = (intake: SystemIntakeForm) => {
+export const convertIntakeToCSV = (
+  intake: SystemIntakeForm & { requesterNameAndComponent: string }
+) => {
   const collaboratorTeams: any = {};
   if (intake.governanceTeams.isPresent) {
-    intake.governanceTeams.teams.forEach(team => {
+    intake.governanceTeams.teams.forEach((team: any) => {
       switch (team.name) {
         case 'Technical Review Board':
           collaboratorTeams.trbCollaborator = team.collaborator;
@@ -333,14 +325,12 @@ export const isIntakeStarted = (intake: SystemIntake | SystemIntakeForm) => {
     intake.isso.name ||
     intake.governanceTeams.isPresent ||
     (intake.governanceTeams.teams && intake.governanceTeams.teams.length > 0) ||
-    intake.fundingSource.isFunded ||
-    intake.fundingSource.fundingNumber ||
-    intake.fundingSource.source ||
+    intake.fundingSources.length > 0 ||
     intake.costs.isExpectingIncrease ||
     intake.costs.expectedIncreaseAmount ||
     intake.contract.hasContract ||
     intake.contract.contractor ||
-    intake.contract.vehicle ||
+    intake.contract.number ||
     intake.contract.startDate.month ||
     intake.contract.startDate.year ||
     intake.contract.endDate.month ||

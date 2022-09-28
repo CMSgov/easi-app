@@ -3,6 +3,7 @@ package cedarcore
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/zap"
@@ -25,14 +26,14 @@ func TestSystemSummaryTestSuite(t *testing.T) {
 	suite.Run(t, tests)
 }
 
-func (s SystemSummaryTestSuite) TestGetSystemSummary() {
+func (s *SystemSummaryTestSuite) TestGetSystemSummary() {
 	ctx := appcontext.WithLogger(context.Background(), s.logger)
 
 	ldClient, err := ld.MakeCustomClient("fake", ld.Config{Offline: true}, 0)
 	s.NoError(err)
 
 	s.Run("LD defaults protects invocation of GetSystemSummary", func() {
-		c := NewClient(ctx, "fake", "fake", ldClient)
+		c := NewClient(ctx, "fake", "fake", time.Minute, ldClient)
 		resp, err := c.GetSystemSummary(ctx, false)
 		s.NoError(err)
 
@@ -40,14 +41,14 @@ func (s SystemSummaryTestSuite) TestGetSystemSummary() {
 		s.Equal(resp, blankSummary)
 	})
 }
-func (s SystemSummaryTestSuite) TestGetSystem() {
+func (s *SystemSummaryTestSuite) TestGetSystem() {
 	ctx := appcontext.WithLogger(context.Background(), s.logger)
 
 	ldClient, err := ld.MakeCustomClient("fake", ld.Config{Offline: true}, 0)
 	s.NoError(err)
 
 	s.Run("LD defaults protects invocation of GetSystem", func() {
-		c := NewClient(ctx, "fake", "fake", ldClient)
+		c := NewClient(ctx, "fake", "fake", time.Minute, ldClient)
 		resp, err := c.GetSystem(ctx, "fake")
 		s.NoError(err)
 

@@ -12,11 +12,13 @@ import FieldGroup from 'components/shared/FieldGroup';
 import HelpText from 'components/shared/HelpText';
 import Label from 'components/shared/Label';
 import TextAreaField from 'components/shared/TextAreaField';
+import useSystemIntake from 'hooks/useSystemIntake';
 import {
   AddGRTFeedback,
   AddGRTFeedbackVariables
 } from 'queries/types/AddGRTFeedback';
 import { ProvideGRTFeedbackForm } from 'types/action';
+import { SystemIntakeContactProps } from 'types/systemIntake';
 import flattenErrors from 'utils/flattenErrors';
 import { provideGRTFeedbackSchema } from 'validations/actionSchema';
 
@@ -33,27 +35,38 @@ const ProvideGRTFeedbackToBusinessOwner = ({
   query
 }: ProvideGRTFeedbackProps) => {
   const { systemId } = useParams<{ systemId: string }>();
+  const { systemIntake } = useSystemIntake(systemId);
   const history = useHistory();
   const { t } = useTranslation('action');
   const [mutate] = useMutation<AddGRTFeedback, AddGRTFeedbackVariables>(query);
   const [shouldSendEmail, setShouldSendEmail] = useState<boolean>(true);
+  const [
+    activeContact,
+    setActiveContact
+  ] = useState<SystemIntakeContactProps | null>(null);
 
   const backLink = `/governance-review-team/${systemId}/actions`;
 
   const initialValues: ProvideGRTFeedbackForm = {
     grtFeedback: '',
-    emailBody: ''
+    emailBody: '',
+    notificationRecipients: {
+      regularRecipientEmails: [systemIntake?.requester?.email!].filter(e => e),
+      shouldNotifyITGovernance: true,
+      shouldNotifyITInvestment: false
+    }
   };
 
   const onSubmit = (values: ProvideGRTFeedbackForm) => {
-    const { grtFeedback, emailBody } = values;
+    const { grtFeedback, emailBody, notificationRecipients } = values;
     mutate({
       variables: {
         input: {
           emailBody,
           feedback: grtFeedback,
           intakeID: systemId,
-          shouldSendEmail
+          shouldSendEmail,
+          notificationRecipients
         }
       }
     }).then(() => {
@@ -76,7 +89,8 @@ const ProvideGRTFeedbackToBusinessOwner = ({
           setErrors,
           handleSubmit,
           submitForm,
-          setFieldValue
+          setFieldValue,
+          values
         } = formikProps;
         const flatErrors = flattenErrors(errors);
         return (
@@ -145,7 +159,20 @@ const ProvideGRTFeedbackToBusinessOwner = ({
                   error={!!flatErrors.emailBody}
                   className="margin-top-5"
                 >
-                  <EmailRecipientsFields />
+                  <EmailRecipientsFields
+                    systemIntakeId={systemId}
+                    activeContact={activeContact}
+                    setActiveContact={setActiveContact}
+                    recipients={values.notificationRecipients}
+                    setRecipients={recipients =>
+                      setFieldValue('notificationRecipients', recipients)
+                    }
+                    error={
+                      flatErrors[
+                        'notificationRecipients.regularRecipientEmails'
+                      ]
+                    }
+                  />
                   <Label
                     htmlFor="ProvideGRTFeedbackForm-EmailBody"
                     className="margin-top-0 line-height-body-2 text-normal"
@@ -170,6 +197,7 @@ const ProvideGRTFeedbackToBusinessOwner = ({
                       setShouldSendEmail(true);
                       setFieldValue('skipEmail', false);
                     }}
+                    disabled={!!activeContact}
                   >
                     {t('submitAction.submit')}
                   </Button>
@@ -182,6 +210,7 @@ const ProvideGRTFeedbackToBusinessOwner = ({
                       setFieldValue('skipEmail', true);
                       setTimeout(submitForm);
                     }}
+                    disabled={!!activeContact}
                   />
                 </div>
               </Form>
