@@ -10,7 +10,8 @@ export type AttendeeUserInfo = {
 export type TRBAttendeeFields = {
   id?: string;
   trbRequestId: string;
-  userInfo: AttendeeUserInfo;
+  // userInfo: AttendeeUserInfo;
+  euaUserId: string;
   component: string;
   role: PersonRole | null;
 };

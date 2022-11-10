@@ -21,8 +21,11 @@ import contactRoles from 'constants/enums/contactRoles';
 import useTRBAttendees from 'hooks/useTRBAttendees';
 // eslint-disable-next-line camelcase
 import { CreateTrbRequest_createTRBRequest } from 'queries/types/CreateTrbRequest';
-import { PersonRole } from 'types/graphql-global-types';
-import { TRBAttendeeFields } from 'types/technicalAssistance';
+import {
+  CreateTRBRequestAttendeeInput,
+  UpdateTRBRequestAttendeeInput
+} from 'types/graphql-global-types';
+// import { TRBAttendeeFields } from 'types/technicalAssistance';
 import { trbAttendeeSchema } from 'validations/trbRequestSchema';
 
 import Breadcrumbs from '../../Breadcrumbs';
@@ -35,6 +38,10 @@ interface AttendeesFormProps {
   activeAttendee: TRBAttendeeFields;
   setActiveAttendee: (value: TRBAttendeeFields) => void;
 }
+
+type TRBAttendeeFields =
+  | CreateTRBRequestAttendeeInput
+  | UpdateTRBRequestAttendeeInput;
 
 function AttendeesForm({
   request,
@@ -56,11 +63,7 @@ function AttendeesForm({
 
   const formType = defaultValues.id ? 'edit' : 'create';
 
-  const {
-    control,
-    handleSubmit
-    // formState: { errors, isSubmitting, isDirty }
-  } = useForm<TRBAttendeeFields>({
+  const { control, handleSubmit, formState } = useForm<TRBAttendeeFields>({
     resolver: yupResolver(trbAttendeeSchema),
     defaultValues
   });
@@ -70,8 +73,8 @@ function AttendeesForm({
     const submitAttendee = (formData: TRBAttendeeFields) => {
       /** Attendee component and role */
       const input = {
-        component: activeAttendee.component,
-        role: activeAttendee.role as PersonRole
+        component: formData.component,
+        role: formData.role as PersonRole
       };
       // If editing attendee, add ID to input and update attendee
       if (defaultValues.id) {
@@ -84,13 +87,15 @@ function AttendeesForm({
         createAttendee({
           ...input,
           trbRequestId: request.id,
-          euaUserId: activeAttendee.userInfo?.euaUserId || ''
+          euaUserId: formData.euaUserId || ''
         }).catch(e => null);
       }
       // TODO: Request error handling
       history.push(backToFormUrl);
       setActiveAttendee(initialAttendee);
     };
+
+    console.log('FORM STATE ERRORS', formState.errors);
 
     return (
       <div className="trb-attendees-list">
@@ -121,6 +126,7 @@ function AttendeesForm({
 
         <Form
           onSubmit={handleSubmit(formData => {
+            console.log('FORM DATA ON SUBMIT', formData);
             // TODO: Fix
             submitAttendee(formData);
           })}
@@ -142,19 +148,21 @@ function AttendeesForm({
           </Alert> */}
           {/* Attendee name */}
           <Controller
-            name="userInfo"
+            name="euaUserId"
             control={control}
             render={({ field }) => {
               return (
                 <FormGroup>
-                  <Label htmlFor="userInfo">
+                  <Label htmlFor="euaUserId">
                     {t(`attendees.fieldLabels.${formType}.commonName`)}
                   </Label>
                   <CedarContactSelect
-                    name="userInfo"
-                    id="userInfo"
+                    name="euaUserId"
+                    id="euaUserId"
                     value={activeAttendee.userInfo}
-                    onChange={field.onChange}
+                    onChange={cedarData => {
+                      field.onChange(cedarData?.euaUserId);
+                    }}
                   />
                 </FormGroup>
               );
