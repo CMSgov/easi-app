@@ -108,7 +108,7 @@ repos:
         description: Re-generates CEDAR Intake and CEDAR Core clients when either of the swagger files change. This will re-generate both clients if either file changes.
         entry: scripts/generate_cedar_clients
         language: script
-        files: pkg/cedar/intake/cedar_intake.json|pkg/cedar/core/cedar_core.json
+        files: pkg/cedar/intake/cedar_intake.json|pkg/cedar/core/cedar_core.json|pkg/cedar/cedarldap/swagger-impl.json
         pass_filenames: false
 
   - repo: https://github.com/awslabs/git-secrets
