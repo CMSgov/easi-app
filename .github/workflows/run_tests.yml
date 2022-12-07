@@ -40,7 +40,7 @@ jobs:
         with:
           ref: ${{ env.GIT_HASH }}
       - name: Configure go cache
-        uses: actions/cache@56461b9eb0f8438fd15c7a9968e3c9ebb18ceff1
+        uses: actions/cache@9b0c1fce7a93df8e3bb8926b0d6e9d89e92f20a7
         with:
           path: |
             ~/go/pkg/mod
@@ -80,6 +80,7 @@ jobs:
           GRT_EMAIL: success@simulator.amazonses.com
           IT_INVESTMENT_EMAIL: success@simulator.amazonses.com
           ACCESSIBILITY_TEAM_EMAIL: success@simulator.amazonses.com
+          TRB_EMAIL: success@simulator.amazonses.com
           EASI_HELP_EMAIL: success@simulator.amazonses.com
           OKTA_CLIENT_ID: 0oa2e913coDQeG19S297
           OKTA_DOMAIN: https://test.idp.idm.cms.gov
@@ -108,7 +109,7 @@ jobs:
           ./scripts/testsuite
           docker-compose --project-name easi-server-test -f docker-compose.ci_server_test.yml down
       - name: Upload backend test artifacts
-        uses: actions/upload-artifact@3cea5372237819ed00197afe530f5a7ea3e805c8
+        uses: actions/upload-artifact@83fd05a356d7e2593de66fc9913b3002723633cb
         with:
           name: backend-tests
           path: results
@@ -126,14 +127,14 @@ jobs:
         with:
           ref: ${{ env.GIT_HASH }}
       - name: Set up node
-        uses: actions/setup-node@969bd2663942d722d85b6a8626225850c2f7be4b
+        uses: actions/setup-node@8c91899e586c5b171469028077307d293428b516
         with:
           node-version: ${{ env.EASI_APP_NODE_VERSION }}
       - name: Get yarn cache directory path
         id: yarn-cache-dir-path
         run: echo "::set-output name=dir::$(yarn cache dir)"
       - name: Configure yarn cache
-        uses: actions/cache@56461b9eb0f8438fd15c7a9968e3c9ebb18ceff1
+        uses: actions/cache@9b0c1fce7a93df8e3bb8926b0d6e9d89e92f20a7
         id: yarn-cache # use this to check for `cache-hit` (`steps.yarn-cache.outputs.cache-hit != 'true'`)
         with:
           path: |
@@ -180,14 +181,14 @@ jobs:
           ./scripts/run-cypress-test-docker
       - name: Upload cypress videos
         if: ${{ always() }}
-        uses: actions/upload-artifact@3cea5372237819ed00197afe530f5a7ea3e805c8
+        uses: actions/upload-artifact@83fd05a356d7e2593de66fc9913b3002723633cb
         with:
           name: cypress-videos
           path: cypress/videos
           retention-days: 14
       - name: Upload cypress screenshots
         if: ${{ always() }}
-        uses: actions/upload-artifact@3cea5372237819ed00197afe530f5a7ea3e805c8
+        uses: actions/upload-artifact@83fd05a356d7e2593de66fc9913b3002723633cb
         with:
           name: cypress-screenshots
           path: cypress/screenshots
@@ -206,7 +207,7 @@ jobs:
         with:
           ref: ${{ env.GIT_HASH }}
       - name: Set up node
-        uses: actions/setup-node@969bd2663942d722d85b6a8626225850c2f7be4b
+        uses: actions/setup-node@8c91899e586c5b171469028077307d293428b516
         with:
           node-version: ${{ env.EASI_APP_NODE_VERSION }}
       - name: Set up go
@@ -214,7 +215,7 @@ jobs:
         with:
           go-version: ${{ env.EASI_APP_GO_VERSION }}
       - name: Configure go cache
-        uses: actions/cache@56461b9eb0f8438fd15c7a9968e3c9ebb18ceff1
+        uses: actions/cache@9b0c1fce7a93df8e3bb8926b0d6e9d89e92f20a7
         with:
           path: |
             ~/go/pkg/mod
@@ -225,7 +226,7 @@ jobs:
         id: yarn-cache-dir-path
         run: echo "::set-output name=dir::$(yarn cache dir)"
       - name: Configure yarn cache
-        uses: actions/cache@56461b9eb0f8438fd15c7a9968e3c9ebb18ceff1
+        uses: actions/cache@9b0c1fce7a93df8e3bb8926b0d6e9d89e92f20a7
         id: yarn-cache # use this to check for `cache-hit` (`steps.yarn-cache.outputs.cache-hit != 'true'`)
         with:
           path: |
@@ -258,14 +259,14 @@ jobs:
         with:
           ref: ${{ env.GIT_HASH }}
       - name: Set up node
-        uses: actions/setup-node@969bd2663942d722d85b6a8626225850c2f7be4b
+        uses: actions/setup-node@8c91899e586c5b171469028077307d293428b516
         with:
           node-version: ${{ env.EASI_APP_NODE_VERSION }}
       - name: Get yarn cache directory path
         id: yarn-cache-dir-path
         run: echo "::set-output name=dir::$(yarn cache dir)"
       - name: Configure yarn cache
-        uses: actions/cache@56461b9eb0f8438fd15c7a9968e3c9ebb18ceff1
+        uses: actions/cache@9b0c1fce7a93df8e3bb8926b0d6e9d89e92f20a7
         id: yarn-cache # use this to check for `cache-hit` (`steps.yarn-cache.outputs.cache-hit != 'true'`)
         with:
           path: |
@@ -288,14 +289,14 @@ jobs:
         with:
           ref: ${{ env.GIT_HASH }}
       - name: Set up node
-        uses: actions/setup-node@969bd2663942d722d85b6a8626225850c2f7be4b # v2.1.5
+        uses: actions/setup-node@8c91899e586c5b171469028077307d293428b516 # v2.1.5
         with:
           node-version: ${{ env.EASI_APP_NODE_VERSION }}
       - name: Get yarn cache directory path
         id: yarn-cache-dir-path
         run: echo "::set-output name=dir::$(yarn cache dir)"
       - name: Configure yarn cache
-        uses: actions/cache@56461b9eb0f8438fd15c7a9968e3c9ebb18ceff1 # v2.1.6
+        uses: actions/cache@9b0c1fce7a93df8e3bb8926b0d6e9d89e92f20a7 # v2.1.6
         id: yarn-cache # use this to check for `cache-hit` (`steps.yarn-cache.outputs.cache-hit != 'true'`)
         with:
           path: |
