@@ -110,7 +110,7 @@ function RequestNameCell({
   row
 }: CellProps<TrbAdminTeamHomeRequest, TrbAdminTeamHomeRequest['name']>) {
   return (
-    <UswdsReactLink to={`/trb/task-list/${row.original.id}`}>
+    <UswdsReactLink to={`/trb/${row.original.id}/request`}>
       {value}
     </UswdsReactLink>
   );
@@ -631,12 +631,12 @@ function TrbAdminTeamHome() {
           </ul>
           <div className="margin-top-6">
             <TrbNewRequestsTable
-              requests={trbRequests.filter(d => d.isRecent)}
+              requests={trbRequests.filter((d, i) => i % 2 === 0)}
             />
           </div>
           <div className="margin-top-6 trb-existing-requests-table">
             <TrbExistingRequestsTable
-              requests={trbRequests.filter(d => !d.isRecent)}
+              requests={trbRequests.filter((d, i) => i % 2 !== 0)}
             />
           </div>
         </>
