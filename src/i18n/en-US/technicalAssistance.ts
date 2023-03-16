@@ -620,7 +620,8 @@ const technicalAssistance = {
     status: 'Status',
     requestStatuses: {
       OPEN: 'Open',
-      CLOSED: 'Closed'
+      CLOSED: 'Closed',
+      REQUEST_FORM_COMPLETE: 'Complete'
     },
     taskStatuses: {
       formStatus: {

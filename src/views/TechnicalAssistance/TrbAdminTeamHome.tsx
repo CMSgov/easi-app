@@ -164,12 +164,12 @@ function TrbNewRequestsTable({ requests }: TrbRequestsTableProps) {
         Cell: ({ value, row }: CellProps<TrbAdminTeamHomeRequest>) => {
           return (
             <>
-              <UswdsReactLink
-                to={`/trb/${row.original.id}/initial-request-form`}
+              {/* <UswdsReactLink
+                to={`/trb/${row.original.id}/initial-request-form/initial-request-form`}
                 className="margin-right-2"
               >
                 {t('adminTeamHome.actions.reviewRequest')}
-              </UswdsReactLink>
+              </UswdsReactLink> */}
               {/* wip assign lead could be a modal popup */}
               <Button type="button" unstyled>
                 {t('adminTeamHome.actions.assignLead')}
