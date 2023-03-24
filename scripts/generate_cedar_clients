@@ -1,17 +1,14 @@
 #!/usr/bin/env bash
 
+function swagger() {
+    docker run --rm --user "$(id -u)":"$(id -g)" -e GOPATH="$(go env GOPATH)":/go -v "$HOME":"$HOME" -w "$(pwd)" quay.io/goswagger/swagger "$@"
+}
+
 if ! command -v jq &> /dev/null
 then
     echo "jq could not be found."
     echo "Install jq from https://stedolan.github.io/jq/download/"
     exit 1
-fi
-
-if ! command -v swagger &> /dev/null
-then
-    echo "go-swagger could not be found."
-    echo "Install go-swagger from https://goswagger.io/install.html"
-    exit 2
 fi
 
 # equivalent of set -e; exit on first error
