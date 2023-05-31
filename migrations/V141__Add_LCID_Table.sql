@@ -1,5 +1,9 @@
 -- TODO - what's a good naming convention to separate lcids table surrogate key and the actual lifecycle ID?
 
+-- TODO - how to find LCIDs to migrate
+-- for testing purposes, use WHERE lcid_scope IS NOT NULL (because seed data is a little wonky)
+-- hopefully for deployed environments, we can use WHERE lcid IS NOT NULL instead
+
 -- everything will be handled in a single transaction
 DO
 $do$
@@ -7,9 +11,8 @@ BEGIN
 	-- add column to system_intakes that we'll use as FK, then fill it with UUIDs that we'll use as PKs for LCIDs that will be migrated
     -- we want to add this column first so we have the LCID ids to insert into the lcids table,
     -- but we can't create a FK relationship until the lcid table's been populated; we'll do that later in this code
-
 	ALTER TABLE system_intakes
-    ADD COLUMN lcid_id uuid; -- REFERENCES lcids(id);
+    ADD COLUMN lcid_id uuid;
 
 	-- generate PKs for LCIDs that will be migrated
     UPDATE system_intakes
@@ -24,11 +27,11 @@ BEGIN
         -- fields (from system_intakes table)
         lcid TEXT NOT NULL, -- corresponds to current system_intakes.lcid, the user-visible LCID
 
-        -- might be possible to make these non-nullable
-        lcid_expires_at TIMESTAMP WITH TIME ZONE,
-        lcid_scope TEXT,
+        -- required to be present by input form for issuing LCID
+        lcid_expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+        lcid_scope TEXT NOT NULL,
 
-        -- need to be nullable
+        -- optional fields
         lcid_cost_baseline TEXT,
         lcid_expiration_alert_ts TIMESTAMP WITH TIME ZONE,
 
@@ -38,11 +41,6 @@ BEGIN
         modified_by TEXT CHECK (modified_by ~ '^[A-Z0-9]{4}$'),
         modified_at TIMESTAMP WITH TIME ZONE
     );
-
-
--- migration - for testing purposes, select on WHERE lcid_scope IS NOT NULL (because seed data is a little wonky)
--- hopefully for deployed environments, we can use WHERE lcid IS NOT NULL instead
-
 
     -- TODO - insert metadata? from where?
     -- TODO - how to handle created_by?
@@ -72,11 +70,10 @@ BEGIN
             OR lcid_expiration_alert_ts IS NOT NULL
         )
     ) THEN
+        -- TODO - how should we handle this error? do we want to do something that fails running the migration, so the deployment fails?
         RAISE NOTICE 'Data found that shouldnt be deleted, rolling back';
---         ROLLBACK;
 		RAISE EXCEPTION 'Rolling back';
     END IF;
-
 
     -- delete migrated columns
     ALTER TABLE system_intakes
