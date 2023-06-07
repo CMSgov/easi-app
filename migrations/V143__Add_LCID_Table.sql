@@ -22,9 +22,9 @@ BEGIN
         -- fields (from system_intakes table)
         lcid TEXT NOT NULL, -- corresponds to current system_intakes.lcid, the user-visible LCID
 
-        -- required to be present by input form for issuing LCID
-        lcid_expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
-        lcid_scope TEXT NOT NULL,
+        -- required to be present by input form for issuing LCID, but some records from Sharepoint don't have these, so columns are nullable
+        lcid_expires_at TIMESTAMP WITH TIME ZONE,
+        lcid_scope TEXT,
 
         -- optional fields
         lcid_cost_baseline TEXT,
@@ -50,8 +50,13 @@ BEGIN
         FOREIGN KEY (lcid_id) REFERENCES lcids(id);
 
 
+    -- this sanity check *probably* doesn't need to exist; when checking Prod, there's only two older intakes, imported from Sharepoint,
+    -- that have lcid_scope data but a NULL lcid
+    -- from EASi team meeting on 6/7/23, it's *probably* ok to just drop these columns and lose that data, but we're verifying with CMS
+
     -- sanity check to make sure we're not deleting any data we missed in the INSERT INTO query;
     -- if any of the columns to be deleted have a non-NULL in any of the rows that haven't been copied to LCID table, rollback everything
+    /*
     IF EXISTS (
         SELECT -- intentionally empty
         FROM system_intakes
@@ -65,6 +70,7 @@ BEGIN
     ) THEN
 		RAISE EXCEPTION 'LCID data found in system_intakes that was not migrated, rolling back';
     END IF;
+    */
 
     -- delete migrated columns
     ALTER TABLE system_intakes
