@@ -30,19 +30,20 @@ BEGIN
         lcid_cost_baseline TEXT,
         lcid_expiration_alert_ts TIMESTAMP WITH TIME ZONE,
 
-        -- general metadata (TODO: is this needed?)
+        -- general metadata
         created_by TEXT NOT NULL CHECK (created_by ~ '^[A-Z0-9]{4}$'),
         created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
         modified_by TEXT CHECK (modified_by ~ '^[A-Z0-9]{4}$'),
         modified_at TIMESTAMP WITH TIME ZONE
     );
 
-    -- TODO - insert metadata? from where?
-    -- TODO - how to handle created_by?
+    -- copy data into new table from system_intakes, with a placeholder for created_by
     INSERT INTO lcids (id, lcid, lcid_expires_at, lcid_scope, lcid_cost_baseline, lcid_expiration_alert_ts, created_by)
-    SELECT lcid_id, lcid, lcid_expires_at, lcid_scope, lcid_cost_baseline, lcid_expiration_alert_ts, 'ABCD'
+    SELECT lcid_id, lcid, lcid_expires_at, lcid_scope, lcid_cost_baseline, lcid_expiration_alert_ts, 'TEMP'
     FROM system_intakes
     WHERE lcid IS NOT NULL;
+
+    -- TODO - insert metadata, probably from actions table
 
     -- now that lcids table exists and is populated, we can set up FK relationship between system_intakes and lcids
     ALTER TABLE system_intakes
