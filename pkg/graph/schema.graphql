@@ -39,7 +39,7 @@ type Request {
   type: RequestType!
   status: String!
   statusCreatedAt: Time
-  lcid: String
+  lcid: LCID
   nextMeetingDate: Time
 }
 
@@ -480,7 +480,7 @@ managed by CMS
 type System {
   businessOwner: BusinessOwner!
   id: UUID!
-  lcid: String!
+  lcid: LCID!
   name: String!
 }
 
@@ -963,6 +963,21 @@ type SystemIntakeRequester {
 }
 
 """
+Represents a lifecycle ID
+"""
+type LCID {
+  id: UUID!
+  lifecycleID: String! # User-visible ID, such as 123456 or F987654
+  expiresAt: Time
+  scope: String
+  costBaseline: String
+  createdBy: String!
+  createdAt: Time!
+  modifiedBy: String
+  modifiedAt: Time
+}
+
+"""
 Represents an IT governance request for a system
 """
 type SystemIntake {
@@ -989,10 +1004,7 @@ type SystemIntake {
   grtFeedbacks: [GRTFeedback!]!
   id: UUID!
   isso: SystemIntakeISSO!
-  lcid: String
-  lcidExpiresAt: Time
-  lcidScope: String
-  lcidCostBaseline: String
+  lcid: LCID
   needsEaSupport: Boolean
   notes: [SystemIntakeNote!]!
   oitSecurityCollaborator: String
