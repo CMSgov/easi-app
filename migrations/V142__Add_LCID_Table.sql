@@ -1,9 +1,5 @@
 -- TODO - what's a good naming convention to separate lcids table surrogate key and the actual lifecycle ID?
 
--- TODO - how to find LCIDs to migrate
--- for testing purposes, use WHERE lcid_scope IS NOT NULL (because seed data is a little wonky)
--- hopefully for deployed environments, we can use WHERE lcid IS NOT NULL instead
-
 -- everything will be handled in a single transaction
 DO
 $do$
@@ -17,8 +13,7 @@ BEGIN
 	-- generate PKs for LCIDs that will be migrated
     UPDATE system_intakes
     SET lcid_id = uuid_generate_v4()
-    WHERE lcid_scope IS NOT NULL;
-    --WHERE lcid IS NOT NULL;
+    WHERE lcid IS NOT NULL;
 
     CREATE TABLE lcids (
         -- PK
@@ -47,8 +42,7 @@ BEGIN
     INSERT INTO lcids (id, lcid, lcid_expires_at, lcid_scope, lcid_cost_baseline, lcid_expiration_alert_ts, created_by)
     SELECT lcid_id, lcid, lcid_expires_at, lcid_scope, lcid_cost_baseline, lcid_expiration_alert_ts, 'ABCD'
     FROM system_intakes
-    WHERE lcid_scope IS NOT NULL;
-    --WHERE lcid IS NOT NULL;
+    WHERE lcid IS NOT NULL;
 
     -- now that lcids table exists and is populated, we can set up FK relationship between system_intakes and lcids
     ALTER TABLE system_intakes
@@ -61,8 +55,7 @@ BEGIN
     IF EXISTS (
         SELECT -- intentionally empty
         FROM system_intakes
-        WHERE lcid_scope IS NULL
-        -- WHERE lcid IS NULL
+        WHERE lcid IS NULL
         AND (
             lcid_expires_at IS NOT NULL
             OR lcid_scope IS NOT NULL
@@ -70,9 +63,7 @@ BEGIN
             OR lcid_expiration_alert_ts IS NOT NULL
         )
     ) THEN
-        -- TODO - how should we handle this error? do we want to do something that fails running the migration, so the deployment fails?
-        RAISE NOTICE 'Data found that shouldnt be deleted, rolling back';
-		RAISE EXCEPTION 'Rolling back';
+		RAISE EXCEPTION 'LCID data found in system_intakes that was not migrated, rolling back';
     END IF;
 
     -- delete migrated columns
