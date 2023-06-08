@@ -23,12 +23,12 @@ BEGIN
         lcid TEXT NOT NULL, -- corresponds to current system_intakes.lcid, the user-visible LCID
 
         -- required to be present by input form for issuing LCID, but some records from Sharepoint don't have these, so columns are nullable
-        lcid_expires_at TIMESTAMP WITH TIME ZONE,
-        lcid_scope TEXT,
+        expires_at TIMESTAMP WITH TIME ZONE,
+        scope TEXT,
 
         -- optional fields
-        lcid_cost_baseline TEXT,
-        lcid_expiration_alert_ts TIMESTAMP WITH TIME ZONE,
+        cost_baseline TEXT,
+        expiration_alert_ts TIMESTAMP WITH TIME ZONE,
 
         -- general metadata
         created_by TEXT NOT NULL CHECK (created_by ~ '^[A-Z0-9]{4}$'),
@@ -38,7 +38,7 @@ BEGIN
     );
 
     -- copy data into new table from system_intakes, with a placeholder for created_by
-    INSERT INTO lcids (id, lcid, lcid_expires_at, lcid_scope, lcid_cost_baseline, lcid_expiration_alert_ts, created_by)
+    INSERT INTO lcids (id, lcid, expires_at, scope, cost_baseline, expiration_alert_ts, created_by)
     SELECT lcid_id, lcid, lcid_expires_at, lcid_scope, lcid_cost_baseline, lcid_expiration_alert_ts, 'TEMP'
     FROM system_intakes
     WHERE lcid IS NOT NULL;
