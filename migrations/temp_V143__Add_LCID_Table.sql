@@ -1,5 +1,3 @@
--- TODO - what's a good naming convention to separate lcids table surrogate key and the actual lifecycle ID?
-
 -- everything will be handled in a single transaction
 DO
 $do$
@@ -8,14 +6,14 @@ BEGIN
     -- we want to add this column first so we have the LCID ids to insert into the lcids table,
     -- but we can't create a FK relationship until the lcid table's been populated; we'll do that later in this code
 	ALTER TABLE system_intakes
-    ADD COLUMN lcid_id uuid;
+    ADD COLUMN lcid_assignment_id uuid;
 
 	-- generate PKs for LCIDs that will be migrated
     UPDATE system_intakes
-    SET lcid_id = uuid_generate_v4()
+    SET lcid_assignment_id = uuid_generate_v4()
     WHERE lcid IS NOT NULL;
 
-    CREATE TABLE lcids (
+    CREATE TABLE lcid_assignments (
         -- PK
         id UUID PRIMARY KEY NOT NULL, -- surrogate key
 
@@ -38,8 +36,8 @@ BEGIN
     );
 
     -- copy data into new table from system_intakes, with a placeholder for created_by
-    INSERT INTO lcids (id, lcid, expires_at, scope, cost_baseline, expiration_alert_ts, created_by)
-    SELECT lcid_id, lcid, lcid_expires_at, lcid_scope, lcid_cost_baseline, lcid_expiration_alert_ts, 'TEMP'
+    INSERT INTO lcid_assignments (id, lcid, expires_at, scope, cost_baseline, expiration_alert_ts, created_by)
+    SELECT lcid_assignment_id, lcid, lcid_expires_at, lcid_scope, lcid_cost_baseline, lcid_expiration_alert_ts, 'TEMP'
     FROM system_intakes
     WHERE lcid IS NOT NULL;
 
@@ -47,8 +45,8 @@ BEGIN
 
     -- now that lcids table exists and is populated, we can set up FK relationship between system_intakes and lcids
     ALTER TABLE system_intakes
-    ADD CONSTRAINT system_intakes_lcid_id_fkey
-        FOREIGN KEY (lcid_id) REFERENCES lcids(id);
+    ADD CONSTRAINT system_intakes_lcid_assignment_id_fkey
+        FOREIGN KEY (lcid_assignment_id) REFERENCES lcid_assignments(id);
 
 
     -- this sanity check *probably* doesn't need to exist; when checking Prod, there's only two older intakes, imported from Sharepoint,
