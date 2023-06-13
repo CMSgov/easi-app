@@ -1,5 +1,3 @@
--- TODO - what's a good naming convention to separate lcids table surrogate key and the actual lifecycle ID?
-
 -- everything will be handled in a single transaction
 DO
 $do$
@@ -8,14 +6,14 @@ BEGIN
     -- we want to add this column first so we have the LCID ids to insert into the lcids table,
     -- but we can't create a FK relationship until the lcid table's been populated; we'll do that later in this code
 	ALTER TABLE system_intakes
-    ADD COLUMN lcid_id uuid;
+    ADD COLUMN lcid_assignment_id uuid;
 
 	-- generate PKs for LCIDs that will be migrated
     UPDATE system_intakes
-    SET lcid_id = uuid_generate_v4()
+    SET lcid_assignment_id = uuid_generate_v4()
     WHERE lcid IS NOT NULL;
 
-    CREATE TABLE lcids (
+    CREATE TABLE lcid_assignments (
         -- PK
         id UUID PRIMARY KEY NOT NULL, -- surrogate key
 
@@ -23,12 +21,12 @@ BEGIN
         lcid TEXT NOT NULL, -- corresponds to current system_intakes.lcid, the user-visible LCID
 
         -- required to be present by input form for issuing LCID, but some records from Sharepoint don't have these, so columns are nullable
-        lcid_expires_at TIMESTAMP WITH TIME ZONE,
-        lcid_scope TEXT,
+        expires_at TIMESTAMP WITH TIME ZONE,
+        scope TEXT,
 
         -- optional fields
-        lcid_cost_baseline TEXT,
-        lcid_expiration_alert_ts TIMESTAMP WITH TIME ZONE,
+        cost_baseline TEXT,
+        expiration_alert_ts TIMESTAMP WITH TIME ZONE,
 
         -- general metadata
         created_by TEXT NOT NULL CHECK (created_by ~ '^[A-Z0-9]{4}$'),
@@ -38,8 +36,8 @@ BEGIN
     );
 
     -- copy data into new table from system_intakes, with a placeholder for created_by
-    INSERT INTO lcids (id, lcid, lcid_expires_at, lcid_scope, lcid_cost_baseline, lcid_expiration_alert_ts, created_by)
-    SELECT lcid_id, lcid, lcid_expires_at, lcid_scope, lcid_cost_baseline, lcid_expiration_alert_ts, 'TEMP'
+    INSERT INTO lcid_assignments (id, lcid, expires_at, scope, cost_baseline, expiration_alert_ts, created_by)
+    SELECT lcid_assignment_id, lcid, lcid_expires_at, lcid_scope, lcid_cost_baseline, lcid_expiration_alert_ts, 'TEMP'
     FROM system_intakes
     WHERE lcid IS NOT NULL;
 
@@ -47,31 +45,11 @@ BEGIN
 
     -- now that lcids table exists and is populated, we can set up FK relationship between system_intakes and lcids
     ALTER TABLE system_intakes
-    ADD CONSTRAINT system_intakes_lcid_id_fkey
-        FOREIGN KEY (lcid_id) REFERENCES lcids(id);
+    ADD CONSTRAINT system_intakes_lcid_assignment_id_fkey
+        FOREIGN KEY (lcid_assignment_id) REFERENCES lcid_assignments(id);
 
-
-    -- this sanity check *probably* doesn't need to exist; when checking Prod, there's only two older intakes, imported from Sharepoint,
-    -- that have lcid_scope data but a NULL lcid
-    -- from EASi team meeting on 6/7/23, it's *probably* ok to just drop these columns and lose that data, but we're verifying with CMS
-
-    -- sanity check to make sure we're not deleting any data we missed in the INSERT INTO query;
-    -- if any of the columns to be deleted have a non-NULL in any of the rows that haven't been copied to LCID table, rollback everything
-    /*
-    IF EXISTS (
-        SELECT -- intentionally empty
-        FROM system_intakes
-        WHERE lcid IS NULL
-        AND (
-            lcid_expires_at IS NOT NULL
-            OR lcid_scope IS NOT NULL
-            OR lcid_cost_baseline IS NOT NULL
-            OR lcid_expiration_alert_ts IS NOT NULL
-        )
-    ) THEN
-		RAISE EXCEPTION 'LCID data found in system_intakes that was not migrated, rolling back';
-    END IF;
-    */
+    -- don't need to worry about dropping data in lcid_expires_at/lcid_scope/lcid_cost_baseline in rows where lcid is NULL;
+    -- that's data that was migrated in from Sharepoint, if it's absolutely needed it can be recovered from Sharepoint
 
     -- delete migrated columns
     ALTER TABLE system_intakes
