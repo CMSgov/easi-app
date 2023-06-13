@@ -39,7 +39,7 @@ type Request {
   type: RequestType!
   status: String!
   statusCreatedAt: Time
-  lcid: LCID
+  lcid: String
   nextMeetingDate: Time
 }
 
@@ -480,7 +480,7 @@ managed by CMS
 type System {
   businessOwner: BusinessOwner!
   id: UUID!
-  lcid: LCID!
+  lcid: String!
   name: String!
 }
 
