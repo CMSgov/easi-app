@@ -6,7 +6,7 @@ import (
 	"github.com/guregu/null"
 )
 
-// LCIDAssignment represents a Lifecycle ID entity, including both the ID itself and additional data such as the expiration date and scope
+// LCIDAssignment represents a Lifecycle ID assigned to some object, including both the ID itself and additional data such as the expiration date and scope
 type LCIDAssignment struct {
 	BaseStruct
 	LifecycleID       string      `json:"lcid" db:"lcid"`
