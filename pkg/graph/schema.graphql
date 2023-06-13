@@ -963,11 +963,11 @@ type SystemIntakeRequester {
 }
 
 """
-Represents a lifecycle ID
+Represents a lifecycle ID assigned to some object, along with its associated data
 """
-type LCID {
+type LCIDAssignment {
   id: UUID!
-  lifecycleID: String! # User-visible ID, such as 123456 or F987654
+  lcid: String! # User-visible ID, such as 123456 or F987654
   expiresAt: Time
   scope: String
   costBaseline: String
@@ -1004,7 +1004,7 @@ type SystemIntake {
   grtFeedbacks: [GRTFeedback!]!
   id: UUID!
   isso: SystemIntakeISSO!
-  lcid: LCID
+  lcidAssignment: LCIDAssignment
   needsEaSupport: Boolean
   notes: [SystemIntakeNote!]!
   oitSecurityCollaborator: String
