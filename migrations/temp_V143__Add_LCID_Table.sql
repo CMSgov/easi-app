@@ -48,28 +48,8 @@ BEGIN
     ADD CONSTRAINT system_intakes_lcid_assignment_id_fkey
         FOREIGN KEY (lcid_assignment_id) REFERENCES lcid_assignments(id);
 
-
-    -- this sanity check *probably* doesn't need to exist; when checking Prod, there's only two older intakes, imported from Sharepoint,
-    -- that have lcid_scope data but a NULL lcid
-    -- from EASi team meeting on 6/7/23, it's *probably* ok to just drop these columns and lose that data, but we're verifying with CMS
-
-    -- sanity check to make sure we're not deleting any data we missed in the INSERT INTO query;
-    -- if any of the columns to be deleted have a non-NULL in any of the rows that haven't been copied to LCID table, rollback everything
-    /*
-    IF EXISTS (
-        SELECT -- intentionally empty
-        FROM system_intakes
-        WHERE lcid IS NULL
-        AND (
-            lcid_expires_at IS NOT NULL
-            OR lcid_scope IS NOT NULL
-            OR lcid_cost_baseline IS NOT NULL
-            OR lcid_expiration_alert_ts IS NOT NULL
-        )
-    ) THEN
-		RAISE EXCEPTION 'LCID data found in system_intakes that was not migrated, rolling back';
-    END IF;
-    */
+    -- don't need to worry about dropping data in lcid_expires_at/lcid_scope/lcid_cost_baseline in rows where lcid is NULL;
+    -- that's data that was migrated in from Sharepoint, if it's absolutely needed it can be recovered from Sharepoint
 
     -- delete migrated columns
     ALTER TABLE system_intakes
