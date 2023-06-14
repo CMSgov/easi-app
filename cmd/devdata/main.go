@@ -183,12 +183,6 @@ func main() {
 		tomorrow := time.Now().Add(24 * time.Hour)
 		i.GRBDate = &lastMonth
 		i.GRTDate = &tomorrow
-
-		// inconsistent data for testing LCID migration's error handling
-		// the inconsistency: LCID-related data is present without i.LifecycleID being set (currently enforced by the frontend form)
-		// inconsistencies were present in this seed data before work to explore LCID migration;
-		// currently unknown whether actual data in impl/prod has inconsistencies like this
-		i.LifecycleCostBaseline = null.StringFrom("I think I will cause problems on purpose")
 	})
 	makeBusinessCase("With GRT scheduled", logger, store, intake)
 
