@@ -2306,6 +2306,7 @@ type Query {
   trbLeadOptions: [UserInfo!]!
   trbAdminNote(id: UUID!): TRBAdminNote!
     @hasRole(role: EASI_TRB_ADMIN)
+  cedarRolesForCurrentUserOnSystem(cedarSystemId: String!): [CedarRole!]!
 }
 
 enum TRBRequestType {

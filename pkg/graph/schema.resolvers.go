@@ -2535,6 +2535,24 @@ func (r *queryResolver) TrbAdminNote(ctx context.Context, id uuid.UUID) (*models
 	return resolvers.GetTRBAdminNoteByID(ctx, r.store, id)
 }
 
+// CedarRolesForCurrentUserOnSystem is the resolver for the cedarRolesForCurrentUserOnSystem field.
+func (r *queryResolver) CedarRolesForCurrentUserOnSystem(ctx context.Context, cedarSystemID string) ([]*models.CedarRole, error) {
+	currentUserEUAID := appcontext.Principal(ctx).ID()
+
+	allRoles, err := r.cedarCoreClient.GetRolesBySystem(ctx, cedarSystemID, null.StringFromPtr(nil))
+	if err != nil {
+		return nil, err
+	}
+
+	rolesForCurrentUser := []*models.CedarRole{}
+	for _, role := range allRoles {
+		if *role.AssigneeType == models.PersonAssignee && role.AssigneeUsername.ValueOrZero() == currentUserEUAID {
+			rolesForCurrentUser = append(rolesForCurrentUser, role)
+		}
+	}
+	return rolesForCurrentUser, nil
+}
+
 // Actions is the resolver for the actions field.
 func (r *systemIntakeResolver) Actions(ctx context.Context, obj *models.SystemIntake) ([]*model.SystemIntakeAction, error) {
 	actions, actionsErr := r.store.GetActionsByRequestID(ctx, obj.ID)

@@ -593,32 +593,33 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
-		AccessibilityRequest     func(childComplexity int, id uuid.UUID) int
-		AccessibilityRequests    func(childComplexity int, after *string, first int) int
-		CedarAuthorityToOperate  func(childComplexity int, cedarSystemID string) int
-		CedarPersonsByCommonName func(childComplexity int, commonName string) int
-		CedarSystem              func(childComplexity int, cedarSystemID string) int
-		CedarSystemBookmarks     func(childComplexity int) int
-		CedarSystemDetails       func(childComplexity int, cedarSystemID string) int
-		CedarSystems             func(childComplexity int) int
-		CedarThreat              func(childComplexity int, cedarSystemID string) int
-		CurrentUser              func(childComplexity int) int
-		Deployments              func(childComplexity int, cedarSystemID string, deploymentType *string, state *string, status *string) int
-		Exchanges                func(childComplexity int, cedarSystemID string) int
-		MyTrbRequests            func(childComplexity int, archived bool) int
-		RelatedSystemIntakes     func(childComplexity int, id uuid.UUID) int
-		Requests                 func(childComplexity int, after *string, first int) int
-		RoleTypes                func(childComplexity int) int
-		Roles                    func(childComplexity int, cedarSystemID string, roleTypeID *string) int
-		SystemIntake             func(childComplexity int, id uuid.UUID) int
-		SystemIntakeContacts     func(childComplexity int, id uuid.UUID) int
-		SystemIntakesWithLcids   func(childComplexity int) int
-		Systems                  func(childComplexity int, after *string, first int) int
-		TrbAdminNote             func(childComplexity int, id uuid.UUID) int
-		TrbLeadOptions           func(childComplexity int) int
-		TrbRequest               func(childComplexity int, id uuid.UUID) int
-		TrbRequests              func(childComplexity int, archived bool) int
-		Urls                     func(childComplexity int, cedarSystemID string) int
+		AccessibilityRequest             func(childComplexity int, id uuid.UUID) int
+		AccessibilityRequests            func(childComplexity int, after *string, first int) int
+		CedarAuthorityToOperate          func(childComplexity int, cedarSystemID string) int
+		CedarPersonsByCommonName         func(childComplexity int, commonName string) int
+		CedarRolesForCurrentUserOnSystem func(childComplexity int, cedarSystemID string) int
+		CedarSystem                      func(childComplexity int, cedarSystemID string) int
+		CedarSystemBookmarks             func(childComplexity int) int
+		CedarSystemDetails               func(childComplexity int, cedarSystemID string) int
+		CedarSystems                     func(childComplexity int) int
+		CedarThreat                      func(childComplexity int, cedarSystemID string) int
+		CurrentUser                      func(childComplexity int) int
+		Deployments                      func(childComplexity int, cedarSystemID string, deploymentType *string, state *string, status *string) int
+		Exchanges                        func(childComplexity int, cedarSystemID string) int
+		MyTrbRequests                    func(childComplexity int, archived bool) int
+		RelatedSystemIntakes             func(childComplexity int, id uuid.UUID) int
+		Requests                         func(childComplexity int, after *string, first int) int
+		RoleTypes                        func(childComplexity int) int
+		Roles                            func(childComplexity int, cedarSystemID string, roleTypeID *string) int
+		SystemIntake                     func(childComplexity int, id uuid.UUID) int
+		SystemIntakeContacts             func(childComplexity int, id uuid.UUID) int
+		SystemIntakesWithLcids           func(childComplexity int) int
+		Systems                          func(childComplexity int, after *string, first int) int
+		TrbAdminNote                     func(childComplexity int, id uuid.UUID) int
+		TrbLeadOptions                   func(childComplexity int) int
+		TrbRequest                       func(childComplexity int, id uuid.UUID) int
+		TrbRequests                      func(childComplexity int, archived bool) int
+		Urls                             func(childComplexity int, cedarSystemID string) int
 	}
 
 	Request struct {
@@ -1274,6 +1275,7 @@ type QueryResolver interface {
 	MyTrbRequests(ctx context.Context, archived bool) ([]*models.TRBRequest, error)
 	TrbLeadOptions(ctx context.Context) ([]*models.UserInfo, error)
 	TrbAdminNote(ctx context.Context, id uuid.UUID) (*models.TRBAdminNote, error)
+	CedarRolesForCurrentUserOnSystem(ctx context.Context, cedarSystemID string) ([]*models.CedarRole, error)
 }
 type SystemIntakeResolver interface {
 	Actions(ctx context.Context, obj *models.SystemIntake) ([]*model.SystemIntakeAction, error)
@@ -4417,6 +4419,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.CedarPersonsByCommonName(childComplexity, args["commonName"].(string)), true
+
+	case "Query.cedarRolesForCurrentUserOnSystem":
+		if e.complexity.Query.CedarRolesForCurrentUserOnSystem == nil {
+			break
+		}
+
+		args, err := ec.field_Query_cedarRolesForCurrentUserOnSystem_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.CedarRolesForCurrentUserOnSystem(childComplexity, args["cedarSystemId"].(string)), true
 
 	case "Query.cedarSystem":
 		if e.complexity.Query.CedarSystem == nil {
@@ -9070,6 +9084,7 @@ type Query {
   trbLeadOptions: [UserInfo!]!
   trbAdminNote(id: UUID!): TRBAdminNote!
     @hasRole(role: EASI_TRB_ADMIN)
+  cedarRolesForCurrentUserOnSystem(cedarSystemId: String!): [CedarRole!]!
 }
 
 enum TRBRequestType {
@@ -10408,6 +10423,21 @@ func (ec *executionContext) field_Query_cedarPersonsByCommonName_args(ctx contex
 		}
 	}
 	args["commonName"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_cedarRolesForCurrentUserOnSystem_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["cedarSystemId"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cedarSystemId"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["cedarSystemId"] = arg0
 	return args, nil
 }
 
@@ -32150,6 +32180,94 @@ func (ec *executionContext) fieldContext_Query_trbAdminNote(ctx context.Context,
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Query_trbAdminNote_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_cedarRolesForCurrentUserOnSystem(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_cedarRolesForCurrentUserOnSystem(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().CedarRolesForCurrentUserOnSystem(rctx, fc.Args["cedarSystemId"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*models.CedarRole)
+	fc.Result = res
+	return ec.marshalNCedarRole2ᚕᚖgithubᚗcomᚋcmsgovᚋeasiᚑappᚋpkgᚋmodelsᚐCedarRoleᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_cedarRolesForCurrentUserOnSystem(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "application":
+				return ec.fieldContext_CedarRole_application(ctx, field)
+			case "objectID":
+				return ec.fieldContext_CedarRole_objectID(ctx, field)
+			case "roleTypeID":
+				return ec.fieldContext_CedarRole_roleTypeID(ctx, field)
+			case "assigneeType":
+				return ec.fieldContext_CedarRole_assigneeType(ctx, field)
+			case "assigneeUsername":
+				return ec.fieldContext_CedarRole_assigneeUsername(ctx, field)
+			case "assigneeEmail":
+				return ec.fieldContext_CedarRole_assigneeEmail(ctx, field)
+			case "assigneeOrgID":
+				return ec.fieldContext_CedarRole_assigneeOrgID(ctx, field)
+			case "assigneeOrgName":
+				return ec.fieldContext_CedarRole_assigneeOrgName(ctx, field)
+			case "assigneeFirstName":
+				return ec.fieldContext_CedarRole_assigneeFirstName(ctx, field)
+			case "assigneeLastName":
+				return ec.fieldContext_CedarRole_assigneeLastName(ctx, field)
+			case "assigneePhone":
+				return ec.fieldContext_CedarRole_assigneePhone(ctx, field)
+			case "assigneeDesc":
+				return ec.fieldContext_CedarRole_assigneeDesc(ctx, field)
+			case "roleTypeName":
+				return ec.fieldContext_CedarRole_roleTypeName(ctx, field)
+			case "roleTypeDesc":
+				return ec.fieldContext_CedarRole_roleTypeDesc(ctx, field)
+			case "roleID":
+				return ec.fieldContext_CedarRole_roleID(ctx, field)
+			case "objectType":
+				return ec.fieldContext_CedarRole_objectType(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type CedarRole", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_cedarRolesForCurrentUserOnSystem_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return
 	}
@@ -54724,6 +54842,26 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_trbAdminNote(ctx, field)
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return rrm(innerCtx)
+			})
+		case "cedarRolesForCurrentUserOnSystem":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_cedarRolesForCurrentUserOnSystem(ctx, field)
 				return res
 			}
 
