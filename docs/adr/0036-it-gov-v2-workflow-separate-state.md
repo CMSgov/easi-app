@@ -1,4 +1,4 @@
-# *[short title of solved problem and solution]*
+# Separate persisted state for IT Gov v2 from statuses exposed in the GraphQL API
 
 **User Story:** *[ticket/issue-number]* <!-- optional -->
 
