@@ -231,7 +231,7 @@ namespace :docker do
 end
 
 def each_minio_file(&block)
-  output = `docker-compose run --entrypoint="mc --no-color --json ls -r local/easi-app-file-uploads" minio_mc`
+  output = `docker-compose run --rm --entrypoint="mc --no-color --json ls -r local/easi-app-file-uploads" minio_mc`
   json = "[#{output.gsub(/\}\s*\{/, "},{")}]" # convert sort-of-jsonl into conventional json
   files = JSON.parse(json)
 
@@ -242,10 +242,11 @@ end
 
 def set_file_tag(key, status)
   command = %Q{mc tag set 'local/easi-app-file-uploads/#{key}' 'av-status=#{status}'}
-  sh %Q{docker-compose run --entrypoint="#{command}" minio_mc}
+  sh %Q{docker-compose run --rm --entrypoint="#{command}" minio_mc}
 end
 
 namespace :minio do
+  desc "Lists all filenames of files currently in minio"
   task :list do
     each_minio_file do |file|
       puts file["key"]
