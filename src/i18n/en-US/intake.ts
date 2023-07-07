@@ -31,6 +31,7 @@ const intake = {
       'Choose a document to upload, such as a draft IGCE, contracting document, or another document related to your Intake Request.',
     returnToIntake: "Don't upload and return to Intake Request",
     selectDocument: 'Select your document',
+    uploadedDocuments: 'Uploaded documents',
     type: {
       SOO_SOW: 'SOO or SOW',
       DRAFT_ICGE: 'Draft ICGE',
@@ -270,6 +271,9 @@ const intake = {
     costs:
       'Do the costs for this request exceed what you are currently spending to meet your business need?',
     increase: 'Approximately how much do you expect the cost to increase?',
+    currentAnnualSpending: 'What is the current annual spending?',
+    plannedYearOneSpending:
+      'What is the planned annual spending of the first year of the new contract?',
     contract: 'Do you already have a contract in place to support this effort?',
     contractors: 'Contractors',
     contractVehicle: 'Contract vehicle',

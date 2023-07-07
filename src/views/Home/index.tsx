@@ -18,10 +18,7 @@ import {
   GetCedarSystemBookmarks,
   GetCedarSystemBookmarks_cedarSystemBookmarks as CedarSystemBookmark
 } from 'queries/types/GetCedarSystemBookmarks';
-import {
-  GetCedarSystems,
-  GetCedarSystems_cedarSystems as CedarSystem
-} from 'queries/types/GetCedarSystems';
+import { GetCedarSystems } from 'queries/types/GetCedarSystems';
 import { AppState } from 'reducers/rootReducer';
 import user from 'utils/user';
 import List from 'views/Accessibility/AccessibilityRequest/List';
@@ -29,7 +26,7 @@ import Table from 'views/MyRequests/Table';
 import SystemsListTable from 'views/SystemList/Table';
 
 import AdminHome from './AdminHome';
-import WelcomeText from './WelcomeText';
+import WelcomePage from './WelcomePage';
 
 const Home = () => {
   const { t } = useTranslation();
@@ -57,7 +54,7 @@ const Home = () => {
     skip: !user.isBasicUser(groups, flags)
   });
 
-  const systemsTableData = (systems?.cedarSystems ?? []) as CedarSystem[];
+  const systemsTableData = systems?.cedarSystems ?? [];
   const bookmarks: CedarSystemBookmark[] =
     systemsBookmarks?.cedarSystemBookmarks ?? [];
 
@@ -154,11 +151,7 @@ const Home = () => {
         );
       }
     }
-    return (
-      <div className="grid-container">
-        <WelcomeText />
-      </div>
-    );
+    return <WelcomePage />;
   };
 
   return <MainContent className="margin-bottom-5">{renderView()}</MainContent>;
