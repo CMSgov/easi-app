@@ -122,6 +122,7 @@ impl
 repurpose
 Alfabet
 booleans
+enum
 enums
 hostname
 macOS
@@ -204,3 +205,5 @@ deliverables
 EASI-1538
 Sprague
 Shoup
+EASI-2535
+Figma
