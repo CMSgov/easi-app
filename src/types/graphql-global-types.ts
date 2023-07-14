@@ -189,6 +189,16 @@ export enum SystemIntakeActionType {
 }
 
 /**
+ * This represents the possible System Intake Decision States
+ */
+export enum SystemIntakeDecisionState {
+  LCID_ISSUED = "LCID_ISSUED",
+  NOT_APPROVED = "NOT_APPROVED",
+  NOT_GOVERNANCE = "NOT_GOVERNANCE",
+  NO_DECISION = "NO_DECISION",
+}
+
+/**
  * Represents the common options for document type that is attached to a
  * System Intake document
  */
@@ -218,7 +228,16 @@ export enum SystemIntakeRequestType {
 }
 
 /**
+ * SystemIntakeState represents whether the intake is open or closed
+ */
+export enum SystemIntakeState {
+  CLOSED = "CLOSED",
+  OPEN = "OPEN",
+}
+
+/**
  * The status of a system's IT governence request
+ * Note - pre-IT Gov v2 only - for IT Gov v2, use SystemIntakeStatusRequester/SystemIntakeStatusAdmin
  */
 export enum SystemIntakeStatus {
   BIZ_CASE_CHANGES_NEEDED = "BIZ_CASE_CHANGES_NEEDED",

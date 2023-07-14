@@ -2979,6 +2979,16 @@ func (r *systemIntakeResolver) ItGovTaskStatuses(ctx context.Context, obj *model
 	}, nil
 }
 
+// StatusRequester is the resolver for the statusRequester field.
+func (r *systemIntakeResolver) StatusRequester(ctx context.Context, obj *models.SystemIntake) (models.SystemIntakeStatusRequester, error) {
+	return resolvers.CalculateSystemIntakeRequesterStatus(obj, time.Now())
+}
+
+// StatusAdmin is the resolver for the statusAdmin field.
+func (r *systemIntakeResolver) StatusAdmin(ctx context.Context, obj *models.SystemIntake) (models.SystemIntakeStatusAdmin, error) {
+	return resolvers.CalculateSystemIntakeAdminStatus(obj)
+}
+
 // DocumentType is the resolver for the documentType field.
 func (r *systemIntakeDocumentResolver) DocumentType(ctx context.Context, obj *models.SystemIntakeDocument) (*model.SystemIntakeDocumentType, error) {
 	return &model.SystemIntakeDocumentType{
