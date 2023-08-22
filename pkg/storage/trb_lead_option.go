@@ -18,7 +18,7 @@ import (
 // CreateTRBLeadOption creates a new TRB lead option record in the database
 func (s *Store) CreateTRBLeadOption(ctx context.Context, leadOption *models.TRBLeadOption) (*models.TRBLeadOption, error) {
 	leadOption.ID = uuid.New()
-	stmt, err := s.db.PrepareNamed(`
+	stmt, err := s.statements.Get(`
 		INSERT INTO trb_lead_options (
 			id,
 			eua_user_id,
@@ -53,7 +53,7 @@ func (s *Store) CreateTRBLeadOption(ctx context.Context, leadOption *models.TRBL
 
 // DeleteTRBLeadOption deletes an existing TRB lead option record in the database
 func (s *Store) DeleteTRBLeadOption(ctx context.Context, euaID string) (*models.TRBLeadOption, error) {
-	stmt, err := s.db.PrepareNamed(`
+	stmt, err := s.statements.Get(`
 		DELETE FROM trb_lead_options
 		WHERE eua_user_id = :eua_user_id
 		RETURNING *;`)

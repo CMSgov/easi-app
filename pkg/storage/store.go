@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/cmsgov/easi-app/pkg/storage/namedstatements"
+
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/facebookgo/clock"
 	"github.com/jmoiron/sqlx"
@@ -12,10 +14,11 @@ import (
 
 // Store performs database operations for EASi
 type Store struct {
-	db        *sqlx.DB
-	clock     clock.Clock
-	easternTZ *time.Location
-	ldClient  *ld.LDClient
+	db         *sqlx.DB
+	clock      clock.Clock
+	easternTZ  *time.Location
+	ldClient   *ld.LDClient
+	statements *namedstatements.Cache
 }
 
 // DBConfig holds the configurations for a database connection
@@ -77,9 +80,10 @@ func NewStore(
 	db.SetMaxOpenConns(config.MaxConnections)
 
 	return &Store{
-		db:        db,
-		clock:     clock.New(),
-		easternTZ: tz,
-		ldClient:  ldClient,
+		db:         db,
+		clock:      clock.New(),
+		easternTZ:  tz,
+		ldClient:   ldClient,
+		statements: namedstatements.NewCache(db),
 	}, nil
 }

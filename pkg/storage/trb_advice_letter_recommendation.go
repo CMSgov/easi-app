@@ -24,7 +24,7 @@ func (s *Store) CreateTRBAdviceLetterRecommendation(
 		recommendation.ID = uuid.New()
 	}
 
-	stmt, err := s.db.PrepareNamed(`
+	stmt, err := s.statements.Get(`
 		INSERT INTO trb_advice_letter_recommendations (
 			id,
 			trb_request_id,
@@ -73,7 +73,7 @@ func (s *Store) CreateTRBAdviceLetterRecommendation(
 // GetTRBAdviceLetterRecommendationByID retrieves a TRB advice letter recommendation record from the database
 func (s *Store) GetTRBAdviceLetterRecommendationByID(ctx context.Context, id uuid.UUID) (*models.TRBAdviceLetterRecommendation, error) {
 	recommendation := models.TRBAdviceLetterRecommendation{}
-	stmt, err := s.db.PrepareNamed(`SELECT * FROM trb_advice_letter_recommendations WHERE id = :id`)
+	stmt, err := s.statements.Get(`SELECT * FROM trb_advice_letter_recommendations WHERE id = :id`)
 	if err != nil {
 		return nil, err
 	}
@@ -115,9 +115,9 @@ func (s *Store) GetTRBAdviceLetterRecommendationsByTRBRequestID(ctx context.Cont
 
 // UpdateTRBAdviceLetterRecommendation updates an existing TRB advice letter recommendation record in the database
 func (s *Store) UpdateTRBAdviceLetterRecommendation(ctx context.Context, recommendation *models.TRBAdviceLetterRecommendation) (*models.TRBAdviceLetterRecommendation, error) {
-	stmt, err := s.db.PrepareNamed(`
+	stmt, err := s.statements.Get(`
 		UPDATE trb_advice_letter_recommendations
-		SET 
+		SET
 			trb_request_id = :trb_request_id,
 			title = :title,
 			recommendation = :recommendation,
@@ -155,7 +155,7 @@ func (s *Store) UpdateTRBAdviceLetterRecommendation(ctx context.Context, recomme
 
 // DeleteTRBAdviceLetterRecommendation deletes an existing TRB advice letter recommendation record in the database
 func (s *Store) DeleteTRBAdviceLetterRecommendation(ctx context.Context, id uuid.UUID) (*models.TRBAdviceLetterRecommendation, error) {
-	stmt, err := s.db.PrepareNamed(`
+	stmt, err := s.statements.Get(`
 		DELETE FROM trb_advice_letter_recommendations
 		WHERE id = :id
 		RETURNING *;`)

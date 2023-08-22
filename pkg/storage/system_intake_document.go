@@ -32,7 +32,7 @@ func (s *Store) GetSystemIntakeDocumentsByRequestID(ctx context.Context, systemI
 
 	documents := []*models.SystemIntakeDocument{}
 
-	stmt, err := s.db.PrepareNamed(systemIntakeDocumentsGetByRequestIDSQL)
+	stmt, err := s.statements.Get(systemIntakeDocumentsGetByRequestIDSQL)
 	if err != nil {
 		appcontext.ZLogger(ctx).Error(
 			fmt.Sprintf("Failed to fetch System Intake request documents for request ID %s", systemIntakeRequestID.String()),
@@ -104,7 +104,7 @@ func (s *Store) CreateSystemIntakeDocument(ctx context.Context, document *models
 		document.ID = uuid.New()
 	}
 
-	stmt, err := s.db.PrepareNamed(systemIntakeDocumentCreateSQL)
+	stmt, err := s.statements.Get(systemIntakeDocumentCreateSQL)
 	if err != nil {
 		appcontext.ZLogger(ctx).Error(
 			fmt.Sprintf("Failed to create system intake document with error %s", err),
@@ -152,7 +152,7 @@ func (s *Store) DeleteSystemIntakeDocument(ctx context.Context, id uuid.UUID) (*
 			modified_at
 	`
 
-	stmt, err := s.db.PrepareNamed(systemIntakeDocumentDeleteSQL)
+	stmt, err := s.statements.Get(systemIntakeDocumentDeleteSQL)
 	if err != nil {
 		appcontext.ZLogger(ctx).Error(
 			fmt.Sprintf("Failed to delete system intake document with ID %s due to error %s", id, err),

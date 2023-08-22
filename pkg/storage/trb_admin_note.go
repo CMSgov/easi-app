@@ -35,7 +35,7 @@ func (s *Store) CreateTRBAdminNote(ctx context.Context, note *models.TRBAdminNot
 			:note_text
 		) RETURNING *;
 	`
-	stmt, err := s.db.PrepareNamed(trbAdminNoteCreateSQL)
+	stmt, err := s.statements.Get(trbAdminNoteCreateSQL)
 	if err != nil {
 		appcontext.ZLogger(ctx).Error(
 			fmt.Sprintf("Failed to create TRB admin note with error %s", err),
@@ -64,7 +64,7 @@ func (s *Store) CreateTRBAdminNote(ctx context.Context, note *models.TRBAdminNot
 func (s *Store) GetTRBAdminNotesByTRBRequestID(ctx context.Context, trbRequestID uuid.UUID) ([]*models.TRBAdminNote, error) {
 	notes := []*models.TRBAdminNote{}
 
-	stmt, err := s.db.PrepareNamed(`SELECT * FROM trb_admin_notes WHERE trb_request_id = :trb_request_id`)
+	stmt, err := s.statements.Get(`SELECT * FROM trb_admin_notes WHERE trb_request_id = :trb_request_id`)
 	if err != nil {
 		appcontext.ZLogger(ctx).Error(
 			"Failed to fetch TRB admin notes",
@@ -97,7 +97,7 @@ func (s *Store) GetTRBAdminNotesByTRBRequestID(ctx context.Context, trbRequestID
 func (s *Store) GetTRBAdminNoteByID(ctx context.Context, id uuid.UUID) (*models.TRBAdminNote, error) {
 	note := models.TRBAdminNote{}
 
-	stmt, err := s.db.PrepareNamed(`SELECT * FROM trb_admin_notes WHERE id = :id`)
+	stmt, err := s.statements.Get(`SELECT * FROM trb_admin_notes WHERE id = :id`)
 	if err != nil {
 		appcontext.ZLogger(ctx).Error(
 			"Failed to fetch admin note",
@@ -133,7 +133,7 @@ func (s *Store) GetTRBAdminNoteByID(ctx context.Context, id uuid.UUID) (*models.
 // UpdateTRBAdminNote updates all of a TRB admin note's mutable fields.
 // The note's IsArchived field _can_ be set, though ArchiveTRBAdminNote() should be used when archiving a note.
 func (s *Store) UpdateTRBAdminNote(ctx context.Context, note *models.TRBAdminNote) (*models.TRBAdminNote, error) {
-	stmt, err := s.db.PrepareNamed(`
+	stmt, err := s.statements.Get(`
 		UPDATE trb_admin_notes
 		SET
 			category = :category,
@@ -176,7 +176,7 @@ func (s *Store) UpdateTRBAdminNote(ctx context.Context, note *models.TRBAdminNot
 // SetTRBAdminNoteArchived sets whether a TRB admin note is archived (soft-deleted)
 // It takes a modifiedBy argument because it doesn't take a full TRBAdminNote as an argument, and ModifiedBy fields are usually set by the resolver.
 func (s *Store) SetTRBAdminNoteArchived(ctx context.Context, id uuid.UUID, isArchived bool, modifiedBy string) (*models.TRBAdminNote, error) {
-	stmt, err := s.db.PrepareNamed(`
+	stmt, err := s.statements.Get(`
 		UPDATE trb_admin_notes
 		SET
 			is_archived = :is_archived,

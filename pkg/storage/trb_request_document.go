@@ -32,7 +32,7 @@ func (s *Store) GetTRBRequestDocumentsByRequestID(ctx context.Context, trbReques
 
 	documents := []*models.TRBRequestDocument{}
 
-	stmt, err := s.db.PrepareNamed(trbRequestDocumentsGetByRequestIDSQL)
+	stmt, err := s.statements.Get(trbRequestDocumentsGetByRequestIDSQL)
 	if err != nil {
 		appcontext.ZLogger(ctx).Error(
 			fmt.Sprintf("Failed to fetch TRB request documents for request ID %s", trbRequestID.String()),
@@ -104,7 +104,7 @@ func (s *Store) CreateTRBRequestDocument(ctx context.Context, document *models.T
 		document.ID = uuid.New()
 	}
 
-	stmt, err := s.db.PrepareNamed(trbRequestDocumentCreateSQL)
+	stmt, err := s.statements.Get(trbRequestDocumentCreateSQL)
 	if err != nil {
 		appcontext.ZLogger(ctx).Error(
 			fmt.Sprintf("Failed to create trb request document with error %s", err),
@@ -152,7 +152,7 @@ func (s *Store) DeleteTRBRequestDocument(ctx context.Context, id uuid.UUID) (*mo
 			modified_at
 	`
 
-	stmt, err := s.db.PrepareNamed(trbRequestDocumentDeleteSQL)
+	stmt, err := s.statements.Get(trbRequestDocumentDeleteSQL)
 	if err != nil {
 		appcontext.ZLogger(ctx).Error(
 			fmt.Sprintf("Failed to delete trb request document with ID %s due to error %s", id, err),

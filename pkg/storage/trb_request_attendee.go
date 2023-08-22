@@ -18,7 +18,7 @@ import (
 // CreateTRBRequestAttendee creates a new TRB request attendee record in the database
 func (s *Store) CreateTRBRequestAttendee(ctx context.Context, attendee *models.TRBRequestAttendee) (*models.TRBRequestAttendee, error) {
 	attendee.ID = uuid.New()
-	stmt, err := s.db.PrepareNamed(`
+	stmt, err := s.statements.Get(`
 		INSERT INTO trb_request_attendees (
 			id,
 			eua_user_id,
@@ -60,7 +60,7 @@ func (s *Store) CreateTRBRequestAttendee(ctx context.Context, attendee *models.T
 // UpdateTRBRequestAttendee updates a TRB request attendee record in the database
 func (s *Store) UpdateTRBRequestAttendee(ctx context.Context, attendee *models.TRBRequestAttendee) (*models.TRBRequestAttendee, error) {
 	// return attendee, nil
-	stmt, err := s.db.PrepareNamed(`
+	stmt, err := s.statements.Get(`
 		UPDATE trb_request_attendees
 		SET role = :role,
 			component = :component,
@@ -113,7 +113,7 @@ func (s *Store) GetTRBRequestAttendeesByTRBRequestID(ctx context.Context, trbReq
 
 // DeleteTRBRequestAttendee deletes an existing TRB request attendee record in the database
 func (s *Store) DeleteTRBRequestAttendee(ctx context.Context, id uuid.UUID) (*models.TRBRequestAttendee, error) {
-	stmt, err := s.db.PrepareNamed(`
+	stmt, err := s.statements.Get(`
 		DELETE FROM trb_request_attendees
 		WHERE id = :id
 		RETURNING *;`)
@@ -147,7 +147,7 @@ func (s *Store) DeleteTRBRequestAttendee(ctx context.Context, id uuid.UUID) (*mo
 // GetAttendeeComponentByEUA attempts to retrieve the component of a given EUA user ID and TRB Request ID
 func (s *Store) GetAttendeeComponentByEUA(ctx context.Context, euaID string, trbRequestID uuid.UUID) (*string, error) {
 	attendee := models.TRBRequestAttendee{}
-	stmt, err := s.db.PrepareNamed(`
+	stmt, err := s.statements.Get(`
 		SELECT *
 		FROM trb_request_attendees
 		WHERE eua_user_id = :eua_user_id

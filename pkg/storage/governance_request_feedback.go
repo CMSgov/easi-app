@@ -38,7 +38,7 @@ func (s *Store) CreateGovernanceRequestFeedback(ctx context.Context, requestFeed
 		) RETURNING *;
 	`
 
-	stmt, err := s.db.PrepareNamed(governanceRequestFeedbackCreateSQL)
+	stmt, err := s.statements.Get(governanceRequestFeedbackCreateSQL)
 	if err != nil {
 		appcontext.ZLogger(ctx).Error(
 			fmt.Sprintf("Failed to create governance request feedback with error %s", err),
@@ -67,7 +67,7 @@ func (s *Store) CreateGovernanceRequestFeedback(ctx context.Context, requestFeed
 func (s *Store) GetGovernanceRequestFeedbacksByIntakeID(ctx context.Context, intakeID uuid.UUID) ([]*models.GovernanceRequestFeedback, error) {
 	feedbacks := []*models.GovernanceRequestFeedback{}
 
-	stmt, err := s.db.PrepareNamed(`SELECT * FROM governance_request_feedback WHERE intake_id = :intake_id`)
+	stmt, err := s.statements.Get(`SELECT * FROM governance_request_feedback WHERE intake_id = :intake_id`)
 	if err != nil {
 		appcontext.ZLogger(ctx).Error(
 			"Failed to fetch governance request feedbacks",

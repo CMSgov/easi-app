@@ -130,7 +130,7 @@ func (s *Store) GetTRBRequestFeedbackByTRBRequestID(ctx context.Context, trbRequ
 // matching the given TRB request ID
 func (s *Store) GetNewestTRBRequestFeedbackByTRBRequestID(ctx context.Context, trbRequestID uuid.UUID) (*models.TRBRequestFeedback, error) {
 	feedback := models.TRBRequestFeedback{}
-	stmt, err := s.db.PrepareNamed(`
+	stmt, err := s.statements.Get(`
 		SELECT *
 		FROM trb_request_feedback
 		WHERE trb_request_id = :trb_request_id

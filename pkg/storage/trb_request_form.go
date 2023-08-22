@@ -15,7 +15,7 @@ import (
 
 // UpdateTRBRequestForm updates a TRB request form record in the database
 func (s *Store) UpdateTRBRequestForm(ctx context.Context, form *models.TRBRequestForm) (*models.TRBRequestForm, error) {
-	stmt, err := s.db.PrepareNamed(`
+	stmt, err := s.statements.Get(`
 		UPDATE trb_request_forms
 		SET
 			status = :status,
@@ -73,7 +73,7 @@ func (s *Store) UpdateTRBRequestForm(ctx context.Context, form *models.TRBReques
 // matching the given TRB request ID
 func (s *Store) GetTRBRequestFormByTRBRequestID(ctx context.Context, trbRequestID uuid.UUID) (*models.TRBRequestForm, error) {
 	form := models.TRBRequestForm{}
-	stmt, err := s.db.PrepareNamed(`SELECT * FROM trb_request_forms WHERE trb_request_id=:trb_request_id`)
+	stmt, err := s.statements.Get(`SELECT * FROM trb_request_forms WHERE trb_request_id=:trb_request_id`)
 	if err != nil {
 		appcontext.ZLogger(ctx).Error(
 			"Failed to fetch TRB request form",
@@ -104,7 +104,7 @@ func (s *Store) GetTRBRequestFormByTRBRequestID(ctx context.Context, trbRequestI
 // matching the given TRB request ID
 func (s *Store) GetFundingSourcesByRequestID(ctx context.Context, trbRequestID uuid.UUID) ([]*models.TRBFundingSource, error) {
 	fundingSources := []*models.TRBFundingSource{}
-	stmt, err := s.db.PrepareNamed(`SELECT * FROM trb_request_funding_sources WHERE trb_request_id=:trb_request_id`)
+	stmt, err := s.statements.Get(`SELECT * FROM trb_request_funding_sources WHERE trb_request_id=:trb_request_id`)
 	if err != nil {
 		appcontext.ZLogger(ctx).Error(
 			"Failed to fetch TRB request funding sources",
@@ -133,7 +133,7 @@ func (s *Store) GetFundingSourcesByRequestID(ctx context.Context, trbRequestID u
 
 // DeleteTRBRequestForm deletes an existing TRB request form record in the database
 func (s *Store) DeleteTRBRequestForm(ctx context.Context, trbRequestID uuid.UUID) (*models.TRBRequestForm, error) {
-	stmt, err := s.db.PrepareNamed(`
+	stmt, err := s.statements.Get(`
 		DELETE FROM trb_request_forms
 		WHERE trb_request_id = :trb_request_id
 		RETURNING *;`)

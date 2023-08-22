@@ -34,10 +34,11 @@ func (s *Store) CreateTRBAdviceLetter(ctx context.Context, createdBy string, trb
 			:id,
 			:trb_request_id,
 			:created_by,
-			:status 
+			:status
 		) RETURNING *;
 	`
-	stmt, err := s.db.PrepareNamed(trbAdviceLetterCreateSQL)
+
+	stmt, err := s.statements.Get(trbAdviceLetterCreateSQL)
 	if err != nil {
 		appcontext.ZLogger(ctx).Error(
 			fmt.Sprintf("Failed to prepare SQL statement for creating TRB advice letter with error %s", err),
@@ -76,7 +77,7 @@ func (s *Store) UpdateTRBAdviceLetterStatus(ctx context.Context, id uuid.UUID, s
 	RETURNING *;
 	`
 
-	stmt, err := s.db.PrepareNamed(trbAdviceLetterStatusUpdateSQL)
+	stmt, err := s.statements.Get(trbAdviceLetterStatusUpdateSQL)
 	if err != nil {
 		appcontext.ZLogger(ctx).Error(
 			fmt.Sprintf("Failed to prepare SQL statement for updating TRB advice letter status with error %s", err),
@@ -136,7 +137,7 @@ func (s *Store) UpdateTRBAdviceLetter(ctx context.Context, letter *models.TRBAdv
 		RETURNING *;
 	`
 
-	stmt, err := s.db.PrepareNamed(trbAdviceLetterUpdateSQL)
+	stmt, err := s.statements.Get(trbAdviceLetterUpdateSQL)
 	if err != nil {
 		appcontext.ZLogger(ctx).Error(
 			fmt.Sprintf("Failed to prepare SQL statement for updating TRB advice letter with error %s", err),
@@ -168,7 +169,7 @@ func (s *Store) UpdateTRBAdviceLetter(ctx context.Context, letter *models.TRBAdv
 func (s *Store) GetTRBAdviceLetterByTRBRequestID(ctx context.Context, trbRequestID uuid.UUID) (*models.TRBAdviceLetter, error) {
 	letter := models.TRBAdviceLetter{}
 
-	stmt, err := s.db.PrepareNamed(`SELECT * FROM trb_advice_letters WHERE trb_request_id = :trb_request_id`)
+	stmt, err := s.statements.Get(`SELECT * FROM trb_advice_letters WHERE trb_request_id = :trb_request_id`)
 	if err != nil {
 		appcontext.ZLogger(ctx).Error(
 			fmt.Sprintf("Failed to prepare SQL statement for fetching TRB advice letter with error %s", err),

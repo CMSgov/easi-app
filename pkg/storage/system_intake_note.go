@@ -21,7 +21,7 @@ func (s *Store) CreateSystemIntakeNote(ctx context.Context, note *models.SystemI
 		ts := s.clock.Now()
 		note.CreatedAt = &ts
 	}
-	const createSystemIntakeNoteSQL = `	
+	const createSystemIntakeNoteSQL = `
 		INSERT INTO notes (
 			id,
 			system_intake,
@@ -29,13 +29,13 @@ func (s *Store) CreateSystemIntakeNote(ctx context.Context, note *models.SystemI
 		    eua_user_id,
 			author_name,
 			content
-		) 
+		)
 		VALUES (
 			:id,
 			:system_intake,
 		    :created_at,
 			:eua_user_id,
-		    :author_name,    
+		    :author_name,
 		    :content
 		)`
 	_, err := s.db.NamedExec(
@@ -60,7 +60,7 @@ func (s *Store) CreateSystemIntakeNote(ctx context.Context, note *models.SystemI
 // UpdateSystemIntakeNote updates all of a IT governance admin note's mutable fields.
 // The note's IsArchived field _can_ be set, though SetNoteArchived() should be used when archiving a note.
 func (s *Store) UpdateSystemIntakeNote(ctx context.Context, note *models.SystemIntakeNote) (*models.SystemIntakeNote, error) {
-	stmt, err := s.db.PrepareNamed(`
+	stmt, err := s.statements.Get(`
 	UPDATE notes
 	SET
 		content = :content,

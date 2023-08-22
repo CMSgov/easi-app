@@ -101,7 +101,7 @@ func (s *Store) CreateTRBRequest(ctx context.Context, trb *models.TRBRequest) (*
 func (s *Store) GetTRBRequestByID(ctx context.Context, id uuid.UUID) (*models.TRBRequest, error) {
 
 	trb := models.TRBRequest{}
-	stmt, err := s.db.PrepareNamed(trbRequestGetByIDSQL)
+	stmt, err := s.statements.Get(trbRequestGetByIDSQL)
 	if err != nil {
 		appcontext.ZLogger(ctx).Error(
 			"Failed to fetch TRB request",
@@ -130,7 +130,7 @@ func (s *Store) GetTRBRequestByID(ctx context.Context, id uuid.UUID) (*models.TR
 
 // UpdateTRBRequest returns an TRBRequest from the db for a given id
 func (s *Store) UpdateTRBRequest(ctx context.Context, trb *models.TRBRequest) (*models.TRBRequest, error) {
-	stmt, err := s.db.PrepareNamed(trbRequestUpdateSQL)
+	stmt, err := s.statements.Get(trbRequestUpdateSQL)
 	if err != nil {
 		appcontext.ZLogger(ctx).Error(
 			fmt.Sprintf("Failed to update TRB request %s", err),
@@ -160,7 +160,7 @@ func (s *Store) UpdateTRBRequest(ctx context.Context, trb *models.TRBRequest) (*
 func (s *Store) GetTRBRequests(ctx context.Context, archived bool) ([]*models.TRBRequest, error) {
 	trbRequests := []*models.TRBRequest{}
 
-	stmt, err := s.db.PrepareNamed(trbRequestCollectionGetSQL)
+	stmt, err := s.statements.Get(trbRequestCollectionGetSQL)
 	if err != nil {
 		appcontext.ZLogger(ctx).Error(
 			"Failed to fetch trb requests",
@@ -190,7 +190,7 @@ func (s *Store) GetTRBRequests(ctx context.Context, archived bool) ([]*models.TR
 func (s *Store) GetMyTRBRequests(ctx context.Context, archived bool) ([]*models.TRBRequest, error) {
 	trbRequests := []*models.TRBRequest{}
 
-	stmt, err := s.db.PrepareNamed(trbRequestCollectionGetMySQL)
+	stmt, err := s.statements.Get(trbRequestCollectionGetMySQL)
 	if err != nil {
 		appcontext.ZLogger(ctx).Error(
 			"Failed to fetch user's trb requests",
