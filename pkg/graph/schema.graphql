@@ -364,6 +364,40 @@ type CedarExchange {
 }
 
 """
+CedarBudget represents info about the budget associated with a CEDAR object (usually a system); this information is returned from the CEDAR Core API
+
+NJD - ensure that nullable is correct
+"""
+
+type CedarBudget {
+  funding: String
+  fundingId: String
+  id: String
+  projectId: String!
+  projectTitle: String
+  systemId: String
+}
+
+"""
+CedarContract represents info about a contract associated with a CEDAR object (usually a system); this information is returned from the CEDAR Core API
+
+NJD - ensure that nullable is correct
+"""
+
+type CedarContract {
+  popEndDate: String
+  popStartDate: String
+  awardId: String!
+  contractADO: String
+  contractDeliverableId: String
+  contractName: String
+  description: String
+  id: String!
+  parentAwardId: String!
+  systemId: String
+}
+
+"""
 An accessibility request represents a system that needs to go through
 the 508 process
 """
@@ -2844,6 +2878,8 @@ type Query {
   systemIntakesWithLcids: [SystemIntake!]!
   currentUser: CurrentUser
   cedarAuthorityToOperate(cedarSystemID: String!): [CedarAuthorityToOperate!]!
+  cedarBudgets(cedarSystemId: String!): [CedarBudget!]!
+  cedarContract(cedarSystemId: String!): [CedarContract!]!
   cedarPersonsByCommonName(commonName: String!): [UserInfo!]!
   cedarSystem(cedarSystemId: String!): CedarSystem
   cedarSystems: [CedarSystem!]!

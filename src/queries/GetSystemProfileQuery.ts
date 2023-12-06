@@ -75,5 +75,13 @@ export default gql`
         netAccessibility
       }
     }
+    cedarBudgets(cedarSystemId: $cedarSystemId) {
+      funding
+      fundingId
+      id
+      projectId
+      projectTitle
+      systemId
+    }
   }
 `;

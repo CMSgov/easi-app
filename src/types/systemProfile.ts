@@ -8,6 +8,7 @@ import {
   GetSystemProfile,
   /* eslint-disable camelcase */
   GetSystemProfile_cedarAuthorityToOperate,
+  GetSystemProfile_cedarBudgets,
   GetSystemProfile_cedarSystemDetails_cedarSystem,
   GetSystemProfile_cedarSystemDetails_deployments_dataCenter,
   GetSystemProfile_cedarSystemDetails_roles,
@@ -16,7 +17,6 @@ import {
 } from 'queries/types/GetSystemProfile';
 import {
   tempATOProp,
-  tempBudgetProp,
   tempProductsProp,
   tempSubSystemProp,
   tempSystemDataProp
@@ -145,7 +145,8 @@ export interface SystemProfileData extends GetSystemProfile {
 
   // Remaining mock data stubs
   activities?: tempATOProp[];
-  budgets?: tempBudgetProp[];
+  // eslint-disable-next-line camelcase
+  budgets?: GetSystemProfile_cedarBudgets[]; // NJD? - tempBudgetProp[];
   products?: tempProductsProp[];
   subSystems?: tempSubSystemProp[];
   systemData?: tempSystemDataProp[];

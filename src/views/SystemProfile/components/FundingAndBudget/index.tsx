@@ -1,6 +1,8 @@
+/* eslint-disable no-console */
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import {
+  Alert,
   Card,
   CardFooter,
   CardGroup,
@@ -23,6 +25,9 @@ import './index.scss';
 const FundingAndBudget = ({ system }: SystemProfileSubviewProps) => {
   const { t } = useTranslation('systemProfile');
   const isMobile = useCheckResponsiveScreen('tablet');
+  // const flags = useFlags();
+
+  const { budgets } = system;
   return (
     <>
       <SectionWrapper className="padding-bottom-4">
@@ -78,33 +83,42 @@ const FundingAndBudget = ({ system }: SystemProfileSubviewProps) => {
           Fed Admin
         </Tag>
       </SectionWrapper>
+
       <SectionWrapper
         borderBottom={isMobile}
         className="margin-bottom-4 padding-bottom-4"
       >
         <CardGroup className="margin-0">
-          {system.budgets?.map(
-            (budget): React.ReactNode => (
-              <Card
-                key={budget.id}
-                data-testid="system-card"
-                className="grid-col-12"
-              >
-                <CardHeader className="padding-2 padding-bottom-0 text-top">
-                  <dt>
-                    {t('singleSystem.fundingAndBudget.budgetID')}
-                    {budget.id}
-                  </dt>
-                  <h3 className="margin-top-0 margin-bottom-1">
-                    {budget.title}
-                  </h3>
-                  <Divider />
-                </CardHeader>
-                <CardFooter className="padding-2">
-                  <dt>{budget.comment}</dt>
-                </CardFooter>
-              </Card>
+          {budgets?.length ? (
+            budgets?.map(
+              (budget: any): React.ReactNode => (
+                <Card
+                  key={budget.id}
+                  data-testid="system-card"
+                  className="grid-col-12"
+                >
+                  <CardHeader className="padding-2 padding-bottom-0 text-top">
+                    <dt>
+                      {t('singleSystem.fundingAndBudget.budgetID')}
+                      {budget.id}
+                    </dt>
+                    <h3 className="margin-top-0 margin-bottom-1">
+                      {budget.projectTitle}
+                    </h3>
+                    <Divider />
+                    <h3>
+                      {t('singleSystem.fundingAndBudget.fundingPercentage')}
+                    </h3>
+                    <dt>{budget.funding}</dt>
+                  </CardHeader>
+                  <CardFooter className="padding-1" />
+                </Card>
+              )
             )
+          ) : (
+            <Alert slim type="info">
+              {t('singleSystem.fundingAndBudget.noBudget')}
+            </Alert>
           )}
         </CardGroup>
       </SectionWrapper>

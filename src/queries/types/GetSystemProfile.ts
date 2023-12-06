@@ -102,10 +102,21 @@ export interface GetSystemProfile_cedarSystemDetails {
   systemMaintainerInformation: GetSystemProfile_cedarSystemDetails_systemMaintainerInformation;
 }
 
+export interface GetSystemProfile_cedarBudgets {
+  __typename: "CedarBudget";
+  funding: string | null;
+  fundingId: string | null;
+  id: string | null;
+  projectId: string;
+  projectTitle: string | null;
+  systemId: string | null;
+}
+
 export interface GetSystemProfile {
   cedarAuthorityToOperate: GetSystemProfile_cedarAuthorityToOperate[];
   cedarThreat: GetSystemProfile_cedarThreat[];
   cedarSystemDetails: GetSystemProfile_cedarSystemDetails | null;
+  cedarBudgets: GetSystemProfile_cedarBudgets[];
 }
 
 export interface GetSystemProfileVariables {

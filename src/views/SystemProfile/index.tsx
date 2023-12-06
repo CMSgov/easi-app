@@ -57,7 +57,6 @@ import { formatDateUtc, parseAsUTC } from 'utils/date';
 import NotFound from 'views/NotFound';
 import {
   activities as mockActivies,
-  budgetsInfo as mockBudgets,
   products as mockProducts,
   subSystems as mockSubSystems,
   systemData as mockSystemData
@@ -237,6 +236,8 @@ export function getSystemProfileData(
 
   const cedarAuthorityToOperate = data.cedarAuthorityToOperate[0];
 
+  const { cedarBudgets } = data;
+
   const numberOfContractorFte = parseFloat(
     cedarSystemDetails.businessOwnerInformation?.numberOfContractorFte || '0'
   );
@@ -267,7 +268,7 @@ export function getSystemProfileData(
 
     // Remaining mock data stubs
     activities: mockActivies,
-    budgets: mockBudgets,
+    budgets: cedarBudgets, // NJD = FIX
     products: mockProducts,
     subSystems: mockSubSystems,
     systemData: mockSystemData

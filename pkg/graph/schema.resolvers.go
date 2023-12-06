@@ -136,6 +136,7 @@ func (r *accessibilityRequestResolver) Notes(ctx context.Context, obj *models.Ac
 
 // CedarSystemID is the resolver for the cedarSystemId field.
 func (r *accessibilityRequestResolver) CedarSystemID(ctx context.Context, obj *models.AccessibilityRequest) (*string, error) {
+	appcontext.ZLogger(ctx).Info("NJD 1 -> " + obj.CedarSystemID.String)
 	return obj.CedarSystemID.Ptr(), nil
 }
 
@@ -2447,6 +2448,25 @@ func (r *queryResolver) CedarAuthorityToOperate(ctx context.Context, cedarSystem
 	}
 
 	return cedarATO, nil
+}
+
+// CedarBudgets is the resolver for the cedarBudgets field.
+func (r *queryResolver) CedarBudgets(ctx context.Context, cedarSystemID string) ([]*models.CedarBudget, error) {
+	cedarBudgets, err := r.cedarCoreClient.GetBudgetBySystem(ctx, cedarSystemID)
+	if err != nil {
+		return nil, err
+	}
+
+	return cedarBudgets, nil
+}
+
+// CedarContract is the resolver for the cedarContract field.
+func (r *queryResolver) CedarContract(ctx context.Context, cedarSystemID string) ([]*models.CedarContract, error) {
+	cedarContracts, err := r.cedarCoreClient.GetContractBySystem(ctx, cedarSystemID)
+	if err != nil {
+		return nil, err
+	}
+	return cedarContracts, nil
 }
 
 // CedarPersonsByCommonName is the resolver for the cedarPersonsByCommonName field.

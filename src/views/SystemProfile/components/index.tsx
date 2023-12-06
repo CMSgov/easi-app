@@ -53,6 +53,11 @@ const sideNavItems = (
           component: <ATO system={system} />,
           route: `/systems/${system.id}/ato`,
           componentId: 'ato'
+        },
+        'funding-and-budget': {
+          component: <FundingAndBudget system={system} />,
+          route: `/systems/${system.id}/funding-and-budget`,
+          componentId: 'funding-and-budget'
         }
       }
     : {

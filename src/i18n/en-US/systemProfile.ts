@@ -98,7 +98,10 @@ const systemProfile = {
       tagHeader1: 'Funding Sources',
       budgetID: 'Budget ID: ',
       systemFiscalYear: 'System fiscal year (FY) cost',
-      viewMoreFunding: 'View more funding and budget information'
+      viewMoreFunding: 'View more funding and budget information',
+      fundingPercentage: 'Percentage of funding dedicated to this system',
+      noBudget: 'There are no budget projects listed for this system',
+      noFunding: 'There is no system cost information available for this system'
     },
     team: {
       header: {
