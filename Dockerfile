@@ -6,6 +6,7 @@ COPY config/tls/*.crt /usr/local/share/ca-certificates/
 RUN update-ca-certificates
 
 COPY go.mod go.sum ./
+ENV GOPROXY="https://artifactory.cloud.cms.gov/artifactory/api/go/go"
 RUN go mod download
 
 FROM base AS dev
