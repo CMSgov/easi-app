@@ -20,6 +20,7 @@ func makeSystemIntakeAndIssueLCID(
 	requesterEUA string,
 	logger *zap.Logger,
 	store *storage.Store,
+	lcidExpirationDate time.Time,
 ) *models.SystemIntake {
 	pastMeetingDate := time.Now().AddDate(0, -1, 0)
 	var intake *models.SystemIntake
@@ -52,7 +53,7 @@ func makeSystemIntakeAndIssueLCID(
 		logger,
 		store,
 		intake,
-		time.Now().AddDate(1, 0, 0),
+		lcidExpirationDate,
 		models.TRBFRNotRecommended,
 	)
 	return intake
@@ -69,7 +70,7 @@ func issueLCID(
 	expiresAt time.Time,
 	trbFollowUp models.SystemIntakeTRBFollowUp,
 ) *models.SystemIntake {
-	ctx := mock.CtxWithLoggerAndPrincipal(logger, mock.PrincipalUser)
+	ctx := mock.CtxWithLoggerAndPrincipal(logger, store, mock.PrincipalUser)
 
 	scope := models.HTML("scope for this lcid")
 	nextSteps := models.HTML("next steps for this intake")
@@ -105,7 +106,7 @@ func updateLCID(
 	intake *models.SystemIntake,
 	expiresAt time.Time,
 ) *models.SystemIntake {
-	ctx := mock.CtxWithLoggerAndPrincipal(logger, mock.PrincipalUser)
+	ctx := mock.CtxWithLoggerAndPrincipal(logger, store, mock.PrincipalUser)
 
 	scope := models.HTML("scope for this lcid")
 	nextSteps := models.HTML("next steps for this intake")
@@ -137,7 +138,7 @@ func confirmLCID(
 	expiresAt time.Time,
 	trbFollowUp models.SystemIntakeTRBFollowUp,
 ) *models.SystemIntake {
-	ctx := mock.CtxWithLoggerAndPrincipal(logger, mock.PrincipalUser)
+	ctx := mock.CtxWithLoggerAndPrincipal(logger, store, mock.PrincipalUser)
 
 	scope := models.HTML("scope for this lcid")
 	nextSteps := models.HTML("next steps for this intake")
@@ -168,7 +169,7 @@ func expireLCID(
 	store *storage.Store,
 	intake *models.SystemIntake,
 ) *models.SystemIntake {
-	ctx := mock.CtxWithLoggerAndPrincipal(logger, mock.PrincipalUser)
+	ctx := mock.CtxWithLoggerAndPrincipal(logger, store, mock.PrincipalUser)
 
 	reason := models.HTML("reason for expiring this LCID")
 	nextSteps := models.HTML("next steps for this intake")
@@ -196,7 +197,7 @@ func retireLCID(
 	intake *models.SystemIntake,
 	retiresAt time.Time,
 ) *models.SystemIntake {
-	ctx := mock.CtxWithLoggerAndPrincipal(logger, mock.PrincipalUser)
+	ctx := mock.CtxWithLoggerAndPrincipal(logger, store, mock.PrincipalUser)
 
 	reason := models.HTML("reason for retiring this LCID")
 	additionalInfo := models.HTML("additional info about retiring this LCID")
@@ -223,7 +224,7 @@ func changeLCIDRetireDate(
 	intake *models.SystemIntake,
 	retiresAt time.Time,
 ) *models.SystemIntake {
-	ctx := mock.CtxWithLoggerAndPrincipal(logger, mock.PrincipalUser)
+	ctx := mock.CtxWithLoggerAndPrincipal(logger, store, mock.PrincipalUser)
 
 	additionalInfo := models.HTML("additional info about retiring this LCID")
 	adminNote := models.HTML("admin note about retiring this LCID")
@@ -247,7 +248,7 @@ func closeIntake(
 	store *storage.Store,
 	intake *models.SystemIntake,
 ) *models.SystemIntake {
-	ctx := mock.CtxWithLoggerAndPrincipal(logger, mock.PrincipalUser)
+	ctx := mock.CtxWithLoggerAndPrincipal(logger, store, mock.PrincipalUser)
 
 	reason := models.HTML("reason for closing this intake")
 	additionalInfo := models.HTML("additional info about closing this request")
@@ -272,7 +273,7 @@ func reopenIntake(
 	store *storage.Store,
 	intake *models.SystemIntake,
 ) *models.SystemIntake {
-	ctx := mock.CtxWithLoggerAndPrincipal(logger, mock.PrincipalUser)
+	ctx := mock.CtxWithLoggerAndPrincipal(logger, store, mock.PrincipalUser)
 
 	reason := models.HTML("reason for reopening this intake")
 	additionalInfo := models.HTML("additional info about reopening this request")
@@ -298,7 +299,7 @@ func closeIntakeNotApproved(
 	intake *models.SystemIntake,
 	trbFollowUp models.SystemIntakeTRBFollowUp,
 ) *models.SystemIntake {
-	ctx := mock.CtxWithLoggerAndPrincipal(logger, mock.PrincipalUser)
+	ctx := mock.CtxWithLoggerAndPrincipal(logger, store, mock.PrincipalUser)
 
 	reason := models.HTML("reason for rejecting this intake")
 	nextSteps := models.HTML("next steps for this rejected intake")
@@ -326,7 +327,7 @@ func closeIntakeNotITGovRequest(
 	store *storage.Store,
 	intake *models.SystemIntake,
 ) *models.SystemIntake {
-	ctx := mock.CtxWithLoggerAndPrincipal(logger, mock.PrincipalUser)
+	ctx := mock.CtxWithLoggerAndPrincipal(logger, store, mock.PrincipalUser)
 
 	reason := models.HTML("reason for rejecting this intake")
 	additionalInfo := models.HTML("additional info about rejecting this request")
