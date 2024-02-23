@@ -1399,12 +1399,7 @@ func (r *mutationResolver) SetSystemIntakeRelationExistingSystem(ctx context.Con
 	// This resolver's purpose is to relate this System Intake to some number of CEDAR System IDs and Contract Numbers
 	// It is also responsible for clearing any previous relations that might have been set by SetSystemIntakeRelationExistingService(), which,
 	// in practice, should just be the `contractName` field.
-	//
-	// Pseudo-code for this resolver (best if handled in a transaction):
-	// 1. Delete (if any) existing free-text contract/service name that might have been set by SetSystemIntakeRelationExistingService()
-	// 2. Delete & Create CEDAR System ID relations (Delete & Create because this mutation always receives the full state of the relations)
-	// 3. Delete & Create Contract Number relations (Delete & Create because this mutation always receives the full state of the relations)
-	intake, err := resolvers.SetSystemIntakeRelationExistingSystem(ctx, r.store, input)
+	intake, err := resolvers.SetSystemIntakeRelationExistingSystem(ctx, r.store, r.cedarCoreClient.GetSystem, input)
 	if err != nil {
 		return nil, err
 	}
@@ -2771,9 +2766,14 @@ func (r *systemIntakeResolver) RelationType(ctx context.Context, obj *models.Sys
 	return obj.SystemRelationType, nil
 }
 
-// ContractNumbers is the resolver for the contractNumbers field.
+// Systems is the resolver for the systems field on system intakes.
+func (r *systemIntakeResolver) Systems(ctx context.Context, obj *models.SystemIntake) ([]*models.CedarSystem, error) {
+	return resolvers.SystemIntakeSystems(ctx, r.cedarCoreClient.GetSystem, obj.ID)
+}
+
+// ContractNumbers is the resolver for the contractNumbers field on system intakes.
 func (r *systemIntakeResolver) ContractNumbers(ctx context.Context, obj *models.SystemIntake) ([]*models.SystemIntakeContractNumber, error) {
-	return resolvers.ContractNumbers(ctx, obj.ID)
+	return resolvers.SystemIntakeContractNumbers(ctx, obj.ID)
 }
 
 // DocumentType is the resolver for the documentType field.
@@ -2934,6 +2934,11 @@ func (r *tRBRequestResolver) ContractName(ctx context.Context, obj *models.TRBRe
 // RelationType is the resolver for the relationType field.
 func (r *tRBRequestResolver) RelationType(ctx context.Context, obj *models.TRBRequest) (*models.RequestRelationType, error) {
 	return obj.SystemRelationType, nil
+}
+
+// ContractNumbers is the resolver for the contractNumbers field.
+func (r *tRBRequestResolver) ContractNumbers(ctx context.Context, obj *models.TRBRequest) ([]*models.TRBRequestContractNumber, error) {
+	return resolvers.TRBRequestContractNumbers(ctx, obj.ID)
 }
 
 // UserInfo is the resolver for the userInfo field.

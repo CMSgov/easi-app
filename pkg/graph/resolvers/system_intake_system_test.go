@@ -1,35 +1,47 @@
 package resolvers
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 
+	"github.com/cmsgov/easi-app/pkg/appcontext"
+	"github.com/cmsgov/easi-app/pkg/dataloaders"
 	"github.com/cmsgov/easi-app/pkg/models"
 	"github.com/cmsgov/easi-app/pkg/sqlutils"
 	"github.com/cmsgov/easi-app/pkg/testhelpers"
 )
 
-func (s *ResolverSuite) TestSystemIntakeContractNumbers() {
-	ctx := s.testConfigs.Context
+func (s *ResolverSuite) TestIntakeRelatedSystems() {
+	ctx := context.Background()
+	ctx = appcontext.WithLogger(ctx, s.testConfigs.Logger)
+
+	ctx = dataloaders.CTXWithLoaders(
+		ctx,
+		dataloaders.NewDataLoaders(
+			s.testConfigs.Store,
+			func(ctx context.Context, s []string) ([]*models.UserInfo, error) { return nil, nil },
+		),
+	)
 
 	const (
-		contract1 = "1"
-		contract2 = "2"
-		contract3 = "3"
+		systemID1 = "1"
+		systemID2 = "2"
+		systemID3 = "3"
 	)
 
 	var createdIDs []uuid.UUID
 
 	// create system intake
-	s.Run("create system intake for test", func() {
+	s.Run("create system intakes for test", func() {
 		for i := 0; i < 2; i++ {
 			intake := models.SystemIntake{
 				EUAUserID:   testhelpers.RandomEUAIDNull(),
 				Status:      models.SystemIntakeStatusINTAKEDRAFT,
 				RequestType: models.SystemIntakeRequestTypeNEW,
-				Requester:   fmt.Sprintf("system intake contract number data loader %d", i),
+				Requester:   fmt.Sprintf("system intake system data loader %d", i),
 			}
 
 			created, err := s.testConfigs.Store.CreateSystemIntake(ctx, &intake)
@@ -38,20 +50,20 @@ func (s *ResolverSuite) TestSystemIntakeContractNumbers() {
 		}
 
 		// set contract for the created system intake
-		// insert contracts for this created system intake
-		contractNumbers := []string{
-			contract1,
-			contract2,
-			contract3,
+		// insert systems for this created system intake
+		systemIDs := []string{
+			systemID1,
+			systemID2,
+			systemID3,
 		}
 
 		_, err := sqlutils.WithTransaction[any](s.testConfigs.Store, func(tx *sqlx.Tx) (*any, error) {
-			s.NoError(s.testConfigs.Store.SetSystemIntakeContractNumbers(ctx, tx, createdIDs[0], contractNumbers))
+			s.NoError(s.testConfigs.Store.SetSystemIntakeSystems(ctx, tx, createdIDs[0], systemIDs))
 			return nil, nil
 		})
 		s.NoError(err)
 
-		data, err := SystemIntakeContractNumbers(ctx, createdIDs[0])
+		data, err := SystemIntakeSystems(ctx, mockGetCedarSystem, createdIDs[0])
 		s.NoError(err)
 		s.Len(data, 3)
 
@@ -62,17 +74,15 @@ func (s *ResolverSuite) TestSystemIntakeContractNumbers() {
 		)
 
 		for _, result := range data {
-			s.Equal(result.SystemIntakeID, createdIDs[0])
-
-			if result.ContractNumber == contract1 {
+			if result.ID == systemID1 {
 				found1 = true
 			}
 
-			if result.ContractNumber == contract2 {
+			if result.ID == systemID2 {
 				found2 = true
 			}
 
-			if result.ContractNumber == contract3 {
+			if result.ID == systemID3 {
 				found3 = true
 			}
 		}
@@ -81,8 +91,8 @@ func (s *ResolverSuite) TestSystemIntakeContractNumbers() {
 		s.True(found2)
 		s.True(found3)
 
-		// attempt to get contract numbers for a system intake without linked contracts
-		data, err = SystemIntakeContractNumbers(ctx, createdIDs[1])
+		// attempt to get systems for a system intake without linked systems
+		data, err = SystemIntakeSystems(ctx, mockGetCedarSystem, createdIDs[1])
 		s.NoError(err)
 		s.Empty(data)
 	})

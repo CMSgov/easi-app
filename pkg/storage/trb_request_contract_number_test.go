@@ -2,19 +2,16 @@ package storage
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 	"github.com/lib/pq"
 
-	"github.com/cmsgov/easi-app/pkg/models"
 	"github.com/cmsgov/easi-app/pkg/sqlutils"
-	"github.com/cmsgov/easi-app/pkg/testhelpers"
 )
 
-func (s *StoreTestSuite) TestLinkSystemIntakeContractNumbers() {
+func (s *StoreTestSuite) TestLinkTRBRequestContractNumbers() {
 	ctx := context.Background()
 
 	const (
@@ -26,40 +23,31 @@ func (s *StoreTestSuite) TestLinkSystemIntakeContractNumbers() {
 
 	var createdIDs []uuid.UUID
 
-	s.Run("sets contracts on a system intake", func() {
-		// create three intakes
+	s.Run("sets contracts on a TRB Request", func() {
+		// create three TRB Requests
 		for i := 0; i < 3; i++ {
-			intake := models.SystemIntake{
-				EUAUserID:   testhelpers.RandomEUAIDNull(),
-				Status:      models.SystemIntakeStatusINTAKEDRAFT,
-				RequestType: models.SystemIntakeRequestTypeNEW,
-				Requester:   fmt.Sprintf("link to contracts %d", i),
-			}
-
-			created, err := s.store.CreateSystemIntake(ctx, &intake)
-			s.NoError(err)
-			createdIDs = append(createdIDs, created.ID)
+			createdIDs = append(createdIDs, createTRBRequest(ctx, s, "ANON"))
 		}
 
-		// insert contracts for this created system intake
 		contractNumbers := []string{
 			contract1,
 			contract2,
 			contract3,
 		}
-		for _, systemIntakeID := range createdIDs {
+
+		for _, trbRequestID := range createdIDs {
 			_, err := sqlutils.WithTransaction[any](s.db, func(tx *sqlx.Tx) (*any, error) {
-				s.NoError(s.store.SetSystemIntakeContractNumbers(ctx, tx, systemIntakeID, contractNumbers))
+				s.NoError(s.store.SetTRBRequestContractNumbers(ctx, tx, trbRequestID, contractNumbers))
 				return nil, nil
 			})
 			s.NoError(err)
 		}
-
-		data, err := s.store.SystemIntakeContractNumbersBySystemIntakeIDLOADER(ctx, formatParamTableJSON("system_intake_id", createdIDs))
+		// retrieve these contract numbers
+		data, err := s.store.TRBRequestContractNumbersByTRBRequestIDLOADER(ctx, formatParamTableJSON("trb_request_id", createdIDs))
 		s.NoError(err)
 
-		for _, systemIntakeID := range createdIDs {
-			contractsFound, ok := data[systemIntakeID.String()]
+		for _, trbRequestID := range createdIDs {
+			contractsFound, ok := data[trbRequestID.String()]
 			s.True(ok)
 			s.Len(contractsFound, 3)
 
@@ -88,15 +76,16 @@ func (s *StoreTestSuite) TestLinkSystemIntakeContractNumbers() {
 			s.True(found3)
 		}
 
-		// now, we can add contract 4 to one of the system intakes and verify that the created_at dates for the first three remain unchanged
+		// add contract 4 to one of the TRB Requests and confirm the first three were not modified in any way
 		_, err = sqlutils.WithTransaction[any](s.db, func(tx *sqlx.Tx) (*any, error) {
-			s.NoError(s.store.SetSystemIntakeContractNumbers(ctx, tx, createdIDs[0], append(contractNumbers, contract4)))
+			s.NoError(s.store.SetTRBRequestContractNumbers(ctx, tx, createdIDs[0], append(contractNumbers, contract4)))
 			return nil, nil
 		})
 		s.NoError(err)
 
-		data, err = s.store.SystemIntakeContractNumbersBySystemIntakeIDLOADER(ctx, formatParamTableJSON("system_intake_id", []uuid.UUID{createdIDs[0]}))
+		data, err = s.store.TRBRequestContractNumbersByTRBRequestIDLOADER(ctx, formatParamTableJSON("trb_request_id", []uuid.UUID{createdIDs[0]}))
 		s.NoError(err)
+
 		contractsFound, ok := data[createdIDs[0].String()]
 		s.True(ok)
 		s.Len(contractsFound, 4)
@@ -123,7 +112,7 @@ func (s *StoreTestSuite) TestLinkSystemIntakeContractNumbers() {
 
 		s.True(fourthContractTime.After(firstThreeContractsTime))
 
-		_, err = s.db.ExecContext(ctx, "DELETE FROM system_intakes WHERE id = ANY($1)", pq.Array(createdIDs))
+		_, err = s.db.ExecContext(ctx, "DELETE FROM trb_request WHERE id = ANY($1)", pq.Array(createdIDs))
 		s.NoError(err)
 	})
 }

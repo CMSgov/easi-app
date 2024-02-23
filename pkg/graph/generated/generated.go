@@ -741,6 +741,7 @@ type ComplexityRoot struct {
 		StatusRequester             func(childComplexity int) int
 		Step                        func(childComplexity int) int
 		SubmittedAt                 func(childComplexity int) int
+		Systems                     func(childComplexity int) int
 		TRBFollowUpRecommendation   func(childComplexity int) int
 		TrbCollaborator             func(childComplexity int) int
 		TrbCollaboratorName         func(childComplexity int) int
@@ -976,6 +977,7 @@ type ComplexityRoot struct {
 		Attendees          func(childComplexity int) int
 		ConsultMeetingTime func(childComplexity int) int
 		ContractName       func(childComplexity int) int
+		ContractNumbers    func(childComplexity int) int
 		CreatedAt          func(childComplexity int) int
 		CreatedBy          func(childComplexity int) int
 		Documents          func(childComplexity int) int
@@ -1008,6 +1010,16 @@ type ComplexityRoot struct {
 		Role         func(childComplexity int) int
 		TRBRequestID func(childComplexity int) int
 		UserInfo     func(childComplexity int) int
+	}
+
+	TRBRequestContractNumber struct {
+		ContractNumber func(childComplexity int) int
+		CreatedAt      func(childComplexity int) int
+		CreatedBy      func(childComplexity int) int
+		ID             func(childComplexity int) int
+		ModifiedAt     func(childComplexity int) int
+		ModifiedBy     func(childComplexity int) int
+		TRBRequestID   func(childComplexity int) int
 	}
 
 	TRBRequestDocument struct {
@@ -1458,6 +1470,7 @@ type SystemIntakeResolver interface {
 
 	ContractName(ctx context.Context, obj *models.SystemIntake) (*string, error)
 	RelationType(ctx context.Context, obj *models.SystemIntake) (*models.RequestRelationType, error)
+	Systems(ctx context.Context, obj *models.SystemIntake) ([]*models.CedarSystem, error)
 	ContractNumbers(ctx context.Context, obj *models.SystemIntake) ([]*models.SystemIntakeContractNumber, error)
 }
 type SystemIntakeDocumentResolver interface {
@@ -1507,6 +1520,7 @@ type TRBRequestResolver interface {
 
 	ContractName(ctx context.Context, obj *models.TRBRequest) (*string, error)
 	RelationType(ctx context.Context, obj *models.TRBRequest) (*models.RequestRelationType, error)
+	ContractNumbers(ctx context.Context, obj *models.TRBRequest) ([]*models.TRBRequestContractNumber, error)
 }
 type TRBRequestAttendeeResolver interface {
 	UserInfo(ctx context.Context, obj *models.TRBRequestAttendee) (*models.UserInfo, error)
@@ -5564,6 +5578,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.SystemIntake.SubmittedAt(childComplexity), true
 
+	case "SystemIntake.systems":
+		if e.complexity.SystemIntake.Systems == nil {
+			break
+		}
+
+		return e.complexity.SystemIntake.Systems(childComplexity), true
+
 	case "SystemIntake.trbFollowUpRecommendation":
 		if e.complexity.SystemIntake.TRBFollowUpRecommendation == nil {
 			break
@@ -6579,6 +6600,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.TRBRequest.ContractName(childComplexity), true
 
+	case "TRBRequest.contractNumbers":
+		if e.complexity.TRBRequest.ContractNumbers == nil {
+			break
+		}
+
+		return e.complexity.TRBRequest.ContractNumbers(childComplexity), true
+
 	case "TRBRequest.createdAt":
 		if e.complexity.TRBRequest.CreatedAt == nil {
 			break
@@ -6781,6 +6809,55 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.TRBRequestAttendee.UserInfo(childComplexity), true
+
+	case "TRBRequestContractNumber.contractNumber":
+		if e.complexity.TRBRequestContractNumber.ContractNumber == nil {
+			break
+		}
+
+		return e.complexity.TRBRequestContractNumber.ContractNumber(childComplexity), true
+
+	case "TRBRequestContractNumber.createdAt":
+		if e.complexity.TRBRequestContractNumber.CreatedAt == nil {
+			break
+		}
+
+		return e.complexity.TRBRequestContractNumber.CreatedAt(childComplexity), true
+
+	case "TRBRequestContractNumber.createdBy":
+		if e.complexity.TRBRequestContractNumber.CreatedBy == nil {
+			break
+		}
+
+		return e.complexity.TRBRequestContractNumber.CreatedBy(childComplexity), true
+
+	case "TRBRequestContractNumber.id":
+		if e.complexity.TRBRequestContractNumber.ID == nil {
+			break
+		}
+
+		return e.complexity.TRBRequestContractNumber.ID(childComplexity), true
+
+	case "TRBRequestContractNumber.modifiedAt":
+		if e.complexity.TRBRequestContractNumber.ModifiedAt == nil {
+			break
+		}
+
+		return e.complexity.TRBRequestContractNumber.ModifiedAt(childComplexity), true
+
+	case "TRBRequestContractNumber.modifiedBy":
+		if e.complexity.TRBRequestContractNumber.ModifiedBy == nil {
+			break
+		}
+
+		return e.complexity.TRBRequestContractNumber.ModifiedBy(childComplexity), true
+
+	case "TRBRequestContractNumber.trbRequestID":
+		if e.complexity.TRBRequestContractNumber.TRBRequestID == nil {
+			break
+		}
+
+		return e.complexity.TRBRequestContractNumber.TRBRequestID(childComplexity), true
 
 	case "TRBRequestDocument.deletedAt":
 		if e.complexity.TRBRequestDocument.DeletedAt == nil {
@@ -8598,7 +8675,12 @@ type SystemIntake {
   lcidStatus: SystemIntakeLCIDStatus
   trbFollowUpRecommendation: SystemIntakeTRBFollowUp
   contractName: String
-  relationType: RequestRelationType # TODO: NOT IMPLEMENTED
+  relationType: RequestRelationType
+
+  """
+  Linked systems
+  """
+  systems: [CedarSystem!]!
 
   """
   Linked contract numbers
@@ -9319,6 +9401,21 @@ type TRBRequest {
   modifiedAt: Time
   contractName: String
   relationType: RequestRelationType # TODO: NOT IMPLEMENTED
+
+  """
+  Linked contract numbers
+  """
+  contractNumbers: [TRBRequestContractNumber!]!
+}
+
+type TRBRequestContractNumber {
+  id: UUID!
+  trbRequestID: UUID!
+  contractNumber: String!
+  createdBy: UUID!
+  createdAt: Time!
+  modifiedBy: UUID
+  modifiedAt: Time
 }
 
 """
@@ -10164,11 +10261,8 @@ type Mutation {
     input: CreateCedarSystemBookmarkInput!
   ): DeleteCedarSystemBookmarkPayload
 
-  # TODO: NOT IMPLEMENTED
   setSystemIntakeRelationNewSystem(input: SetSystemIntakeRelationNewSystemInput): UpdateSystemIntakePayload
-  # TODO: NOT IMPLEMENTED
   setSystemIntakeRelationExistingSystem(input: SetSystemIntakeRelationExistingSystemInput): UpdateSystemIntakePayload
-  # TODO: NOT FULLY IMPLEMENTED
   setSystemIntakeRelationExistingService(input: SetSystemIntakeRelationExistingServiceInput): UpdateSystemIntakePayload
   unlinkSystemIntakeRelation(intakeID: UUID!): UpdateSystemIntakePayload
 
@@ -15333,6 +15427,8 @@ func (ec *executionContext) fieldContext_BusinessCase_systemIntake(ctx context.C
 				return ec.fieldContext_SystemIntake_contractName(ctx, field)
 			case "relationType":
 				return ec.fieldContext_SystemIntake_relationType(ctx, field)
+			case "systems":
+				return ec.fieldContext_SystemIntake_systems(ctx, field)
 			case "contractNumbers":
 				return ec.fieldContext_SystemIntake_contractNumbers(ctx, field)
 			}
@@ -27850,6 +27946,8 @@ func (ec *executionContext) fieldContext_Mutation_createSystemIntake(ctx context
 				return ec.fieldContext_SystemIntake_contractName(ctx, field)
 			case "relationType":
 				return ec.fieldContext_SystemIntake_relationType(ctx, field)
+			case "systems":
+				return ec.fieldContext_SystemIntake_systems(ctx, field)
 			case "contractNumbers":
 				return ec.fieldContext_SystemIntake_contractNumbers(ctx, field)
 			}
@@ -29443,6 +29541,8 @@ func (ec *executionContext) fieldContext_Mutation_createTRBRequest(ctx context.C
 				return ec.fieldContext_TRBRequest_contractName(ctx, field)
 			case "relationType":
 				return ec.fieldContext_TRBRequest_relationType(ctx, field)
+			case "contractNumbers":
+				return ec.fieldContext_TRBRequest_contractNumbers(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type TRBRequest", field.Name)
 		},
@@ -29550,6 +29650,8 @@ func (ec *executionContext) fieldContext_Mutation_updateTRBRequest(ctx context.C
 				return ec.fieldContext_TRBRequest_contractName(ctx, field)
 			case "relationType":
 				return ec.fieldContext_TRBRequest_relationType(ctx, field)
+			case "contractNumbers":
+				return ec.fieldContext_TRBRequest_contractNumbers(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type TRBRequest", field.Name)
 		},
@@ -30554,6 +30656,8 @@ func (ec *executionContext) fieldContext_Mutation_updateTRBRequestConsultMeeting
 				return ec.fieldContext_TRBRequest_contractName(ctx, field)
 			case "relationType":
 				return ec.fieldContext_TRBRequest_relationType(ctx, field)
+			case "contractNumbers":
+				return ec.fieldContext_TRBRequest_contractNumbers(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type TRBRequest", field.Name)
 		},
@@ -30685,6 +30789,8 @@ func (ec *executionContext) fieldContext_Mutation_updateTRBRequestTRBLead(ctx co
 				return ec.fieldContext_TRBRequest_contractName(ctx, field)
 			case "relationType":
 				return ec.fieldContext_TRBRequest_relationType(ctx, field)
+			case "contractNumbers":
+				return ec.fieldContext_TRBRequest_contractNumbers(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type TRBRequest", field.Name)
 		},
@@ -30789,6 +30895,8 @@ func (ec *executionContext) fieldContext_Mutation_setTRBRequestRelationNewSystem
 				return ec.fieldContext_TRBRequest_contractName(ctx, field)
 			case "relationType":
 				return ec.fieldContext_TRBRequest_relationType(ctx, field)
+			case "contractNumbers":
+				return ec.fieldContext_TRBRequest_contractNumbers(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type TRBRequest", field.Name)
 		},
@@ -30893,6 +31001,8 @@ func (ec *executionContext) fieldContext_Mutation_setTRBRequestRelationExistingS
 				return ec.fieldContext_TRBRequest_contractName(ctx, field)
 			case "relationType":
 				return ec.fieldContext_TRBRequest_relationType(ctx, field)
+			case "contractNumbers":
+				return ec.fieldContext_TRBRequest_contractNumbers(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type TRBRequest", field.Name)
 		},
@@ -30997,6 +31107,8 @@ func (ec *executionContext) fieldContext_Mutation_setTRBRequestRelationExistingS
 				return ec.fieldContext_TRBRequest_contractName(ctx, field)
 			case "relationType":
 				return ec.fieldContext_TRBRequest_relationType(ctx, field)
+			case "contractNumbers":
+				return ec.fieldContext_TRBRequest_contractNumbers(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type TRBRequest", field.Name)
 		},
@@ -31101,6 +31213,8 @@ func (ec *executionContext) fieldContext_Mutation_unlinkTRBRequestRelation(ctx c
 				return ec.fieldContext_TRBRequest_contractName(ctx, field)
 			case "relationType":
 				return ec.fieldContext_TRBRequest_relationType(ctx, field)
+			case "contractNumbers":
+				return ec.fieldContext_TRBRequest_contractNumbers(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type TRBRequest", field.Name)
 		},
@@ -32690,6 +32804,8 @@ func (ec *executionContext) fieldContext_Mutation_closeTRBRequest(ctx context.Co
 				return ec.fieldContext_TRBRequest_contractName(ctx, field)
 			case "relationType":
 				return ec.fieldContext_TRBRequest_relationType(ctx, field)
+			case "contractNumbers":
+				return ec.fieldContext_TRBRequest_contractNumbers(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type TRBRequest", field.Name)
 		},
@@ -32821,6 +32937,8 @@ func (ec *executionContext) fieldContext_Mutation_reopenTrbRequest(ctx context.C
 				return ec.fieldContext_TRBRequest_contractName(ctx, field)
 			case "relationType":
 				return ec.fieldContext_TRBRequest_relationType(ctx, field)
+			case "contractNumbers":
+				return ec.fieldContext_TRBRequest_contractNumbers(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type TRBRequest", field.Name)
 		},
@@ -33367,6 +33485,8 @@ func (ec *executionContext) fieldContext_Query_systemIntake(ctx context.Context,
 				return ec.fieldContext_SystemIntake_contractName(ctx, field)
 			case "relationType":
 				return ec.fieldContext_SystemIntake_relationType(ctx, field)
+			case "systems":
+				return ec.fieldContext_SystemIntake_systems(ctx, field)
 			case "contractNumbers":
 				return ec.fieldContext_SystemIntake_contractNumbers(ctx, field)
 			}
@@ -33584,6 +33704,8 @@ func (ec *executionContext) fieldContext_Query_systemIntakes(ctx context.Context
 				return ec.fieldContext_SystemIntake_contractName(ctx, field)
 			case "relationType":
 				return ec.fieldContext_SystemIntake_relationType(ctx, field)
+			case "systems":
+				return ec.fieldContext_SystemIntake_systems(ctx, field)
 			case "contractNumbers":
 				return ec.fieldContext_SystemIntake_contractNumbers(ctx, field)
 			}
@@ -33833,6 +33955,8 @@ func (ec *executionContext) fieldContext_Query_systemIntakesWithLcids(ctx contex
 				return ec.fieldContext_SystemIntake_contractName(ctx, field)
 			case "relationType":
 				return ec.fieldContext_SystemIntake_relationType(ctx, field)
+			case "systems":
+				return ec.fieldContext_SystemIntake_systems(ctx, field)
 			case "contractNumbers":
 				return ec.fieldContext_SystemIntake_contractNumbers(ctx, field)
 			}
@@ -35046,6 +35170,8 @@ func (ec *executionContext) fieldContext_Query_relatedSystemIntakes(ctx context.
 				return ec.fieldContext_SystemIntake_contractName(ctx, field)
 			case "relationType":
 				return ec.fieldContext_SystemIntake_relationType(ctx, field)
+			case "systems":
+				return ec.fieldContext_SystemIntake_systems(ctx, field)
 			case "contractNumbers":
 				return ec.fieldContext_SystemIntake_contractNumbers(ctx, field)
 			}
@@ -35155,6 +35281,8 @@ func (ec *executionContext) fieldContext_Query_trbRequest(ctx context.Context, f
 				return ec.fieldContext_TRBRequest_contractName(ctx, field)
 			case "relationType":
 				return ec.fieldContext_TRBRequest_relationType(ctx, field)
+			case "contractNumbers":
+				return ec.fieldContext_TRBRequest_contractNumbers(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type TRBRequest", field.Name)
 		},
@@ -35286,6 +35414,8 @@ func (ec *executionContext) fieldContext_Query_trbRequests(ctx context.Context, 
 				return ec.fieldContext_TRBRequest_contractName(ctx, field)
 			case "relationType":
 				return ec.fieldContext_TRBRequest_relationType(ctx, field)
+			case "contractNumbers":
+				return ec.fieldContext_TRBRequest_contractNumbers(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type TRBRequest", field.Name)
 		},
@@ -35393,6 +35523,8 @@ func (ec *executionContext) fieldContext_Query_myTrbRequests(ctx context.Context
 				return ec.fieldContext_TRBRequest_contractName(ctx, field)
 			case "relationType":
 				return ec.fieldContext_TRBRequest_relationType(ctx, field)
+			case "contractNumbers":
+				return ec.fieldContext_TRBRequest_contractNumbers(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type TRBRequest", field.Name)
 		},
@@ -39571,6 +39703,72 @@ func (ec *executionContext) fieldContext_SystemIntake_relationType(ctx context.C
 	return fc, nil
 }
 
+func (ec *executionContext) _SystemIntake_systems(ctx context.Context, field graphql.CollectedField, obj *models.SystemIntake) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_SystemIntake_systems(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.SystemIntake().Systems(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*models.CedarSystem)
+	fc.Result = res
+	return ec.marshalNCedarSystem2ᚕᚖgithubᚗcomᚋcmsgovᚋeasiᚑappᚋpkgᚋmodelsᚐCedarSystemᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_SystemIntake_systems(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SystemIntake",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_CedarSystem_id(ctx, field)
+			case "name":
+				return ec.fieldContext_CedarSystem_name(ctx, field)
+			case "description":
+				return ec.fieldContext_CedarSystem_description(ctx, field)
+			case "acronym":
+				return ec.fieldContext_CedarSystem_acronym(ctx, field)
+			case "status":
+				return ec.fieldContext_CedarSystem_status(ctx, field)
+			case "businessOwnerOrg":
+				return ec.fieldContext_CedarSystem_businessOwnerOrg(ctx, field)
+			case "businessOwnerOrgComp":
+				return ec.fieldContext_CedarSystem_businessOwnerOrgComp(ctx, field)
+			case "systemMaintainerOrg":
+				return ec.fieldContext_CedarSystem_systemMaintainerOrg(ctx, field)
+			case "systemMaintainerOrgComp":
+				return ec.fieldContext_CedarSystem_systemMaintainerOrgComp(ctx, field)
+			case "versionId":
+				return ec.fieldContext_CedarSystem_versionId(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type CedarSystem", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _SystemIntake_contractNumbers(ctx context.Context, field graphql.CollectedField, obj *models.SystemIntake) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_SystemIntake_contractNumbers(ctx, field)
 	if err != nil {
@@ -39848,6 +40046,8 @@ func (ec *executionContext) fieldContext_SystemIntakeAction_systemIntake(ctx con
 				return ec.fieldContext_SystemIntake_contractName(ctx, field)
 			case "relationType":
 				return ec.fieldContext_SystemIntake_relationType(ctx, field)
+			case "systems":
+				return ec.fieldContext_SystemIntake_systems(ctx, field)
 			case "contractNumbers":
 				return ec.fieldContext_SystemIntake_contractNumbers(ctx, field)
 			}
@@ -47047,6 +47247,66 @@ func (ec *executionContext) fieldContext_TRBRequest_relationType(ctx context.Con
 	return fc, nil
 }
 
+func (ec *executionContext) _TRBRequest_contractNumbers(ctx context.Context, field graphql.CollectedField, obj *models.TRBRequest) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_TRBRequest_contractNumbers(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.TRBRequest().ContractNumbers(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*models.TRBRequestContractNumber)
+	fc.Result = res
+	return ec.marshalNTRBRequestContractNumber2ᚕᚖgithubᚗcomᚋcmsgovᚋeasiᚑappᚋpkgᚋmodelsᚐTRBRequestContractNumberᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_TRBRequest_contractNumbers(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TRBRequest",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_TRBRequestContractNumber_id(ctx, field)
+			case "trbRequestID":
+				return ec.fieldContext_TRBRequestContractNumber_trbRequestID(ctx, field)
+			case "contractNumber":
+				return ec.fieldContext_TRBRequestContractNumber_contractNumber(ctx, field)
+			case "createdBy":
+				return ec.fieldContext_TRBRequestContractNumber_createdBy(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_TRBRequestContractNumber_createdAt(ctx, field)
+			case "modifiedBy":
+				return ec.fieldContext_TRBRequestContractNumber_modifiedBy(ctx, field)
+			case "modifiedAt":
+				return ec.fieldContext_TRBRequestContractNumber_modifiedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type TRBRequestContractNumber", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _TRBRequestAttendee_id(ctx context.Context, field graphql.CollectedField, obj *models.TRBRequestAttendee) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_TRBRequestAttendee_id(ctx, field)
 	if err != nil {
@@ -47474,6 +47734,308 @@ func (ec *executionContext) _TRBRequestAttendee_modifiedAt(ctx context.Context, 
 func (ec *executionContext) fieldContext_TRBRequestAttendee_modifiedAt(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "TRBRequestAttendee",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Time does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _TRBRequestContractNumber_id(ctx context.Context, field graphql.CollectedField, obj *models.TRBRequestContractNumber) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_TRBRequestContractNumber_id(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(uuid.UUID)
+	fc.Result = res
+	return ec.marshalNUUID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_TRBRequestContractNumber_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TRBRequestContractNumber",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type UUID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _TRBRequestContractNumber_trbRequestID(ctx context.Context, field graphql.CollectedField, obj *models.TRBRequestContractNumber) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_TRBRequestContractNumber_trbRequestID(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.TRBRequestID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(uuid.UUID)
+	fc.Result = res
+	return ec.marshalNUUID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_TRBRequestContractNumber_trbRequestID(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TRBRequestContractNumber",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type UUID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _TRBRequestContractNumber_contractNumber(ctx context.Context, field graphql.CollectedField, obj *models.TRBRequestContractNumber) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_TRBRequestContractNumber_contractNumber(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ContractNumber, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_TRBRequestContractNumber_contractNumber(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TRBRequestContractNumber",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _TRBRequestContractNumber_createdBy(ctx context.Context, field graphql.CollectedField, obj *models.TRBRequestContractNumber) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_TRBRequestContractNumber_createdBy(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.CreatedBy, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(uuid.UUID)
+	fc.Result = res
+	return ec.marshalNUUID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_TRBRequestContractNumber_createdBy(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TRBRequestContractNumber",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type UUID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _TRBRequestContractNumber_createdAt(ctx context.Context, field graphql.CollectedField, obj *models.TRBRequestContractNumber) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_TRBRequestContractNumber_createdAt(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.CreatedAt, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(time.Time)
+	fc.Result = res
+	return ec.marshalNTime2timeᚐTime(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_TRBRequestContractNumber_createdAt(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TRBRequestContractNumber",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Time does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _TRBRequestContractNumber_modifiedBy(ctx context.Context, field graphql.CollectedField, obj *models.TRBRequestContractNumber) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_TRBRequestContractNumber_modifiedBy(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ModifiedBy, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*uuid.UUID)
+	fc.Result = res
+	return ec.marshalOUUID2ᚖgithubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_TRBRequestContractNumber_modifiedBy(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TRBRequestContractNumber",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type UUID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _TRBRequestContractNumber_modifiedAt(ctx context.Context, field graphql.CollectedField, obj *models.TRBRequestContractNumber) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_TRBRequestContractNumber_modifiedAt(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ModifiedAt, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*time.Time)
+	fc.Result = res
+	return ec.marshalOTime2ᚖtimeᚐTime(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_TRBRequestContractNumber_modifiedAt(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TRBRequestContractNumber",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -49475,6 +50037,8 @@ func (ec *executionContext) fieldContext_TRBRequestForm_systemIntakes(ctx contex
 				return ec.fieldContext_SystemIntake_contractName(ctx, field)
 			case "relationType":
 				return ec.fieldContext_SystemIntake_relationType(ctx, field)
+			case "systems":
+				return ec.fieldContext_SystemIntake_systems(ctx, field)
 			case "contractNumbers":
 				return ec.fieldContext_SystemIntake_contractNumbers(ctx, field)
 			}
@@ -50716,6 +51280,8 @@ func (ec *executionContext) fieldContext_UpdateSystemIntakePayload_systemIntake(
 				return ec.fieldContext_SystemIntake_contractName(ctx, field)
 			case "relationType":
 				return ec.fieldContext_SystemIntake_relationType(ctx, field)
+			case "systems":
+				return ec.fieldContext_SystemIntake_systems(ctx, field)
 			case "contractNumbers":
 				return ec.fieldContext_SystemIntake_contractNumbers(ctx, field)
 			}
@@ -66196,6 +66762,42 @@ func (ec *executionContext) _SystemIntake(ctx context.Context, sel ast.Selection
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "systems":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._SystemIntake_systems(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "contractNumbers":
 			field := field
 
@@ -68728,6 +69330,42 @@ func (ec *executionContext) _TRBRequest(ctx context.Context, sel ast.SelectionSe
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "contractNumbers":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._TRBRequest_contractNumbers(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -68828,6 +69466,69 @@ func (ec *executionContext) _TRBRequestAttendee(ctx context.Context, sel ast.Sel
 			out.Values[i] = ec._TRBRequestAttendee_modifiedBy(ctx, field, obj)
 		case "modifiedAt":
 			out.Values[i] = ec._TRBRequestAttendee_modifiedAt(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var tRBRequestContractNumberImplementors = []string{"TRBRequestContractNumber"}
+
+func (ec *executionContext) _TRBRequestContractNumber(ctx context.Context, sel ast.SelectionSet, obj *models.TRBRequestContractNumber) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, tRBRequestContractNumberImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("TRBRequestContractNumber")
+		case "id":
+			out.Values[i] = ec._TRBRequestContractNumber_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "trbRequestID":
+			out.Values[i] = ec._TRBRequestContractNumber_trbRequestID(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "contractNumber":
+			out.Values[i] = ec._TRBRequestContractNumber_contractNumber(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "createdBy":
+			out.Values[i] = ec._TRBRequestContractNumber_createdBy(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "createdAt":
+			out.Values[i] = ec._TRBRequestContractNumber_createdAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "modifiedBy":
+			out.Values[i] = ec._TRBRequestContractNumber_modifiedBy(ctx, field, obj)
+		case "modifiedAt":
+			out.Values[i] = ec._TRBRequestContractNumber_modifiedAt(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -73315,6 +74016,60 @@ func (ec *executionContext) marshalNTRBRequestAttendee2ᚖgithubᚗcomᚋcmsgov�
 		return graphql.Null
 	}
 	return ec._TRBRequestAttendee(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNTRBRequestContractNumber2ᚕᚖgithubᚗcomᚋcmsgovᚋeasiᚑappᚋpkgᚋmodelsᚐTRBRequestContractNumberᚄ(ctx context.Context, sel ast.SelectionSet, v []*models.TRBRequestContractNumber) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNTRBRequestContractNumber2ᚖgithubᚗcomᚋcmsgovᚋeasiᚑappᚋpkgᚋmodelsᚐTRBRequestContractNumber(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNTRBRequestContractNumber2ᚖgithubᚗcomᚋcmsgovᚋeasiᚑappᚋpkgᚋmodelsᚐTRBRequestContractNumber(ctx context.Context, sel ast.SelectionSet, v *models.TRBRequestContractNumber) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._TRBRequestContractNumber(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNTRBRequestDocument2ᚕᚖgithubᚗcomᚋcmsgovᚋeasiᚑappᚋpkgᚋmodelsᚐTRBRequestDocumentᚄ(ctx context.Context, sel ast.SelectionSet, v []*models.TRBRequestDocument) graphql.Marshaler {
