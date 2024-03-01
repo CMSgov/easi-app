@@ -95,8 +95,7 @@ export const defaultProposedSolution = {
 
 export const businessCaseInitialData: BusinessCaseModel = {
   status: 'OPEN',
-  systemIntakeId: '34ded286-02fa-4457-b1a5-0fc6ec00ecf5', // just a random UUID. All business cases should have a systemIntakeId
-  systemIntakeStatus: '',
+  systemIntakeId: '',
   requestName: '',
   requester: {
     name: '',
@@ -219,7 +218,6 @@ export const prepareBusinessCaseForApp = (
     euaUserId: businessCase.euaUserId,
     status: businessCase.status,
     systemIntakeId: businessCase.systemIntakeId,
-    systemIntakeStatus: businessCase.systemIntakeStatus,
     requestName: businessCase.projectName || '',
     requester: {
       name: businessCase.requester || '',

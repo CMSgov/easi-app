@@ -199,50 +199,6 @@ func (s *Server) routes(
 				services.AuthorizeHasEASiRole,
 				store.CreateTestDate,
 			),
-			AddGRTFeedback: services.NewProvideGRTFeedback(
-				serviceConfig,
-				store.FetchSystemIntakeByID,
-				store.UpdateSystemIntake,
-				saveAction,
-				store.CreateGovernanceRequestFeedback,
-				emailClient.SendSystemIntakeReviewEmails,
-			),
-			CreateActionUpdateStatus: services.NewCreateActionUpdateStatus(
-				serviceConfig,
-				store.FetchSystemIntakeByID,
-				store.UpdateSystemIntake,
-				saveAction,
-				emailClient.SendSystemIntakeReviewEmails,
-				services.NewCloseBusinessCase(
-					serviceConfig,
-					store.FetchBusinessCaseByID,
-					store.UpdateBusinessCase,
-				),
-			),
-			CreateActionExtendLifecycleID: services.NewCreateActionExtendLifecycleID(
-				serviceConfig,
-				saveAction,
-				store.FetchSystemIntakeByID,
-				store.UpdateSystemIntake,
-				emailClient.SendExtendLCIDEmails,
-			),
-			IssueLifecycleID: services.NewUpdateLifecycleFields(
-				serviceConfig,
-				services.AuthorizeRequireGRTJobCode,
-				store.FetchSystemIntakeByID,
-				store.UpdateSystemIntake,
-				saveAction,
-				emailClient.SendIssueLCIDEmails,
-				store.GenerateLifecycleID,
-			),
-			RejectIntake: services.NewUpdateRejectionFields(
-				serviceConfig,
-				services.AuthorizeRequireGRTJobCode,
-				store.FetchSystemIntakeByID,
-				store.UpdateSystemIntake,
-				saveAction,
-				emailClient.SendRejectRequestEmails,
-			),
 			SubmitIntake: services.NewSubmitSystemIntake(
 				serviceConfig,
 				services.AuthorizeUserIsIntakeRequester,
@@ -329,7 +285,6 @@ func (s *Server) routes(
 			serviceConfig,
 			store.FetchSystemIntakesByEuaID,
 			store.FetchSystemIntakes,
-			store.FetchSystemIntakesByStatuses,
 			services.AuthorizeHasEASiRole,
 		),
 	)
@@ -388,7 +343,6 @@ func (s *Server) routes(
 					emailClient.SystemIntake.SendSubmitBizCaseRequesterNotification,
 					emailClient.SystemIntake.SendSubmitBizCaseReviewerNotification,
 					publisher.PublishBusinessCase,
-					models.SystemIntakeStatusBIZCASEDRAFTSUBMITTED,
 				),
 				models.ActionTypeSUBMITFINALBIZCASE: services.NewSubmitBusinessCase(
 					serviceConfig,
@@ -401,7 +355,6 @@ func (s *Server) routes(
 					emailClient.SystemIntake.SendSubmitBizCaseRequesterNotification,
 					emailClient.SystemIntake.SendSubmitBizCaseReviewerNotification,
 					publisher.PublishBusinessCase,
-					models.SystemIntakeStatusBIZCASEFINALSUBMITTED,
 				), models.ActionTypeSUBMITINTAKE: services.NewSubmitSystemIntake(
 					serviceConfig,
 					services.AuthorizeUserIsIntakeRequester,
@@ -471,20 +424,5 @@ func (s *Server) routes(
 		store.UpdateSystemIntake,
 		emailClient.SendLCIDExpirationAlertEmail,
 		time.Hour*24)
-
-	// endpoint for short-lived backfill process
-	// backfillHandler := handlers.NewBackfillHandler(
-	// 	base,
-	// 	services.NewBackfill(
-	// 		serviceConfig,
-	// 		store.FetchSystemIntakeByID,
-	// 		store.FetchSystemIntakeByLifecycleID,
-	// 		store.CreateSystemIntake,
-	// 		store.UpdateSystemIntake,
-	// 		store.CreateNote,
-	// 		services.AuthorizeHasEASiRole,
-	// 	),
-	// )
-	// api.Handle("/backfill", backfillHandler.Handle())
 
 }

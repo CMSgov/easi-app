@@ -22,7 +22,6 @@ func CreateSystemIntake(
 		EUAUserID:   null.StringFrom(appcontext.Principal(ctx).ID()),
 		RequestType: models.SystemIntakeRequestType(input.RequestType),
 		Requester:   input.Requester.Name,
-		Status:      models.SystemIntakeStatusINTAKEDRAFT,
 		State:       models.SystemIntakeStateOPEN,
 		Step:        models.SystemIntakeStepINITIALFORM,
 	}
@@ -220,7 +219,9 @@ func SystemIntakeUpdateContractDetails(ctx context.Context, store *storage.Store
 
 	if input.AnnualSpending != nil {
 		intake.CurrentAnnualSpending = null.StringFromPtr(input.AnnualSpending.CurrentAnnualSpending)
+		intake.CurrentAnnualSpendingITPortion = null.StringFromPtr(input.AnnualSpending.CurrentAnnualSpendingITPortion)
 		intake.PlannedYearOneSpending = null.StringFromPtr(input.AnnualSpending.PlannedYearOneSpending)
+		intake.PlannedYearOneSpendingITPortion = null.StringFromPtr(input.AnnualSpending.PlannedYearOneSpendingITPortion)
 	}
 
 	if input.Contract != nil {

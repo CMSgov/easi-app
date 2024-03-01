@@ -104,7 +104,7 @@ func submitSystemIntake(
 	if userEUA == "" {
 		userEUA = mock.PrincipalUser
 	}
-	ctx := mock.CtxWithLoggerAndPrincipal(logger, userEUA)
+	ctx := mock.CtxWithLoggerAndPrincipal(logger, store, userEUA)
 	// until the submit function is refactored out of services, manually submit
 	// NOTE: does not send emails
 	mockSubmitIntake := func(ctx context.Context, intake *models.SystemIntake, action *models.Action) error {
@@ -112,8 +112,6 @@ func submitSystemIntake(
 		intake.SubmittedAt = &updatedTime
 		intake.UpdatedAt = &updatedTime
 
-		// TODO: Remove when Admin Actions v2 is live
-		intake.Status = models.SystemIntakeStatusINTAKESUBMITTED
 		intake.RequestFormState = models.SIRFSSubmitted
 		_, err := store.UpdateSystemIntake(ctx, intake)
 		if err != nil {
@@ -147,7 +145,7 @@ func createSystemIntake(
 	var ctx context.Context
 	var requesterEUAIDPtr *string
 	if requesterEUAID != "" {
-		ctx = mock.CtxWithLoggerAndPrincipal(logger, requesterEUAID)
+		ctx = mock.CtxWithLoggerAndPrincipal(logger, store, requesterEUAID)
 		requesterEUAIDPtr = &requesterEUAID
 	}
 	// The resolver requires an EUA ID and creates a random intake ID.
@@ -171,7 +169,6 @@ func createSystemIntake(
 		EUAUserID:   null.StringFromPtr(requesterEUAIDPtr),
 		RequestType: requestType,
 		Requester:   requesterName,
-		Status:      models.SystemIntakeStatusINTAKEDRAFT,
 		State:       models.SystemIntakeStateOPEN,
 		Step:        models.SystemIntakeStepINITIALFORM,
 	}
@@ -195,7 +192,7 @@ func updateSystemIntakeRequestDetails(
 	cedarSystemID string,
 	hasUIChanges bool,
 ) *models.SystemIntake {
-	ctx := mock.CtxWithLoggerAndPrincipal(logger, intake.EUAUserID.ValueOrZero())
+	ctx := mock.CtxWithLoggerAndPrincipal(logger, store, intake.EUAUserID.ValueOrZero())
 	input := model.UpdateSystemIntakeRequestDetailsInput{
 		ID:               intake.ID,
 		RequestName:      &requestName,
@@ -224,7 +221,7 @@ func createSystemIntakeContact(
 	component string,
 	role string,
 ) {
-	ctx := mock.CtxWithLoggerAndPrincipal(logger, intake.EUAUserID.ValueOrZero())
+	ctx := mock.CtxWithLoggerAndPrincipal(logger, store, intake.EUAUserID.ValueOrZero())
 	input := model.CreateSystemIntakeContactInput{
 		Component:      component,
 		Role:           role,
@@ -245,7 +242,7 @@ func updateSystemIntakeContact(
 	component string,
 	role string,
 ) {
-	ctx := mock.CtxWithLoggerAndPrincipal(logger, intake.EUAUserID.ValueOrZero())
+	ctx := mock.CtxWithLoggerAndPrincipal(logger, store, intake.EUAUserID.ValueOrZero())
 	input := model.UpdateSystemIntakeContactInput{
 		Component: component,
 		Role:      role,
@@ -253,6 +250,74 @@ func updateSystemIntakeContact(
 	}
 	_, err := resolvers.UpdateSystemIntakeContact(ctx, store, input)
 	if err != nil {
+		panic(err)
+	}
+}
+
+func setSystemIntakeRelationNewSystem(
+	logger *zap.Logger,
+	store *storage.Store,
+	intakeID uuid.UUID,
+	contractNumbers []string,
+) {
+	ctx := mock.CtxWithLoggerAndPrincipal(logger, store, intakeID.String())
+	input := &model.SetSystemIntakeRelationNewSystemInput{
+		SystemIntakeID:  intakeID,
+		ContractNumbers: contractNumbers,
+	}
+	if _, err := resolvers.SetSystemIntakeRelationNewSystem(ctx, store, input); err != nil {
+		panic(err)
+	}
+}
+
+func setSystemIntakeRelationExistingSystem(
+	logger *zap.Logger,
+	store *storage.Store,
+	intakeID uuid.UUID,
+	contractNumbers []string,
+	cedarSystemIDs []string,
+) {
+	ctx := mock.CtxWithLoggerAndPrincipal(logger, store, intakeID.String())
+	input := &model.SetSystemIntakeRelationExistingSystemInput{
+		SystemIntakeID:  intakeID,
+		ContractNumbers: contractNumbers,
+		CedarSystemIDs:  cedarSystemIDs,
+	}
+	_, err := resolvers.SetSystemIntakeRelationExistingSystem(
+		ctx,
+		store,
+		func(ctx context.Context, systemID string) (*models.CedarSystem, error) {
+			return &models.CedarSystem{}, nil
+		},
+		input,
+	)
+	if err != nil {
+		panic(err)
+	}
+}
+
+func setSystemIntakeRelationExistingService(
+	logger *zap.Logger,
+	store *storage.Store,
+	intakeID uuid.UUID,
+	contractName string,
+	contractNumbers []string,
+) {
+	ctx := mock.CtxWithLoggerAndPrincipal(logger, store, intakeID.String())
+	input := &model.SetSystemIntakeRelationExistingServiceInput{
+		SystemIntakeID:  intakeID,
+		ContractName:    contractName,
+		ContractNumbers: contractNumbers,
+	}
+	_, err := resolvers.SetSystemIntakeRelationExistingService(ctx, store, input)
+	if err != nil {
+		panic(err)
+	}
+}
+
+func unlinkSystemIntakeRelation(logger *zap.Logger, store *storage.Store, intakeID uuid.UUID) {
+	ctx := mock.CtxWithLoggerAndPrincipal(logger, store, intakeID.String())
+	if _, err := resolvers.UnlinkSystemIntakeRelation(ctx, store, intakeID); err != nil {
 		panic(err)
 	}
 }
@@ -270,7 +335,7 @@ func updateSystemIntakeContactDetails(
 	issoIsPresent bool,
 	issoName string,
 ) *models.SystemIntake {
-	ctx := mock.CtxWithLoggerAndPrincipal(logger, intake.EUAUserID.ValueOrZero())
+	ctx := mock.CtxWithLoggerAndPrincipal(logger, store, intake.EUAUserID.ValueOrZero())
 	govTeamsPresent := true
 
 	input := model.UpdateSystemIntakeContactDetailsInput{
@@ -321,7 +386,7 @@ func updateSystemIntakeContractDetails(
 	store *storage.Store,
 	intake *models.SystemIntake,
 ) *models.SystemIntake {
-	ctx := mock.CtxWithLoggerAndPrincipal(logger, intake.EUAUserID.ValueOrZero())
+	ctx := mock.CtxWithLoggerAndPrincipal(logger, store, intake.EUAUserID.ValueOrZero())
 	existingFunding := true
 	fundingNumber1 := "123456"
 	fundingNumber2 := "789012"
@@ -329,7 +394,9 @@ func updateSystemIntakeContractDetails(
 	source2 := "Fed Admin"
 	source3 := "MIP Base"
 	currentAnnualSpending := "It's kind of a lot"
+	currentAnnualSpendingITPortion := "75%"
 	plannedYearOneSpending := "A little bit more"
+	plannedYearOneSpendingITPortion := "25%"
 	contractor := "Dr Doom"
 	startDate := time.Now().AddDate(-1, 0, 0)
 	hasContract := "HAVE_CONTRACT"
@@ -356,8 +423,10 @@ func updateSystemIntakeContractDetails(
 		},
 		Costs: &model.SystemIntakeCostsInput{}, //doesn't appear in current form
 		AnnualSpending: &model.SystemIntakeAnnualSpendingInput{
-			CurrentAnnualSpending:  &currentAnnualSpending,
-			PlannedYearOneSpending: &plannedYearOneSpending,
+			CurrentAnnualSpending:           &currentAnnualSpending,
+			CurrentAnnualSpendingITPortion:  &currentAnnualSpendingITPortion,
+			PlannedYearOneSpending:          &plannedYearOneSpending,
+			PlannedYearOneSpendingITPortion: &plannedYearOneSpendingITPortion,
 		},
 		Contract: &model.SystemIntakeContractInput{
 			Contractor:  &contractor,
@@ -380,7 +449,7 @@ func createSystemIntakeNote(
 	intake *models.SystemIntake,
 	noteContent string,
 ) *models.SystemIntakeNote {
-	ctx := mock.CtxWithLoggerAndPrincipal(logger, mock.PrincipalUser)
+	ctx := mock.CtxWithLoggerAndPrincipal(logger, store, mock.PrincipalUser)
 	content := models.HTML(noteContent)
 	input := model.CreateSystemIntakeNoteInput{
 		Content:    content,
@@ -404,7 +473,7 @@ func modifySystemIntake(
 	if intake == nil {
 		panic("must provide intake to edit")
 	}
-	ctx := mock.CtxWithLoggerAndPrincipal(logger, intake.EUAUserID.ValueOrZero())
+	ctx := mock.CtxWithLoggerAndPrincipal(logger, store, intake.EUAUserID.ValueOrZero())
 	cb(intake)
 	intake, err := store.UpdateSystemIntake(ctx, intake)
 	if err != nil {

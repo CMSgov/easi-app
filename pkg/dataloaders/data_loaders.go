@@ -10,10 +10,14 @@ import (
 
 // DataLoaders wrap your data loaders to inject via middleware
 type DataLoaders struct {
-	UserAccountLoader *WrappedDataLoader
-	DataReader        *DataReader
-	UserInfoLoader    *WrappedDataLoader
-	FetchUserInfos    func(context.Context, []string) ([]*models.UserInfo, error)
+	UserAccountLoader                 *WrappedDataLoader
+	DataReader                        *DataReader
+	UserInfoLoader                    *WrappedDataLoader
+	systemIntakeContractNumbersLoader *WrappedDataLoader
+	systemIntakeSystemsLoader         *WrappedDataLoader
+	trbRequestContractNumbersLoader   *WrappedDataLoader
+	trbRequestSystemsLoader           *WrappedDataLoader
+	FetchUserInfos                    func(context.Context, []string) ([]*models.UserInfo, error)
 }
 
 // NewDataLoaders instantiates data loaders for the middleware
@@ -29,6 +33,11 @@ func NewDataLoaders(store *storage.Store, fetchUserInfos func(context.Context, [
 
 	loaders.UserInfoLoader = newWrappedDataLoader(loaders.BatchUserInfos)
 
+	loaders.systemIntakeContractNumbersLoader = newWrappedDataLoader(loaders.getSystemIntakeContractNumbersBySystemIntakeID)
+	loaders.systemIntakeSystemsLoader = newWrappedDataLoader(loaders.getSystemIntakeSystemsBySystemIntakeID)
+
+	loaders.trbRequestContractNumbersLoader = newWrappedDataLoader(loaders.getTRBRequestContractNumbersByTRBRequestID)
+	loaders.trbRequestSystemsLoader = newWrappedDataLoader(loaders.getTRBRequestSystemsByTRBRequestID)
 	return loaders
 }
 

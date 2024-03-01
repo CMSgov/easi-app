@@ -3,10 +3,8 @@ package services
 import (
 	"context"
 	"errors"
-	"time"
 
 	"github.com/google/uuid"
-	"github.com/guregu/null"
 	"go.uber.org/zap"
 
 	"github.com/cmsgov/easi-app/pkg/appcontext"
@@ -20,10 +18,9 @@ func NewFetchSystemIntakes(
 	config Config,
 	fetchByID func(c context.Context, euaID string) (models.SystemIntakes, error),
 	fetchAll func(context.Context) (models.SystemIntakes, error),
-	fetchByStatusFilter func(context.Context, []models.SystemIntakeStatus) (models.SystemIntakes, error),
 	authorize func(c context.Context) (bool, error),
-) func(context.Context, models.SystemIntakeStatusFilter) (models.SystemIntakes, error) {
-	return func(ctx context.Context, statusFilter models.SystemIntakeStatusFilter) (models.SystemIntakes, error) {
+) func(context.Context) (models.SystemIntakes, error) {
+	return func(ctx context.Context) (models.SystemIntakes, error) {
 		logger := appcontext.ZLogger(ctx)
 		ok, err := authorize(ctx)
 		if err != nil {
@@ -37,17 +34,7 @@ func NewFetchSystemIntakes(
 		if !principal.AllowGRT() {
 			result, err = fetchByID(ctx, principal.ID())
 		} else {
-			if statusFilter == "" {
-				result, err = fetchAll(ctx)
-			} else {
-				statuses, filterErr := models.GetStatusesByFilter(statusFilter)
-				if filterErr != nil {
-					return nil, &apperrors.BadRequestError{
-						Err: filterErr,
-					}
-				}
-				result, err = fetchByStatusFilter(ctx, statuses)
-			}
+			result, err = fetchAll(ctx)
 		}
 		if err != nil {
 			logger.Error("failed to fetch system intakes")
@@ -165,14 +152,9 @@ func NewArchiveSystemIntake(
 			}
 		}
 
-		initialStatus := intake.Status
-
 		updatedTime := config.clock.Now()
 		intake.UpdatedAt = &updatedTime
-		intake.Status = models.SystemIntakeStatusWITHDRAWN
 		intake.ArchivedAt = &updatedTime
-
-		intake.SetV2FieldsBasedOnV1Status(models.SystemIntakeStatusWITHDRAWN)
 
 		intake, err = update(ctx, intake)
 		if err != nil {
@@ -184,7 +166,7 @@ func NewArchiveSystemIntake(
 		}
 
 		// Do note send email if intake was in a draft state (not submitted)
-		if initialStatus != models.SystemIntakeStatusINTAKEDRAFT {
+		if intake.SubmittedAt != nil {
 			err = sendWithdrawEmail(ctx, intake.ProjectName.String)
 			if err != nil {
 				appcontext.ZLogger(ctx).Error("Withdraw email failed to send: ", zap.Error(err))
@@ -221,219 +203,5 @@ func NewFetchSystemIntakeByID(
 			return nil, &apperrors.UnauthorizedError{Err: err}
 		}
 		return intake, nil
-	}
-}
-
-// NewUpdateLifecycleFields provides a way to update several of the fields
-// associated with assigning a LifecycleID
-func NewUpdateLifecycleFields(
-	config Config,
-	authorize func(context.Context) (bool, error),
-	fetch func(c context.Context, id uuid.UUID) (*models.SystemIntake, error),
-	update func(context.Context, *models.SystemIntake) (*models.SystemIntake, error),
-	saveAction func(context.Context, *models.Action) error,
-	sendIssueLCIDEmails func(context.Context, models.EmailNotificationRecipients, uuid.UUID, string, string, string, *time.Time, models.HTML, string, models.HTML, models.HTML) error,
-	generateLCID func(context.Context) (string, error),
-) func(ctx context.Context, intake *models.SystemIntake, action *models.Action, recipients *models.EmailNotificationRecipients) (*models.SystemIntake, error) {
-	return func(ctx context.Context, intake *models.SystemIntake, action *models.Action, recipients *models.EmailNotificationRecipients) (*models.SystemIntake, error) {
-		existing, err := fetch(ctx, intake.ID)
-		if err != nil {
-			return nil, &apperrors.QueryError{
-				Err:       err,
-				Operation: apperrors.QueryFetch,
-				Model:     existing,
-			}
-		}
-
-		ok, err := authorize(ctx)
-		if err != nil {
-			return nil, err
-		}
-		if !ok {
-			return nil, &apperrors.UnauthorizedError{Err: err}
-		}
-
-		// don't allow overwriting an existing LCID
-		if existing.LifecycleID.ValueOrZero() != "" {
-			return nil, &apperrors.ResourceConflictError{
-				Err:        errors.New("lifecycle id already exists"),
-				Resource:   models.SystemIntake{},
-				ResourceID: existing.ID.String(),
-			}
-		}
-
-		// we only want to bring over the fields specifically
-		// dealing with lifecycleID information
-		updatedTime := config.clock.Now()
-		existing.UpdatedAt = &updatedTime
-		existing.LifecycleID = intake.LifecycleID
-		existing.LifecycleExpiresAt = intake.LifecycleExpiresAt
-		existing.LifecycleIssuedAt = &updatedTime
-		existing.LifecycleScope = intake.LifecycleScope
-		existing.DecisionNextSteps = intake.DecisionNextSteps
-		existing.LifecycleCostBaseline = intake.LifecycleCostBaseline
-
-		// if a LCID wasn't passed in, we generate one
-		if existing.LifecycleID.ValueOrZero() == "" {
-			lcid, gErr := generateLCID(ctx)
-			if gErr != nil {
-				return nil, gErr
-			}
-			existing.LifecycleID = null.StringFrom(lcid)
-		}
-
-		action.IntakeID = &existing.ID
-		action.ActionType = models.ActionTypeISSUELCID
-		if err = saveAction(ctx, action); err != nil {
-			return nil, err
-		}
-
-		existing.Status = models.SystemIntakeStatusLCIDISSUED
-		existing.SetV2FieldsBasedOnV1Status(models.SystemIntakeStatusLCIDISSUED)
-		updated, err := update(ctx, existing)
-		if err != nil {
-			return nil, &apperrors.QueryError{
-				Err:       err,
-				Model:     intake,
-				Operation: apperrors.QuerySave,
-			}
-		}
-
-		if recipients != nil {
-			err = sendIssueLCIDEmails(
-				ctx,
-				*recipients,
-				updated.ID,
-				updated.ProjectName.String,
-				updated.Requester,
-				updated.LifecycleID.String,
-				updated.LifecycleExpiresAt,
-				updated.LifecycleScope.ValueOrEmptyHTML(),
-				updated.LifecycleCostBaseline.String,
-				updated.DecisionNextSteps.ValueOrEmptyHTML(),
-				action.Feedback.ValueOrEmptyHTML(),
-			)
-			if err != nil {
-				return nil, err
-			}
-		}
-
-		return updated, nil
-	}
-}
-
-// NewUpdateRejectionFields provides a way to update several of the fields
-// associated with rejecting an intake request
-func NewUpdateRejectionFields(
-	config Config,
-	authorize func(context.Context) (bool, error),
-	fetch func(c context.Context, id uuid.UUID) (*models.SystemIntake, error),
-	update func(context.Context, *models.SystemIntake) (*models.SystemIntake, error),
-	saveAction func(context.Context, *models.Action) error,
-	sendRejectRequestEmails func(ctx context.Context, recipients models.EmailNotificationRecipients, systemIntakeID uuid.UUID, projectName string, requester string, reason models.HTML, nextSteps models.HTML, feedback models.HTML) error,
-) func(ctx context.Context, intake *models.SystemIntake, action *models.Action, recipients *models.EmailNotificationRecipients) (*models.SystemIntake, error) {
-	return func(ctx context.Context, intake *models.SystemIntake, action *models.Action, recipients *models.EmailNotificationRecipients) (*models.SystemIntake, error) {
-		existing, err := fetch(ctx, intake.ID)
-		if err != nil {
-			return nil, err
-		}
-
-		ok, err := authorize(ctx)
-		if err != nil {
-			return nil, err
-		}
-		if !ok {
-			return nil, &apperrors.UnauthorizedError{Err: err}
-		}
-
-		action.IntakeID = &existing.ID
-		action.ActionType = models.ActionTypeREJECT
-		if err = saveAction(ctx, action); err != nil {
-			return nil, err
-		}
-
-		// we only want to bring over the fields specifically
-		// dealing with Rejection information
-		updatedTime := config.clock.Now()
-		existing.UpdatedAt = &updatedTime
-		existing.RejectionReason = intake.RejectionReason
-		existing.DecisionNextSteps = intake.DecisionNextSteps
-		existing.Status = models.SystemIntakeStatusNOTAPPROVED
-		existing.SetV2FieldsBasedOnV1Status(models.SystemIntakeStatusNOTAPPROVED)
-		updated, err := update(ctx, existing)
-		if err != nil {
-			return nil, err
-		}
-
-		if recipients != nil {
-			err = sendRejectRequestEmails(
-				ctx,
-				*recipients,
-				existing.ID,
-				existing.ProjectName.String,
-				existing.Requester,
-				existing.RejectionReason.ValueOrEmptyHTML(),
-				existing.DecisionNextSteps.ValueOrEmptyHTML(),
-				action.Feedback.ValueOrEmptyHTML(),
-			)
-			if err != nil {
-				return nil, err
-			}
-		}
-
-		return updated, nil
-	}
-}
-
-// NewProvideGRTFeedback gives a function to provide GRT Feedback to an intake
-func NewProvideGRTFeedback(
-	config Config,
-	fetch func(c context.Context, id uuid.UUID) (*models.SystemIntake, error),
-	update func(context.Context, *models.SystemIntake) (*models.SystemIntake, error),
-	saveAction func(context.Context, *models.Action) error,
-	saveGRTFeedback func(context.Context, *models.GovernanceRequestFeedback) (*models.GovernanceRequestFeedback, error),
-	sendReviewEmails func(ctx context.Context, recipients models.EmailNotificationRecipients, intakeID uuid.UUID, projectName string, requester string, emailText models.HTML) error,
-) func(ctx context.Context, grtFeedback *models.GovernanceRequestFeedback, action *models.Action, newStatus models.SystemIntakeStatus, recipients *models.EmailNotificationRecipients) (*models.GovernanceRequestFeedback, error) {
-	return func(ctx context.Context, grtFeedback *models.GovernanceRequestFeedback, action *models.Action, newStatus models.SystemIntakeStatus, recipients *models.EmailNotificationRecipients) (*models.GovernanceRequestFeedback, error) {
-		intake, err := fetch(ctx, grtFeedback.IntakeID)
-		if err != nil {
-			return nil, err
-		}
-
-		if grtFeedback, err = saveGRTFeedback(ctx, grtFeedback); err != nil {
-			return nil, err
-		}
-
-		if err = saveAction(ctx, action); err != nil {
-			return nil, err
-		}
-
-		updatedTime := config.clock.Now()
-		intake.UpdatedAt = &updatedTime
-		intake.Status = newStatus // IT Gov V1
-
-		// Update IT Gov V2 fields based on `newStatus`
-		intake.SetV2FieldsBasedOnV1Status(newStatus)
-
-		intake, err = update(ctx, intake)
-		if err != nil {
-			return nil, err
-		}
-
-		if recipients != nil {
-			err = sendReviewEmails(
-				ctx,
-				*recipients,
-				intake.ID,
-				intake.ProjectName.String,
-				intake.Requester,
-				action.Feedback.ValueOrEmptyHTML(),
-			)
-			if err != nil {
-				return nil, err
-			}
-		}
-
-		return grtFeedback, nil
 	}
 }
