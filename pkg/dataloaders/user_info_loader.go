@@ -48,7 +48,7 @@ func GetUserInfo(ctx context.Context, euaID string) (*models.UserInfo, error) {
 	allLoaders := Loaders(ctx)
 	userInfoLoader := allLoaders.UserInfoLoader
 
-	thunk := userInfoLoader.Loader.Load(ctx, dataloader.StringKey(euaID))
+	thunk := userInfoLoader.loader.Load(ctx, dataloader.StringKey(euaID))
 	result, err := thunk()
 	if err != nil {
 		return nil, err

@@ -1,4 +1,4 @@
-package storage
+package storage_test
 
 import (
 	"context"
@@ -74,7 +74,7 @@ func (s *StoreTestSuite) TestListSystems() {
 	}
 
 	// retrieve the list of systems
-	results, err := s.store.listSystems(ctx)
+	results, err := s.store.ListSystems(ctx)
 	s.NoError(err)
 
 	// verify the list of Systems that we seeded came back to us

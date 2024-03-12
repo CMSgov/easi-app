@@ -1,11 +1,10 @@
-package storage
+package storage_test
 
 import (
 	"context"
 
-	"github.com/cmsgov/easi-app/pkg/testhelpers"
-
 	"github.com/cmsgov/easi-app/pkg/models"
+	"github.com/cmsgov/easi-app/pkg/testhelpers"
 )
 
 func (s *StoreTestSuite) TestCreateAccessibilityRequestStatusRecord() {

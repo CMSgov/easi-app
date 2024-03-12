@@ -23,7 +23,7 @@ func (s *Store) CreateSystemIntake(ctx context.Context, intake *models.SystemInt
 	if intake.ID == uuid.Nil {
 		intake.ID = uuid.New()
 	}
-	createAt := s.clock.Now()
+	createAt := time.Now()
 	if intake.CreatedAt == nil {
 		intake.CreatedAt = &createAt
 	}
@@ -441,7 +441,7 @@ func (s *Store) FetchSystemIntakesByStateForAdmins(ctx context.Context, state mo
 	return intakes, nil
 }
 
-func generateLifecyclePrefix(t time.Time, loc *time.Location) string {
+func GenerateLifecyclePrefix(t time.Time, loc *time.Location) string {
 	return t.In(loc).Format("06002")
 }
 
@@ -456,7 +456,7 @@ func generateLifecyclePrefix(t time.Time, loc *time.Location) string {
 //	programmer circles, though this term seems to be a misappropriation of what
 //	astronomers use to mean a count of days since 24 Nov in the year 4714 BC.)
 func (s *Store) GenerateLifecycleID(ctx context.Context) (string, error) {
-	prefix := generateLifecyclePrefix(s.clock.Now(), s.easternTZ)
+	prefix := GenerateLifecyclePrefix(time.Now(), s.easternTZ)
 
 	countSQL := `SELECT COUNT(*) FROM system_intakes WHERE lcid ~ $1;`
 	var count int

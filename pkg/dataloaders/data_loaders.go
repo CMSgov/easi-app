@@ -10,13 +10,13 @@ import (
 
 // DataLoaders wrap your data loaders to inject via middleware
 type DataLoaders struct {
-	UserAccountLoader                 *WrappedDataLoader
+	UserAccountLoader                 *wrappedDataLoader
 	DataReader                        *DataReader
-	UserInfoLoader                    *WrappedDataLoader
-	systemIntakeContractNumbersLoader *WrappedDataLoader
-	systemIntakeSystemsLoader         *WrappedDataLoader
-	trbRequestContractNumbersLoader   *WrappedDataLoader
-	trbRequestSystemsLoader           *WrappedDataLoader
+	UserInfoLoader                    *wrappedDataLoader
+	systemIntakeContractNumbersLoader *wrappedDataLoader
+	systemIntakeSystemsLoader         *wrappedDataLoader
+	trbRequestContractNumbersLoader   *wrappedDataLoader
+	trbRequestSystemsLoader           *wrappedDataLoader
 	FetchUserInfos                    func(context.Context, []string) ([]*models.UserInfo, error)
 }
 

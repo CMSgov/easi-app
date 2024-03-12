@@ -1,4 +1,4 @@
-package storage
+package storage_test
 
 import (
 	"context"
@@ -19,7 +19,6 @@ func (s *StoreTestSuite) TestFetchAccessibilityRequestMetrics() {
 
 	mockClock := clock.NewMock()
 	settableClock := testhelpers.SettableClock{Mock: mockClock}
-	s.store.clock = &settableClock
 
 	intake := testhelpers.NewSystemIntake()
 	_, err := s.store.CreateSystemIntake(ctx, &intake)

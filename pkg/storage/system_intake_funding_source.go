@@ -3,6 +3,7 @@ package storage
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
@@ -24,7 +25,7 @@ func (s *Store) UpdateSystemIntakeFundingSources(ctx context.Context, systemInta
 
 // UpdateSystemIntakeFundingSources clears and updates the funding sources of a system intake
 func (s *Store) UpdateSystemIntakeFundingSourcesNP(ctx context.Context, tx *sqlx.Tx, systemIntakeID uuid.UUID, fundingSources []*models.SystemIntakeFundingSource) ([]*models.SystemIntakeFundingSource, error) {
-	now := s.clock.Now()
+	now := time.Now()
 
 	deleteFundingSourcesSQL := `
 		DELETE FROM system_intake_funding_sources

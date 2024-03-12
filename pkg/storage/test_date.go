@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"time"
 
 	"github.com/google/uuid"
 	"go.uber.org/zap"
@@ -16,7 +17,7 @@ import (
 // CreateTestDate creates a new Test Date object in the database
 func (s *Store) CreateTestDate(ctx context.Context, testDate *models.TestDate) (*models.TestDate, error) {
 	testDate.ID = uuid.New()
-	createAt := s.clock.Now().UTC()
+	createAt := time.Now().UTC()
 	testDate.CreatedAt = &createAt
 	testDate.UpdatedAt = &createAt
 	const createTestDateSQL = `
@@ -87,7 +88,7 @@ func (s *Store) FetchTestDatesByRequestID(ctx context.Context, requestID uuid.UU
 
 // UpdateTestDate updates an existing Test Date object in the database
 func (s *Store) UpdateTestDate(ctx context.Context, testDate *models.TestDate) (*models.TestDate, error) {
-	updatedAt := s.clock.Now().UTC()
+	updatedAt := time.Now().UTC()
 	testDate.UpdatedAt = &updatedAt
 	const createTestDateSQL = `
 		UPDATE test_dates
@@ -110,7 +111,7 @@ func (s *Store) UpdateTestDate(ctx context.Context, testDate *models.TestDate) (
 
 // DeleteTestDate deletes (soft delete - set deleted_at field) an existing test date object in the database
 func (s *Store) DeleteTestDate(ctx context.Context, testDate *models.TestDate) (*models.TestDate, error) {
-	updatedAt := s.clock.Now().UTC()
+	updatedAt := time.Now().UTC()
 	testDate.UpdatedAt = &updatedAt
 	testDate.DeletedAt = &updatedAt
 

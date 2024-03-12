@@ -1,11 +1,10 @@
-package storage
+package storage_test
 
 import (
 	"context"
 	"time"
 
 	"github.com/cmsgov/easi-app/pkg/models"
-	"github.com/cmsgov/easi-app/pkg/testhelpers"
 
 	"github.com/facebookgo/clock"
 )
@@ -34,8 +33,6 @@ func (s *StoreTestSuite) TestDuplicateCedarSystemBookmark() {
 	ctx := context.Background()
 
 	mockClock := clock.NewMock()
-	settableClock := testhelpers.SettableClock{Mock: mockClock}
-	s.store.clock = &settableClock
 
 	s.Run("create a duplicate cedar system bookmark and verify created_at updates", func() {
 		cedarSystemID := "326-1556-2"

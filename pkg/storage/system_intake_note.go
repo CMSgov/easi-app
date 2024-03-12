@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/google/uuid"
 	"go.uber.org/zap"
@@ -18,7 +19,7 @@ import (
 func (s *Store) CreateSystemIntakeNote(ctx context.Context, note *models.SystemIntakeNote) (*models.SystemIntakeNote, error) {
 	note.ID = uuid.New()
 	if note.CreatedAt == nil {
-		ts := s.clock.Now()
+		ts := time.Now()
 		note.CreatedAt = &ts
 	}
 	const createSystemIntakeNoteSQL = `	

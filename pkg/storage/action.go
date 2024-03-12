@@ -3,6 +3,7 @@ package storage
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/google/uuid"
 	"go.uber.org/zap"
@@ -17,7 +18,7 @@ func (s *Store) CreateAction(ctx context.Context, action *models.Action) (*model
 	id := uuid.New()
 	action.ID = id
 	if action.CreatedAt == nil {
-		createAt := s.clock.Now()
+		createAt := time.Now()
 		action.CreatedAt = &createAt
 	}
 	const createActionSQL = `

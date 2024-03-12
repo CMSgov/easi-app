@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"time"
 
 	"github.com/google/uuid"
 
@@ -16,7 +17,7 @@ import (
 
 // CreateSystemIntakeContact creates a new system intake contact object in the database
 func (s *Store) CreateSystemIntakeContact(ctx context.Context, systemIntakeContact *models.SystemIntakeContact) (*models.SystemIntakeContact, error) {
-	now := s.clock.Now().UTC()
+	now := time.Now().UTC()
 	if systemIntakeContact.CreatedAt == nil {
 		systemIntakeContact.CreatedAt = &now
 	}
@@ -57,7 +58,7 @@ func (s *Store) CreateSystemIntakeContact(ctx context.Context, systemIntakeConta
 
 // UpdateSystemIntakeContact updates a system intake contact object in the database
 func (s *Store) UpdateSystemIntakeContact(ctx context.Context, systemIntakeContact *models.SystemIntakeContact) (*models.SystemIntakeContact, error) {
-	updatedAt := s.clock.Now().UTC()
+	updatedAt := time.Now().UTC()
 	systemIntakeContact.UpdatedAt = &updatedAt
 	const createSystemIntakeContactSQL = `
 		UPDATE system_intake_contacts

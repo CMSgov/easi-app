@@ -1,4 +1,4 @@
-package storage
+package storage_test
 
 import (
 	"context"
@@ -7,18 +7,16 @@ import (
 	"testing"
 	"time"
 
-	"github.com/facebookgo/clock"
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq" // required for postgres driver in sqlx
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/zap"
-	ld "gopkg.in/launchdarkly/go-server-sdk.v5"
 
-	"github.com/cmsgov/easi-app/pkg/appconfig"
+	"github.com/cmsgov/easi-app/pkg/appcontext"
 	"github.com/cmsgov/easi-app/pkg/authentication"
 	"github.com/cmsgov/easi-app/pkg/models"
+	"github.com/cmsgov/easi-app/pkg/storage"
 	"github.com/cmsgov/easi-app/pkg/testhelpers"
 )
 
@@ -26,7 +24,7 @@ type StoreTestSuite struct {
 	suite.Suite
 	db        *sqlx.DB
 	logger    *zap.Logger
-	store     *Store
+	store     *storage.Store
 	Principal *authentication.EUAPrincipal
 }
 
@@ -59,36 +57,21 @@ func (s *StoreTestSuite) emptyDatabaseTables() error {
 }
 
 func TestStoreTestSuite(t *testing.T) {
-	config := testhelpers.NewConfig()
+	testHelper := testhelpers.NewTestHelper()
+	princ := createTestPrincipal(testHelper.Store(), "ANON")
 
-	logger := zap.NewNop()
-	dbConfig := DBConfig{
-		Host:           config.GetString(appconfig.DBHostConfigKey),
-		Port:           config.GetString(appconfig.DBPortConfigKey),
-		Database:       config.GetString(appconfig.DBNameConfigKey),
-		Username:       config.GetString(appconfig.DBUsernameConfigKey),
-		Password:       config.GetString(appconfig.DBPasswordConfigKey),
-		SSLMode:        config.GetString(appconfig.DBSSLModeConfigKey),
-		MaxConnections: config.GetInt(appconfig.DBMaxConnections),
+	logger, ok := appcontext.Logger(testHelper.Context())
+
+	if !ok {
+		t.Fatal("failed to acquire logger for storage test")
 	}
 
-	ldClient, err := ld.MakeCustomClient("fake", ld.Config{Offline: true}, 0)
-	assert.NoError(t, err)
-
-	store, err := NewStore(dbConfig, ldClient)
-	if err != nil {
-		fmt.Printf("Failed to get new database: %v", err)
-		t.Fail()
-	}
-	princ := createTestPrincipal(store, "ANON")
-
-	store.clock = clock.NewMock()
-
+	s := testHelper.Store()
 	storeTestSuite := &StoreTestSuite{
 		Suite:     suite.Suite{},
-		db:        store.db,
+		db:        testHelper.Store(),
 		logger:    logger,
-		store:     store,
+		store:     testHelper.Store(),
 		Principal: princ,
 	}
 
@@ -110,7 +93,7 @@ func createTRBRequest(ctx context.Context, s *StoreTestSuite, createdBy string) 
 }
 
 // createTestPrincipal creates a test principal in the database. It bypasses a call to OKTA, and just creates mock data
-func createTestPrincipal(store *Store, userName string) *authentication.EUAPrincipal {
+func createTestPrincipal(store *storage.Store, userName string) *authentication.EUAPrincipal {
 
 	tAccount := authentication.UserAccount{
 		Username:    userName,

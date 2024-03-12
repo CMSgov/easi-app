@@ -1,4 +1,4 @@
-package storage
+package storage_test
 
 import (
 	"context"
@@ -8,6 +8,7 @@ import (
 
 	"github.com/cmsgov/easi-app/pkg/apperrors"
 	"github.com/cmsgov/easi-app/pkg/models"
+	"github.com/cmsgov/easi-app/pkg/storage"
 	"github.com/cmsgov/easi-app/pkg/testhelpers"
 )
 
@@ -88,7 +89,7 @@ func (s *StoreTestSuite) TestCreateBusinessCase() {
 
 		s.Error(err)
 		s.IsType(&apperrors.QueryError{}, err)
-		s.Equal(IntakeExistsMsg, err.Error())
+		s.Equal(storage.IntakeExistsMsg, err.Error())
 	})
 
 	s.Run("requires a system intake ID that exists in the db", func() {
@@ -103,7 +104,7 @@ func (s *StoreTestSuite) TestCreateBusinessCase() {
 
 		s.Error(err)
 		s.IsType(&apperrors.QueryError{}, err)
-		s.Equal(IntakeExistsMsg, err.Error())
+		s.Equal(storage.IntakeExistsMsg, err.Error())
 	})
 
 	s.Run("requires an eua user id", func() {
@@ -118,7 +119,7 @@ func (s *StoreTestSuite) TestCreateBusinessCase() {
 
 		s.Error(err)
 		s.IsType(&apperrors.QueryError{}, err)
-		s.Equal(EuaIDMsg, err.Error())
+		s.Equal(storage.EuaIDMsg, err.Error())
 	})
 
 	s.Run("requires a status", func() {
@@ -133,7 +134,7 @@ func (s *StoreTestSuite) TestCreateBusinessCase() {
 
 		s.Error(err)
 		s.IsType(&apperrors.QueryError{}, err)
-		s.Contains(err.Error(), ValidStatusMsg)
+		s.Contains(err.Error(), storage.ValidStatusMsg)
 	})
 }
 

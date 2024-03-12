@@ -12,7 +12,6 @@ import (
 	"github.com/cmsgov/easi-app/pkg/appconfig"
 	"github.com/cmsgov/easi-app/pkg/appcontext"
 	"github.com/cmsgov/easi-app/pkg/authentication"
-	"github.com/cmsgov/easi-app/pkg/dataloaders"
 	"github.com/cmsgov/easi-app/pkg/email"
 	"github.com/cmsgov/easi-app/pkg/local"
 	"github.com/cmsgov/easi-app/pkg/models"
@@ -20,8 +19,6 @@ import (
 	"github.com/cmsgov/easi-app/pkg/testhelpers"
 	"github.com/cmsgov/easi-app/pkg/upload"
 	"github.com/cmsgov/easi-app/pkg/userhelpers"
-
-	ld "gopkg.in/launchdarkly/go-server-sdk.v5"
 )
 
 // ResolverSuite is the testify suite for the resolver package
@@ -63,8 +60,6 @@ func TestResolverSuite(t *testing.T) {
 
 // TestConfigs is a struct that contains all the dependencies needed to run a test
 type TestConfigs struct {
-	DBConfig    storage.DBConfig
-	LDClient    *ld.LDClient
 	S3Client    *upload.S3Client
 	Logger      *zap.Logger
 	UserInfo    *models.UserInfo
@@ -77,14 +72,15 @@ type TestConfigs struct {
 // GetDefaultTestConfigs returns a TestConfigs struct with all the dependencies needed to run a test
 func GetDefaultTestConfigs() *TestConfigs {
 	tc := TestConfigs{}
-	tc.GetDefaults()
+	tc.SetDefaults()
 	return &tc
 }
 
-// GetDefaults sets the dependencies for the TestConfigs struct
-func (tc *TestConfigs) GetDefaults() {
-	tc.DBConfig = NewDBConfig()
-	tc.LDClient, _ = ld.MakeCustomClient("fake", ld.Config{Offline: true}, 0)
+// SetDefaults sets the dependencies for the TestConfigs struct
+func (tc *TestConfigs) SetDefaults() {
+	testHelper := testhelpers.NewTestHelper()
+	tc.Context = testHelper.Context()
+	tc.Store = testHelper.Store()
 
 	s3Client := upload.NewS3Client(newS3Config())
 	tc.S3Client = &s3Client
@@ -95,20 +91,14 @@ func (tc *TestConfigs) GetDefaults() {
 		Email:       "testuser@test.com",
 		Username:    "TEST",
 	}
-	tc.Store, _ = storage.NewStore(tc.DBConfig, tc.LDClient)
 
 	// create the test context
 	// principal is fetched between each test in SetupTest()
-	ctx := appcontext.WithLogger(context.Background(), tc.Logger)
-	ctx = appcontext.WithPrincipal(ctx, getTestPrincipal(tc.Store, tc.UserInfo.Username))
-	// Set up mocked dataloaders for the test context
-	ctx = dataloaders.CTXWithLoaders(ctx, dataloaders.NewDataLoaders(tc.Store, func(ctx context.Context, s []string) ([]*models.UserInfo, error) { return nil, nil }))
-
-	tc.Context = ctx
+	tc.Context = appcontext.WithLogger(tc.Context, tc.Logger)
+	tc.Context = appcontext.WithPrincipal(tc.Context, getTestPrincipal(tc.Store, tc.UserInfo.Username))
 
 	emailClient := NewEmailClient()
 	tc.EmailClient = emailClient
-
 }
 
 func NewEmailClient() *email.Client {

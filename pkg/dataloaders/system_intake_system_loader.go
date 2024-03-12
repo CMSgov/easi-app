@@ -72,7 +72,7 @@ func GetSystemIntakeSystemsBySystemIntakeID(ctx context.Context, systemIntakeID 
 	key := NewKeyArgs()
 	key.Args["system_intake_id"] = systemIntakeID
 
-	thunk := loader.Loader.Load(ctx, key)
+	thunk := loader.loader.Load(ctx, key)
 	result, err := thunk()
 	if err != nil {
 		return nil, err

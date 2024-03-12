@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/google/uuid"
 	"github.com/graph-gophers/dataloader"
 	"github.com/samber/lo"
 	"go.uber.org/zap"
@@ -57,4 +58,22 @@ func (loaders *DataLoaders) GetUserAccountsByIDLoader(ctx context.Context, keys 
 	}
 
 	return output
+}
+
+// UserAccountGetByIDLOADER uses a data loader to return a user account from the database
+func UserAccountGetByIDLOADER(ctx context.Context, id uuid.UUID) (*authentication.UserAccount, error) {
+	allLoaders := Loaders(ctx)
+	userAccountLoader := allLoaders.UserAccountLoader
+
+	key := NewKeyArgs()
+	key.Args["id"] = id
+
+	thunk := userAccountLoader.loader.Load(ctx, key)
+	result, err := thunk()
+	if err != nil {
+		return nil, err
+	}
+
+	return result.(*authentication.UserAccount), nil
+
 }

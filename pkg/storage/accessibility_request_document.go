@@ -18,7 +18,7 @@ import (
 // CreateAccessibilityRequestDocument stores metadata for files uploaded to S3
 func (s *Store) CreateAccessibilityRequestDocument(ctx context.Context, file *models.AccessibilityRequestDocument) (*models.AccessibilityRequestDocument, error) {
 	file.ID = uuid.New()
-	createdAt := s.clock.Now()
+	createdAt := time.Now()
 	file.CreatedAt = &createdAt
 	file.UpdatedAt = &createdAt
 	const createAccessibilityRequestDocumentSQL = `INSERT INTO accessibility_request_documents (

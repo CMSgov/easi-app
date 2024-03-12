@@ -1,4 +1,4 @@
-package storage
+package storage_test
 
 import (
 	"context"
@@ -47,7 +47,7 @@ func (s *StoreTestSuite) TestLinkSystemIntakeContractNumbers() {
 			contract3,
 		}
 		for _, systemIntakeID := range createdIDs {
-			_, err := sqlutils.WithTransaction[any](s.db, func(tx *sqlx.Tx) (*any, error) {
+			_, err := sqlutils.WithTransaction[any](s.store, func(tx *sqlx.Tx) (*any, error) {
 				s.NoError(s.store.SetSystemIntakeContractNumbers(ctx, tx, systemIntakeID, contractNumbers))
 				return nil, nil
 			})

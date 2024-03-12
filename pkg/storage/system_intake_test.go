@@ -1,4 +1,4 @@
-package storage
+package storage_test
 
 import (
 	"context"
@@ -9,6 +9,7 @@ import (
 	"github.com/cmsgov/easi-app/pkg/apperrors"
 	"github.com/cmsgov/easi-app/pkg/helpers"
 	"github.com/cmsgov/easi-app/pkg/models"
+	"github.com/cmsgov/easi-app/pkg/storage"
 	"github.com/cmsgov/easi-app/pkg/testhelpers"
 
 	"github.com/facebookgo/clock"
@@ -380,7 +381,7 @@ func (s *StoreTestSuite) TestLifecyclePrefixBoundaries() {
 
 	for name, tc := range testCases {
 		s.Run(fmt.Sprintf("%s %s", name, tc.ts), func() {
-			out := generateLifecyclePrefix(tc.ts, easternTZ)
+			out := storage.GenerateLifecyclePrefix(tc.ts, easternTZ)
 			s.Equal(tc.expected, out, tc.ts)
 		})
 	}
@@ -564,7 +565,6 @@ func (s *StoreTestSuite) TestFetchSystemIntakeMetrics() {
 
 	mockClock := clock.NewMock()
 	settableClock := testhelpers.SettableClock{Mock: mockClock}
-	s.store.clock = &settableClock
 
 	// create a random year to avoid test collisions
 	// uses postgres max year minus 1000000

@@ -20,7 +20,7 @@ func (s *Store) CreateAccessibilityRequest(ctx context.Context, request *models.
 	if request.ID == uuid.Nil {
 		request.ID = uuid.New()
 	}
-	createAt := s.clock.Now()
+	createAt := time.Now()
 	if request.CreatedAt == nil {
 		request.CreatedAt = &createAt
 	}
@@ -190,7 +190,7 @@ func (s *Store) FetchAccessibilityRequestMetrics(_ context.Context, startTime ti
 
 // UpdateAccessibilityRequestCedarSystem updates the CEDAR system ID associated with a 508 request
 func (s *Store) UpdateAccessibilityRequestCedarSystem(ctx context.Context, id uuid.UUID, cedarSystemID null.String) (*models.AccessibilityRequest, error) {
-	updatedAt := s.clock.Now()
+	updatedAt := time.Now()
 	request := &models.AccessibilityRequest{
 		ID:            id,
 		CedarSystemID: cedarSystemID,

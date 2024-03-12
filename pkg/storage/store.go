@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/facebookgo/clock"
 	"github.com/jmoiron/sqlx"
 	ld "gopkg.in/launchdarkly/go-server-sdk.v5"
 )
@@ -13,7 +12,6 @@ import (
 // Store performs database operations for EASi
 type Store struct {
 	db        *sqlx.DB
-	clock     clock.Clock
 	easternTZ *time.Location
 	ldClient  *ld.LDClient
 }
@@ -91,7 +89,6 @@ func NewStore(
 
 	return &Store{
 		db:        db,
-		clock:     clock.New(),
 		easternTZ: tz,
 		ldClient:  ldClient,
 	}, nil

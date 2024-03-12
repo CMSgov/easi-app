@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"time"
 
 	"go.uber.org/zap"
 
@@ -15,7 +16,7 @@ import (
 // CreateCedarSystemBookmark creates a new cedar system bookmark object in the database
 func (s *Store) CreateCedarSystemBookmark(ctx context.Context, cedarSystemBookmark *models.CedarSystemBookmark) (*models.CedarSystemBookmark, error) {
 	euaUserID := appcontext.Principal(ctx).ID()
-	createAt := s.clock.Now().UTC()
+	createAt := time.Now().UTC()
 
 	cedarSystemBookmark.CreatedAt = &createAt
 	cedarSystemBookmark.EUAUserID = euaUserID

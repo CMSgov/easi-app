@@ -71,7 +71,7 @@ func GetTRBRequestContractNumbersByTRBRequestID(ctx context.Context, trbRequestI
 	key := NewKeyArgs()
 	key.Args["trb_request_id"] = trbRequestID
 
-	thunk := loader.Loader.Load(ctx, key)
+	thunk := loader.loader.Load(ctx, key)
 	result, err := thunk()
 	if err != nil {
 		return nil, err

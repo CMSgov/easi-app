@@ -13,12 +13,6 @@ import (
 	"github.com/cmsgov/easi-app/pkg/models"
 )
 
-// ListSystems retrieves a collection of Systems, which are a subset of all SystemIntakes that
-// have been "decided" and issued an LCID.
-func (s *Store) ListSystems(ctx context.Context) ([]*models.System, error) {
-	return s.listSystems(ctx)
-}
-
 const sqlListSystems = `
 	SELECT
 		id,
@@ -32,7 +26,9 @@ const sqlListSystems = `
 		lcid IS NOT NULL;
 `
 
-func (s *Store) listSystems(ctx context.Context) ([]*models.System, error) {
+// ListSystems retrieves a collection of Systems, which are a subset of all SystemIntakes that
+// have been "decided" and issued an LCID.
+func (s *Store) ListSystems(ctx context.Context) ([]*models.System, error) {
 	results := []*models.System{}
 	err := s.db.Select(&results, sqlListSystems)
 	if err != nil {
