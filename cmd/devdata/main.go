@@ -525,7 +525,10 @@ func main() {
 		store,
 		intakeID,
 		[]string{"12345", "67890"},
-		[]string{"54321", "09876"},
+		[]string{
+			"{11AB1A00-1234-5678-ABC1-1A001B00CC0A}",
+			"{11AB1A00-1234-5678-ABC1-1A001B00CC1B}",
+		},
 	)
 
 	// 3. Intake related to an existing contract/service
@@ -547,7 +550,10 @@ func main() {
 		store,
 		intakeID,
 		[]string{"12345", "67890"},
-		[]string{"54321", "09876"},
+		[]string{
+			"{11AB1A00-1234-5678-ABC1-1A001B00CC0A}",
+			"{11AB1A00-1234-5678-ABC1-1A001B00CC1B}",
+		},
 	)
 	unlinkSystemIntakeRelation(logger, store, intakeID)
 
@@ -601,7 +607,7 @@ func main() {
 	)
 	modifySystemIntake(logger, store, intake, func(i *models.SystemIntake) {
 		i.RequestType = models.SystemIntakeRequestTypeNEW
-		i.Requester = "EndToEnd One" // matches pkg/local/cedar_ldap.go, but doesn't really have to :shrug:
+		i.Requester = "EndToEnd One" // matches pkg/local/okta_api.go, but doesn't really have to :shrug:
 		i.Component = null.StringFrom("Center for Consumer Information and Insurance Oversight")
 		i.BusinessOwner = null.StringFrom("John BusinessOwner")
 		i.BusinessOwnerComponent = null.StringFrom("Center for Consumer Information and Insurance Oversight")
@@ -627,17 +633,15 @@ func main() {
 	makeSystemIntakeAndSubmit("Closable Request", &intakeID, requesterEUA, logger, store)
 
 	intakeID = uuid.MustParse("38e46d77-e474-4d15-a7c0-f6411221e2a4")
-	intake = makeSystemIntakeAndSubmit("Intake with no contract vehicle or number", &intakeID, requesterEUA, logger, store)
+	intake = makeSystemIntakeAndSubmit("Intake with no contract vehicle", &intakeID, requesterEUA, logger, store)
 	modifySystemIntake(logger, store, intake, func(i *models.SystemIntake) {
 		i.ContractVehicle = null.StringFromPtr(nil)
-		i.ContractNumber = null.StringFromPtr(nil)
 	})
 
 	intakeID = uuid.MustParse("2ed89f9f-7fd9-4e92-89d2-cee170a44d0d")
 	intake = makeSystemIntakeAndSubmit("Intake with legacy Contract Vehicle", &intakeID, requesterEUA, logger, store)
 	modifySystemIntake(logger, store, intake, func(i *models.SystemIntake) {
 		i.ContractVehicle = null.StringFrom("Honda")
-		i.ContractNumber = null.StringFromPtr(nil)
 	})
 
 	intakeID = uuid.MustParse("69357721-1e0c-4a37-a90f-64bb29814e7a")
