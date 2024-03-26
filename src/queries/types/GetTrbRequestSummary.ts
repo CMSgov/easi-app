@@ -58,7 +58,7 @@ export interface GetTrbRequestSummary_trbRequest {
   type: TRBRequestType;
   state: TRBRequestState;
   status: TRBRequestStatus;
-  trbLeadInfo: GetTrbRequestSummary_trbRequest_trbLeadInfo;
+  trbLeadInfo: GetTrbRequestSummary_trbRequest_trbLeadInfo | null;
   createdAt: Time;
   taskStatuses: GetTrbRequestSummary_trbRequest_taskStatuses;
   adminNotes: GetTrbRequestSummary_trbRequest_adminNotes[];

@@ -35,16 +35,8 @@ func (loaders *DataLoaders) BatchUserInfos(
 	// instead just return empty results
 	if len(userInfos) == 0 {
 		appcontext.ZLogger(ctx).Warn("Empty EUA results from FetchUserInfos")
-		// // return nil
-		// // TODO (context cancelled) make output sooner, make this shared
-		// output := make([]*dataloader.Result, len(keys))
-		// setEachOutputToError(fmt.Errorf("there is no results"), output)
-		// // TODO (context cancelled) This doesn't set the error correctly because it is an array of pointers, and the values are nil
-		// // we need to acutally have a non nil data loader result for this to function as expected.
-		// return output
 
 		return generateErrors(fmt.Errorf("there is no results"), len(keys))
-
 	}
 
 	// Maps EUAs to UserInfo structs

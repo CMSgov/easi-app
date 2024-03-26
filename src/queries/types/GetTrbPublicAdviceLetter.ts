@@ -62,7 +62,7 @@ export interface GetTrbPublicAdviceLetter_trbRequest {
   __typename: "TRBRequest";
   id: UUID;
   name: string | null;
-  requesterInfo: GetTrbPublicAdviceLetter_trbRequest_requesterInfo;
+  requesterInfo: GetTrbPublicAdviceLetter_trbRequest_requesterInfo | null;
   requesterComponent: string | null;
   form: GetTrbPublicAdviceLetter_trbRequest_form;
   type: TRBRequestType;

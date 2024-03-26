@@ -53,9 +53,9 @@ export interface GetTrbAdminTeamHome_trbRequests {
   status: TRBRequestStatus;
   state: TRBRequestState;
   consultMeetingTime: Time | null;
-  trbLeadInfo: GetTrbAdminTeamHome_trbRequests_trbLeadInfo;
+  trbLeadInfo: GetTrbAdminTeamHome_trbRequests_trbLeadInfo | null;
   requesterComponent: string | null;
-  requesterInfo: GetTrbAdminTeamHome_trbRequests_requesterInfo;
+  requesterInfo: GetTrbAdminTeamHome_trbRequests_requesterInfo | null;
   taskStatuses: GetTrbAdminTeamHome_trbRequests_taskStatuses;
   form: GetTrbAdminTeamHome_trbRequests_form;
   contractName: string | null;
