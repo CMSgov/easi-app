@@ -1,6 +1,7 @@
 import React, { useEffect, useLayoutEffect, useMemo, useState } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
 import { Link as RouterLink, NavLink, useParams } from 'react-router-dom';
+import { NavHashLink } from 'react-router-hash-link';
 import { useQuery } from '@apollo/client';
 import {
   Alert,
@@ -18,7 +19,6 @@ import {
 } from '@trussworks/react-uswds';
 import classnames from 'classnames';
 import { useFlags } from 'launchdarkly-react-client-sdk';
-import { startCase } from 'lodash';
 
 import MainContent from 'components/MainContent';
 import PageHeading from 'components/PageHeading';
@@ -37,7 +37,6 @@ import {
   /* eslint-disable camelcase */
   GetSystemProfile_cedarAuthorityToOperate,
   GetSystemProfile_cedarSystemDetails,
-  GetSystemProfile_cedarSystemDetails_roles,
   /* eslint-enable camelcase */
   GetSystemProfileVariables
 } from 'queries/types/GetSystemProfile';
@@ -53,15 +52,14 @@ import {
   UrlLocationTag,
   UsernameWithRoles
 } from 'types/systemProfile';
-import { formatDateUtc, parseAsUTC } from 'utils/date';
+import { parseAsUTC } from 'utils/date';
+import { formatHttpsUrl } from 'utils/formatUrl';
 import NotFound from 'views/NotFound';
 import {
   activities as mockActivies,
-  budgetsInfo as mockBudgets,
-  products as mockProducts,
   subSystems as mockSubSystems,
   systemData as mockSystemData
-} from 'views/Sandbox/mockSystemData';
+} from 'views/SystemProfile/mockSystemData';
 
 import EditPageCallout from './components/EditPageCallout';
 // components/index contains all the sideNavItems components, routes, labels and translations
@@ -69,16 +67,10 @@ import EditPageCallout from './components/EditPageCallout';
 import sideNavItems from './components/index';
 import SystemSubNav from './components/SystemSubNav/index';
 import EditTeam from './components/Team/Edit';
+import { getPersonFullName } from './helpers';
 import PointsOfContactSidebar from './PointsOfContactSidebar';
 
 import './index.scss';
-
-function httpsUrl(url: string): string {
-  if (/^https?/.test(url)) {
-    return url;
-  }
-  return `https://${url}`;
-}
 
 /**
  * Get the ATO Status from certain date properties and flags.
@@ -149,7 +141,7 @@ function getLocations(
 
     // Fix address urls without a protocol
     // and reassign it to the original address property
-    const address = url.address && httpsUrl(url.address);
+    const address = url.address && formatHttpsUrl(url.address);
 
     return {
       ...url,
@@ -158,20 +150,6 @@ function getLocations(
       tags
     };
   });
-}
-
-/**
- * Get a person's full name from a Cedar Role.
- * Format the name in title case if the full name is in all caps.
- */
-export function getPersonFullName(
-  // eslint-disable-next-line camelcase
-  role: GetSystemProfile_cedarSystemDetails_roles
-): string {
-  const fullname = `${role.assigneeFirstName} ${role.assigneeLastName}`;
-  return fullname === fullname.toUpperCase()
-    ? startCase(fullname.toLowerCase())
-    : fullname;
 }
 
 /**
@@ -202,6 +180,33 @@ export function getUsernamesWithRoles(
   return people;
 }
 
+function getPlannedRetirement(
+  // eslint-disable-next-line camelcase
+  cedarSystemDetails: GetSystemProfile_cedarSystemDetails
+): string | null {
+  const {
+    plansToRetireReplace,
+    quarterToRetireReplace,
+    yearToRetireReplace
+  } = cedarSystemDetails.systemMaintainerInformation;
+
+  // Return null if none of the original properties are truthy
+  if (
+    !(plansToRetireReplace || quarterToRetireReplace || yearToRetireReplace)
+  ) {
+    return null;
+  }
+
+  // Return a string where all falsy values are empty
+  return `${plansToRetireReplace || ''} ${
+    quarterToRetireReplace || yearToRetireReplace
+      ? `(${`Q${quarterToRetireReplace || ''} ${
+          yearToRetireReplace || ''
+        }`.trim()})`
+      : ''
+  }`;
+}
+
 /**
  * `SystemProfileData` is a merge of request data and parsed data
  * required by SystemHome and at least one other subpage.
@@ -213,10 +218,22 @@ export function getSystemProfileData(
   // System profile data is generally unavailable if `data.cedarSystemDetails` is empty
   if (!data) return undefined;
 
-  const { cedarSystemDetails } = data;
+  const {
+    cedarSystemDetails,
+    cedarSoftwareProducts,
+    cedarBudget,
+    cedarBudgetSystemCost
+  } = data;
   const cedarSystem = cedarSystemDetails?.cedarSystem;
 
-  if (!cedarSystemDetails || !cedarSystem) return undefined;
+  if (
+    !cedarSystemDetails ||
+    !cedarSystem ||
+    !cedarSoftwareProducts ||
+    !cedarBudget ||
+    !cedarBudgetSystemCost
+  )
+    return undefined;
 
   // Save CedarAssigneeType.PERSON roles for convenience
   const personRoles = cedarSystemDetails.roles.filter(
@@ -254,6 +271,8 @@ export function getSystemProfileData(
     id: cedarSystem.id,
     ato: cedarAuthorityToOperate,
     atoStatus: getAtoStatus(cedarAuthorityToOperate),
+    budgetSystemCosts: cedarBudgetSystemCost,
+    budgets: cedarBudget,
     businessOwners,
     developmentTags: getDevelopmentTags(cedarSystemDetails),
     locations,
@@ -261,54 +280,17 @@ export function getSystemProfileData(
     numberOfFederalFte,
     numberOfFte,
     personRoles,
+    plannedRetirement: getPlannedRetirement(cedarSystemDetails),
     productionLocation,
     status: cedarSystem.status,
+    toolsAndSoftware: cedarSoftwareProducts || undefined,
     usernamesWithRoles,
 
     // Remaining mock data stubs
     activities: mockActivies,
-    budgets: mockBudgets,
-    products: mockProducts,
     subSystems: mockSubSystems,
     systemData: mockSystemData
   };
-}
-
-export function showAtoExpirationDate(
-  // eslint-disable-next-line camelcase
-  systemProfileAto?: GetSystemProfile_cedarAuthorityToOperate
-): React.ReactNode {
-  return showVal(
-    systemProfileAto?.dateAuthorizationMemoExpires &&
-      formatDateUtc(
-        systemProfileAto.dateAuthorizationMemoExpires,
-        'MMMM d, yyyy'
-      )
-  );
-}
-
-/**
- * Show the value if it's not `null`, `undefined`, or `''`,
- * otherwise render `defaultVal`.
- * Use a `format` function on the value if provided.
- */
-export function showVal(
-  val: string | number | null | undefined,
-  {
-    defaultVal = 'No information to display',
-    format
-  }: {
-    defaultVal?: string;
-    format?: (v: any) => string;
-  } = {}
-): React.ReactNode {
-  if (val === null || val === undefined || val === '') {
-    return <span className="text-italic">{defaultVal}</span>;
-  }
-
-  if (format) return format(val);
-
-  return val;
 }
 
 /**
@@ -416,9 +398,12 @@ const SystemProfile = ({ id, modal }: SystemProfileProps) => {
     flags.systemProfileHiddenFields
   );
 
+  const subpageKey: SubpageKey = subinfo || modalSubpage || 'home';
+
   // Mapping of all sub navigation links
   const subNavigationLinks: React.ReactNode[] = Object.keys(subComponents).map(
     (key: string) => {
+      const comp = subComponents[key];
       if (modal)
         return (
           <Button
@@ -435,21 +420,35 @@ const SystemProfile = ({ id, modal }: SystemProfileProps) => {
           </Button>
         );
       return (
-        <NavLink
-          to={subComponents[key].route}
-          key={key}
-          activeClassName="usa-current"
-          className={classnames({
-            'nav-group-border': subComponents[key].groupEnd
-          })}
-        >
-          {t(`navigation.${key}`)}
-        </NavLink>
+        <>
+          <NavLink
+            to={subComponents[key].route}
+            key={key}
+            activeClassName="usa-current"
+            className={classnames({
+              'nav-group-border': subComponents[key].groupEnd
+            })}
+          >
+            {t(`navigation.${key}`)}
+          </NavLink>
+          {comp.hashLinks &&
+            key === subpageKey &&
+            comp.hashLinks.map((sub, subidx) => {
+              return (
+                <NavHashLink
+                  to={sub.hash}
+                  key={key + sub.name}
+                  className="margin-left-4"
+                  activeClassName="text-bold text-primary"
+                >
+                  {sub.name}
+                </NavHashLink>
+              );
+            })}
+        </>
       );
     }
   );
-
-  const subpageKey: SubpageKey = subinfo || modalSubpage || 'home';
 
   const subComponent = subComponents[subpageKey];
 

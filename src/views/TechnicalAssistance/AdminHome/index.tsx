@@ -42,6 +42,7 @@ const SideNavigation = ({
   trbRequestId
 }: SideNavProps) => {
   const { t } = useTranslation('technicalAssistance');
+
   return (
     <nav>
       <ul className="trb-admin__nav-list usa-list usa-list--unstyled">

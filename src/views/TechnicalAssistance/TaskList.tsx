@@ -41,6 +41,7 @@ import {
   TRBFormStatus
 } from 'types/graphql-global-types';
 import { formatDateLocal } from 'utils/date';
+import AdditionalRequestInfo from 'views/GovernanceTaskList/AdditionalRequestInfo';
 import NotFoundPartial from 'views/NotFound/NotFoundPartial';
 
 import Breadcrumbs from './Breadcrumbs';
@@ -401,6 +402,13 @@ function TaskList() {
                   {t('button.removeYourRequest')}
                 </Button>
               </div>
+
+              <AdditionalRequestInfo
+                {...data.trbRequest}
+                id={id}
+                requestType="trb"
+              />
+
               <h4 className="line-height-body-2 margin-top-3 margin-bottom-1">
                 {t('taskList.additionalHelp')}
               </h4>

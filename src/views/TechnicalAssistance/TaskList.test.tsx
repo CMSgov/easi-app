@@ -66,6 +66,10 @@ const getTrbTasklistQuery: MockedQuery<
         },
         feedback: [],
         consultMeetingTime: null,
+        relationType: null,
+        contractName: null,
+        contractNumbers: [],
+        systems: [],
         __typename: 'TRBRequest'
       }
     }
@@ -168,10 +172,7 @@ describe('Trb Task List', () => {
 
     userEvent.click(confirm);
 
-    const alert = await screen.findByTestId('alert');
-    expect(alert).toHaveClass('usa-alert--success');
-
-    screen.getByText(
+    await screen.findByText(
       i18next.t<string>('taskList:withdraw_modal:confirmationText', {
         context: 'name',
         requestName: getTrbTasklistQuery.result.data?.trbRequest.name

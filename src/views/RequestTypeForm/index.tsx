@@ -47,16 +47,17 @@ const RequestTypeForm = () => {
       mutate({ variables: { input } }).then(response => {
         if (!response.errors) {
           const { id } = response.data.createSystemIntake;
-          const navigationLink = `/governance-task-list/${id}`;
+          const navigationLink = `/system/link/${id}`;
+
           switch (requestType) {
             case 'NEW':
               history.push(`/governance-overview/${id}`);
               break;
             case 'MAJOR_CHANGES':
-              history.push(navigationLink);
+              history.push(navigationLink, { isNew: true });
               break;
             case 'RECOMPETE':
-              history.push(navigationLink);
+              history.push(navigationLink, { isNew: true });
               break;
             default:
               // console.warn(`Unknown request type: ${systemIntake.requestType}`);

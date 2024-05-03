@@ -32,20 +32,10 @@ const UserTargetingWrapper = ({ children }: WrapperProps) => {
             hash: data?.currentUser?.launchDarkly.signedHash
           },
           flags: {
-            sandbox: true,
             downgradeGovTeam: false,
-            downgrade508User: false,
-            downgrade508Tester: false,
             downgradeTrbAdmin: false,
-            itGovV2Enabled: false,
-            systemProfile: true,
             systemProfileHiddenFields: false,
-            cedar508Requests: false,
-            technicalAssistance: true,
-            hide508Workflow: true,
-            portfolioUpdateReport: false,
-            itgovLinkRequestsRequester: false,
-            trbLinkRequestsRequester: false
+            systemWorkspace: false
           }
         });
 

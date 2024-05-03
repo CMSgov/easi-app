@@ -27,8 +27,68 @@ export default gql`
       countOfOpenPoams
       lastAssessmentDate
     }
+    cedarBudget(cedarSystemID: $cedarSystemId) {
+      fiscalYear
+      funding
+      fundingId
+      fundingSource
+      id
+      name
+      projectId
+      projectTitle
+      systemId
+    }
+    cedarBudgetSystemCost(cedarSystemID: $cedarSystemId) {
+      budgetActualCost {
+        actualSystemCost
+        fiscalYear
+        systemId
+      }
+    }
     cedarThreat(cedarSystemId: $cedarSystemId) {
       weaknessRiskLevel
+    }
+    cedarSoftwareProducts(cedarSystemId: $cedarSystemId) {
+      aiSolnCatg
+      aiSolnCatgOther
+      apiDataArea
+      apiDescPubLocation
+      apiDescPublished
+      apiFHIRUse
+      apiFHIRUseOther
+      apiHasPortal
+      apisAccessibility
+      apisDeveloped
+      developmentStage
+      softwareProducts {
+        apiGatewayUse
+        elaPurchase
+        elaVendorId
+        providesAiCapability
+        refstr
+        softwareCatagoryConnectionGuid
+        softwareVendorConnectionGuid
+        softwareCost
+        softwareElaOrganization
+        softwareName
+        systemSoftwareConnectionGuid
+        technopediaCategory
+        technopediaID
+        vendorName
+      }
+      systemHasAPIGateway
+      usesAiTech
+    }
+    cedarContractsBySystem(cedarSystemId: $cedarSystemId) {
+      id: systemID
+      startDate
+      endDate
+      contractNumber
+      contractName
+      description
+      orderNumber
+      serviceProvided
+      isDeliveryOrg
     }
     cedarSystemDetails(cedarSystemId: $cedarSystemId) {
       businessOwnerInformation {
@@ -50,6 +110,7 @@ export default gql`
       }
       deployments {
         id
+        startDate
         dataCenter {
           name
         }
@@ -72,8 +133,24 @@ export default gql`
         deploymentFrequency
         devCompletionPercent
         devWorkDescription
+        ecapParticipation
+        frontendAccessType
+        hardCodedIPAddress
+        ip6EnabledAssetPercent
+        ip6TransitionPlan
+        ipEnabledAssetCount
         netAccessibility
+        plansToRetireReplace
+        quarterToRetireReplace
+        systemCustomization
+        yearToRetireReplace
       }
+    }
+    cedarSubSystems(cedarSystemId: $cedarSystemId) {
+      id
+      name
+      acronym
+      description
     }
   }
 `;

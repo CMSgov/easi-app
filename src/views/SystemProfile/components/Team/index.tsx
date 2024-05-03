@@ -35,8 +35,9 @@ import {
   UsernameWithRoles
 } from 'types/systemProfile';
 import formatNumber from 'utils/formatNumber';
-import { mockVendors } from 'views/Sandbox/mockSystemData';
-import { getPersonFullName, showVal } from 'views/SystemProfile';
+import showVal from 'utils/showVal';
+import { getPersonFullName } from 'views/SystemProfile/helpers';
+import { mockVendors } from 'views/SystemProfile/mockSystemData';
 
 import './index.scss';
 
@@ -197,7 +198,9 @@ export const TeamSection = ({
 
   return (
     <SectionWrapper borderTop>
-      <h2 className="margin-y-4">{t(`singleSystem.team.header.${section}`)}</h2>
+      <h2 className="margin-y-4" id={section}>
+        {t(`singleSystem.team.header.${section}`)}
+      </h2>
       {usernamesWithRoles.length ? (
         <div>
           <CardGroup className="margin-x-0">
@@ -215,9 +218,7 @@ export const TeamSection = ({
                 setIsExpanded(!isExpanded);
               }}
             >
-              {t(`singleSystem.team.view${isExpanded ? 'Less' : 'More'}`, {
-                count: membersLeft
-              })}
+              {t(`singleSystem.team.show${isExpanded ? 'Less' : 'More'}`)}
               <IconExpandMore
                 className="margin-left-05 margin-bottom-2px text-tbottom"
                 style={{
@@ -241,33 +242,32 @@ const Team = ({ system }: SystemProfileSubviewProps) => {
   const { t } = useTranslation('systemProfile');
   const flags = useFlags();
   const team = useMemo(() => getTeam(system.usernamesWithRoles), [system]);
+
   return (
     <>
       <SectionWrapper className="padding-bottom-4">
-        <h2 className="margin-top-0 margin-bottom-4">
-          {t('singleSystem.team.header.team')}
+        <h2 className="margin-top-0 margin-bottom-4" id="fte">
+          {t('singleSystem.team.header.fte')}
         </h2>
         <GridContainer className="padding-x-0">
           <Grid row>
             <Grid tablet={{ col: true }}>
-              <DescriptionTerm
-                term={t('singleSystem.team.federalFullTimeEmployees')}
-              />
+              <DescriptionTerm term={t('singleSystem.team.federalFte')} />
               <DescriptionDefinition
                 className="font-body-md line-height-body-3"
                 definition={showVal(system.numberOfFederalFte, {
-                  format: formatNumber
+                  format: formatNumber,
+                  defaultVal: t('general:noDataAvailable')
                 })}
               />
             </Grid>
             <Grid tablet={{ col: true }}>
-              <DescriptionTerm
-                term={t('singleSystem.team.contractorFullTimeEmployees')}
-              />
+              <DescriptionTerm term={t('singleSystem.team.contractorFte')} />
               <DescriptionDefinition
                 className="font-body-md line-height-body-3"
                 definition={showVal(system.numberOfContractorFte, {
-                  format: formatNumber
+                  format: formatNumber,
+                  defaultVal: t('general:noDataAvailable')
                 })}
               />
             </Grid>

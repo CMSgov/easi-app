@@ -18,9 +18,83 @@ export interface GetSystemProfile_cedarAuthorityToOperate {
   lastAssessmentDate: Time | null;
 }
 
+export interface GetSystemProfile_cedarBudget {
+  __typename: "CedarBudget";
+  fiscalYear: string | null;
+  funding: string | null;
+  fundingId: string | null;
+  fundingSource: string | null;
+  id: string | null;
+  name: string | null;
+  projectId: string;
+  projectTitle: string | null;
+  systemId: string | null;
+}
+
+export interface GetSystemProfile_cedarBudgetSystemCost_budgetActualCost {
+  __typename: "CedarBudgetActualCost";
+  actualSystemCost: string | null;
+  fiscalYear: string | null;
+  systemId: string | null;
+}
+
+export interface GetSystemProfile_cedarBudgetSystemCost {
+  __typename: "CedarBudgetSystemCost";
+  budgetActualCost: GetSystemProfile_cedarBudgetSystemCost_budgetActualCost[];
+}
+
 export interface GetSystemProfile_cedarThreat {
   __typename: "CedarThreat";
   weaknessRiskLevel: string | null;
+}
+
+export interface GetSystemProfile_cedarSoftwareProducts_softwareProducts {
+  __typename: "CedarSoftwareProductItem";
+  apiGatewayUse: boolean | null;
+  elaPurchase: string | null;
+  elaVendorId: string | null;
+  providesAiCapability: boolean | null;
+  refstr: string | null;
+  softwareCatagoryConnectionGuid: string | null;
+  softwareVendorConnectionGuid: string | null;
+  softwareCost: string | null;
+  softwareElaOrganization: string | null;
+  softwareName: string | null;
+  systemSoftwareConnectionGuid: string | null;
+  technopediaCategory: string | null;
+  technopediaID: string | null;
+  vendorName: string | null;
+}
+
+export interface GetSystemProfile_cedarSoftwareProducts {
+  __typename: "CedarSoftwareProducts";
+  aiSolnCatg: (string | null)[];
+  aiSolnCatgOther: string | null;
+  apiDataArea: (string | null)[];
+  apiDescPubLocation: string | null;
+  apiDescPublished: string | null;
+  apiFHIRUse: string | null;
+  apiFHIRUseOther: string | null;
+  apiHasPortal: boolean | null;
+  apisAccessibility: string | null;
+  apisDeveloped: string | null;
+  developmentStage: string | null;
+  softwareProducts: GetSystemProfile_cedarSoftwareProducts_softwareProducts[];
+  systemHasAPIGateway: boolean | null;
+  usesAiTech: string | null;
+}
+
+export interface GetSystemProfile_cedarContractsBySystem {
+  __typename: "CedarContract";
+  id: string | null;
+  startDate: Time | null;
+  endDate: Time | null;
+  contractNumber: string | null;
+  contractName: string | null;
+  description: string | null;
+  orderNumber: string | null;
+  serviceProvided: string | null;
+  isDeliveryOrg: boolean | null;
 }
 
 export interface GetSystemProfile_cedarSystemDetails_businessOwnerInformation {
@@ -52,6 +126,7 @@ export interface GetSystemProfile_cedarSystemDetails_deployments_dataCenter {
 export interface GetSystemProfile_cedarSystemDetails_deployments {
   __typename: "CedarDeployment";
   id: string;
+  startDate: Time | null;
   dataCenter: GetSystemProfile_cedarSystemDetails_deployments_dataCenter | null;
   deploymentType: string | null;
   name: string;
@@ -89,7 +164,17 @@ export interface GetSystemProfile_cedarSystemDetails_systemMaintainerInformation
   deploymentFrequency: string | null;
   devCompletionPercent: string | null;
   devWorkDescription: string | null;
+  ecapParticipation: boolean | null;
+  frontendAccessType: string | null;
+  hardCodedIPAddress: boolean | null;
+  ip6EnabledAssetPercent: string | null;
+  ip6TransitionPlan: string | null;
+  ipEnabledAssetCount: number | null;
   netAccessibility: string | null;
+  plansToRetireReplace: string | null;
+  quarterToRetireReplace: string | null;
+  systemCustomization: string | null;
+  yearToRetireReplace: string | null;
 }
 
 export interface GetSystemProfile_cedarSystemDetails {
@@ -102,10 +187,23 @@ export interface GetSystemProfile_cedarSystemDetails {
   systemMaintainerInformation: GetSystemProfile_cedarSystemDetails_systemMaintainerInformation;
 }
 
+export interface GetSystemProfile_cedarSubSystems {
+  __typename: "CedarSubSystem";
+  id: string;
+  name: string;
+  acronym: string | null;
+  description: string | null;
+}
+
 export interface GetSystemProfile {
   cedarAuthorityToOperate: GetSystemProfile_cedarAuthorityToOperate[];
+  cedarBudget: GetSystemProfile_cedarBudget[] | null;
+  cedarBudgetSystemCost: GetSystemProfile_cedarBudgetSystemCost | null;
   cedarThreat: GetSystemProfile_cedarThreat[];
+  cedarSoftwareProducts: GetSystemProfile_cedarSoftwareProducts | null;
+  cedarContractsBySystem: GetSystemProfile_cedarContractsBySystem[];
   cedarSystemDetails: GetSystemProfile_cedarSystemDetails | null;
+  cedarSubSystems: GetSystemProfile_cedarSubSystems[];
 }
 
 export interface GetSystemProfileVariables {

@@ -34,7 +34,9 @@ function ProcessFlow() {
   // Redirect to task list on sucessful trb request creation
   useEffect(() => {
     if (createResult.data) {
-      history.push(`/trb/task-list/${createResult.data.createTRBRequest.id}`);
+      history.push(`/trb/link/${createResult.data.createTRBRequest.id}`, {
+        isNew: true
+      });
     }
   }, [createResult, history]);
 

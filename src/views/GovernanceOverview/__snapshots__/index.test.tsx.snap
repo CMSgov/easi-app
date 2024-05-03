@@ -32,7 +32,7 @@ exports[`The governance overview page > matches the snapshot (w/ id param) 1`] =
         aria-current="page"
         className="usa-breadcrumb__list-item usa-current"
       >
-        Start a request
+        Start an IT Governance request
       </li>
     </ol>
   </nav>
@@ -306,7 +306,7 @@ exports[`The governance overview page > matches the snapshot (w/ id param) 1`] =
   </div>
   <a
     className="usa-button margin-bottom-5"
-    href="/governance-task-list/test-intake-guid"
+    href="/system/link/test-intake-guid"
     onClick={[Function]}
   >
     Get started
@@ -346,7 +346,7 @@ exports[`The governance overview page > matches the snapshot (w/o id param) 1`] 
         aria-current="page"
         className="usa-breadcrumb__list-item usa-current"
       >
-        Start a request
+        Start an IT Governance request
       </li>
     </ol>
   </nav>

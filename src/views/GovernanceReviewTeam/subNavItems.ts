@@ -1,3 +1,5 @@
+import { Flags } from 'types/flags';
+
 type SubNavItems = {
   route: `/governance-review-team/${string}/${string}`;
   text: string;
@@ -6,7 +8,7 @@ type SubNavItems = {
   groupEnd?: boolean;
 }[];
 
-const subNavItems = (systemId: string): SubNavItems => [
+const subNavItems = (systemId: string, flags?: Flags): SubNavItems => [
   {
     route: `/governance-review-team/${systemId}/intake-request`,
     text: 'general:intake',
@@ -31,7 +33,14 @@ const subNavItems = (systemId: string): SubNavItems => [
   {
     route: `/governance-review-team/${systemId}/decision`,
     text: 'decision.title',
-    aria: 'aria.openDecision'
+    aria: 'aria.openDecision',
+    groupEnd: true
+  },
+  {
+    route: `/governance-review-team/${systemId}/additional-information`,
+    text: 'additionalInformation.title',
+    aria: 'aria.openAdditionalInformation',
+    groupEnd: true
   },
   {
     route: `/governance-review-team/${systemId}/lcid`,
