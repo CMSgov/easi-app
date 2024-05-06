@@ -1,7 +1,15 @@
 {
   "compilerOptions": {
     "target": "ESNext",
-    "baseUrl": "src",
+    "baseUrl": "./",
+    "paths": {
+      "*": [
+        "./src/*"
+      ],
+      "easi-shared/*": [
+        "./easi-shared/src/*"
+      ],
+    },
     "lib": [
       "dom",
       "dom.iterable",
