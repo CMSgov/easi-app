@@ -55,7 +55,7 @@ export const initialSystemIntakeForm: SystemIntakeForm = {
     plannedYearOneSpendingITPortion: ''
   },
   contract: {
-    hasContract: '',
+    hasContract: null,
     contractor: '',
     startDate: {
       month: '',
@@ -209,7 +209,7 @@ export const prepareSystemIntakeForApp = (
         systemIntake.plannedYearOneSpendingITPortion || ''
     },
     contract: {
-      hasContract: systemIntake.existingContract || '',
+      hasContract: systemIntake.existingContract || null,
       contractor: systemIntake.contractor || '',
       startDate: {
         month: contractStartDate.month

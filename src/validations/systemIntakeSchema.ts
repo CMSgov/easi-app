@@ -1,6 +1,7 @@
 import { DateTime } from 'luxon';
 import * as Yup from 'yup';
 
+import { FormattedFundingSource } from 'components/FundingSources';
 import cmsGovernanceTeams from 'constants/enums/cmsGovernanceTeams';
 import { SystemIntakeDocumentCommonType } from 'types/graphql-global-types';
 
@@ -97,9 +98,9 @@ const SystemIntakeValidationSchema = {
       )
     }),
     contract: Yup.object().shape({
-      hasContract: Yup.string().required(
-        'Tell us whether you have a contract to support this effort'
-      ),
+      hasContract: Yup.string()
+        .nullable()
+        .required('Tell us whether you have a contract to support this effort'),
       contractor: Yup.string().when('hasContract', {
         is: (val: string) => ['HAVE_CONTRACT', 'IN_PROGRESS'].includes(val),
         then: Yup.string()
@@ -192,6 +193,34 @@ const SystemIntakeValidationSchema = {
 };
 
 export default SystemIntakeValidationSchema;
+
+export const FundingSourcesValidationSchema = Yup.object().shape({
+  fundingSources: Yup.array().of(
+    Yup.object({
+      id: Yup.string(),
+      fundingNumber: Yup.string()
+        .trim()
+        .required('Funding number must be exactly 6 digits')
+        .length(6, 'Funding number must be exactly 6 digits')
+        .matches(/^\d+$/, 'Funding number can only contain digits'),
+      sources: Yup.array().of(Yup.string()).min(1, 'Select a funding source')
+    }).test('is-unique', 'Must be unique', (value, context) => {
+      const fundingNumbers: string[] = context.parent
+        .filter((source: FormattedFundingSource) => source.id !== value.id)
+        .map((source: FormattedFundingSource) => source.fundingNumber);
+
+      const isUnique = !fundingNumbers.includes(value?.fundingNumber!);
+
+      return (
+        isUnique ||
+        context.createError({
+          path: `${context.path}.fundingNumber`,
+          message: 'Funding number must be unique'
+        })
+      );
+    })
+  )
+});
 
 export const DateValidationSchema: any = Yup.object().shape(
   {
