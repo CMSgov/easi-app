@@ -36,24 +36,24 @@ func OneToMany[valT GetMappingID[keyT], keyT comparable](keys []keyT, vals []val
 	return out
 }
 
-type GetMappingIDAndEmbedPtr[keyT comparable, embedPtr any] interface {
-	GetMappingID() keyT
-	GetEmbedPtr() embedPtr
+type Mapper[keyT comparable, valT any] interface {
+	GetMappingKey() keyT
+	GetMappingValue() valT
 }
 
-func OneToManyEmbedded[valT GetMappingIDAndEmbedPtr[keyT, embedPtr], keyT comparable, embedPtr any](keys []keyT, vals []valT) [][]embedPtr {
-	store := map[keyT][]embedPtr{}
+func OneToManyEmbedded[mapperT Mapper[keyT, valT], keyT comparable, valT any](keys []keyT, vals []mapperT) [][]valT {
+	store := map[keyT][]valT{}
 
 	for _, val := range vals {
-		id := val.GetMappingID()
+		id := val.GetMappingKey()
 		if _, ok := store[id]; !ok {
-			store[id] = []embedPtr{}
+			store[id] = []valT{}
 		}
-		embeddedVal := val.GetEmbedPtr()
+		embeddedVal := val.GetMappingValue()
 		store[id] = append(store[id], embeddedVal)
 	}
 
-	var out [][]embedPtr
+	var out [][]valT
 	for _, key := range keys {
 		out = append(out, store[key])
 	}

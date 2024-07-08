@@ -239,9 +239,9 @@ type RelatedSystemIntake struct {
 	RelatedRequestID uuid.UUID `db:"related_request_id"`
 }
 
-func (s *RelatedSystemIntake) GetMappingID() uuid.UUID {
+func (s *RelatedSystemIntake) GetMappingKey() uuid.UUID {
 	return s.RelatedRequestID
 }
-func (s *RelatedSystemIntake) GetEmbedPtr() *SystemIntake {
+func (s *RelatedSystemIntake) GetMappingValue() *SystemIntake {
 	return &s.SystemIntake
 }

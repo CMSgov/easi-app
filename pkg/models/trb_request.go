@@ -122,9 +122,9 @@ type RelatedTRBRequest struct {
 	RelatedRequestID uuid.UUID `db:"related_request_id"`
 }
 
-func (t *RelatedTRBRequest) GetMappingID() uuid.UUID {
+func (t *RelatedTRBRequest) GetMappingKey() uuid.UUID {
 	return t.RelatedRequestID
 }
-func (t *RelatedTRBRequest) GetEmbedPtr() *TRBRequest {
+func (t *RelatedTRBRequest) GetMappingValue() *TRBRequest {
 	return &t.TRBRequest
 }
