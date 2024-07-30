@@ -3082,12 +3082,85 @@ export type UserInfo = {
   lastName: Scalars['String']['output'];
 };
 
+export type GetSystemLinkedRequestsQueryVariables = Exact<{
+  cedarSystemId: Scalars['String']['input'];
+  systemIntakeState: SystemIntakeState;
+  trbRequestState: TrbRequestState;
+}>;
+
+
+export type GetSystemLinkedRequestsQuery = { __typename: 'Query', cedarSystemDetails?: { __typename: 'CedarSystemDetails', cedarSystem: { __typename: 'CedarSystem', id: string, linkedSystemIntakes: Array<{ __typename: 'SystemIntake', id: UUID, submittedAt?: Time | null, lcid?: string | null, requesterName?: string | null, name?: string | null, status: SystemIntakeStatusRequester }>, linkedTrbRequests: Array<{ __typename: 'TRBRequest', id: UUID, name?: string | null, status: TrbRequestStatus, state: TrbRequestState, form: { __typename: 'TRBRequestForm', submittedAt?: Time | null }, requesterInfo: { __typename: 'UserInfo', commonName: string } }> } } | null };
+
 export type GetTrbLeadOptionsQueryVariables = Exact<{ [key: string]: never; }>;
 
 
 export type GetTrbLeadOptionsQuery = { __typename: 'Query', trbLeadOptions: Array<{ __typename: 'UserInfo', euaUserId: string, commonName: string }> };
 
 
+export const GetSystemLinkedRequestsDocument = gql`
+    query GetSystemLinkedRequests($cedarSystemId: String!, $systemIntakeState: SystemIntakeState!, $trbRequestState: TRBRequestState!) {
+  cedarSystemDetails(cedarSystemId: $cedarSystemId) {
+    cedarSystem {
+      id
+      linkedSystemIntakes: linkedSystemIntakes(state: $systemIntakeState) {
+        id
+        name: requestName
+        submittedAt
+        status: statusRequester
+        lcid
+        requesterName
+      }
+      linkedTrbRequests(state: $trbRequestState) {
+        id
+        name
+        form {
+          submittedAt
+        }
+        status
+        state
+        requesterInfo {
+          commonName
+        }
+      }
+    }
+  }
+}
+    `;
+
+/**
+ * __useGetSystemLinkedRequestsQuery__
+ *
+ * To run a query within a React component, call `useGetSystemLinkedRequestsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetSystemLinkedRequestsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetSystemLinkedRequestsQuery({
+ *   variables: {
+ *      cedarSystemId: // value for 'cedarSystemId'
+ *      systemIntakeState: // value for 'systemIntakeState'
+ *      trbRequestState: // value for 'trbRequestState'
+ *   },
+ * });
+ */
+export function useGetSystemLinkedRequestsQuery(baseOptions: Apollo.QueryHookOptions<GetSystemLinkedRequestsQuery, GetSystemLinkedRequestsQueryVariables> & ({ variables: GetSystemLinkedRequestsQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetSystemLinkedRequestsQuery, GetSystemLinkedRequestsQueryVariables>(GetSystemLinkedRequestsDocument, options);
+      }
+export function useGetSystemLinkedRequestsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetSystemLinkedRequestsQuery, GetSystemLinkedRequestsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetSystemLinkedRequestsQuery, GetSystemLinkedRequestsQueryVariables>(GetSystemLinkedRequestsDocument, options);
+        }
+export function useGetSystemLinkedRequestsSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetSystemLinkedRequestsQuery, GetSystemLinkedRequestsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetSystemLinkedRequestsQuery, GetSystemLinkedRequestsQueryVariables>(GetSystemLinkedRequestsDocument, options);
+        }
+export type GetSystemLinkedRequestsQueryHookResult = ReturnType<typeof useGetSystemLinkedRequestsQuery>;
+export type GetSystemLinkedRequestsLazyQueryHookResult = ReturnType<typeof useGetSystemLinkedRequestsLazyQuery>;
+export type GetSystemLinkedRequestsSuspenseQueryHookResult = ReturnType<typeof useGetSystemLinkedRequestsSuspenseQuery>;
+export type GetSystemLinkedRequestsQueryResult = Apollo.QueryResult<GetSystemLinkedRequestsQuery, GetSystemLinkedRequestsQueryVariables>;
 export const GetTrbLeadOptionsDocument = gql`
     query GetTrbLeadOptions {
   trbLeadOptions {
@@ -3129,4 +3202,5 @@ export type GetTrbLeadOptionsLazyQueryHookResult = ReturnType<typeof useGetTrbLe
 export type GetTrbLeadOptionsSuspenseQueryHookResult = ReturnType<typeof useGetTrbLeadOptionsSuspenseQuery>;
 export type GetTrbLeadOptionsQueryResult = Apollo.QueryResult<GetTrbLeadOptionsQuery, GetTrbLeadOptionsQueryVariables>;
 
+export const TypedGetSystemLinkedRequestsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetSystemLinkedRequests"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"cedarSystemId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"systemIntakeState"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"SystemIntakeState"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"trbRequestState"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"TRBRequestState"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"cedarSystemDetails"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"cedarSystemId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"cedarSystemId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"cedarSystem"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","alias":{"kind":"Name","value":"linkedSystemIntakes"},"name":{"kind":"Name","value":"linkedSystemIntakes"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"state"},"value":{"kind":"Variable","name":{"kind":"Name","value":"systemIntakeState"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","alias":{"kind":"Name","value":"name"},"name":{"kind":"Name","value":"requestName"}},{"kind":"Field","name":{"kind":"Name","value":"submittedAt"}},{"kind":"Field","alias":{"kind":"Name","value":"status"},"name":{"kind":"Name","value":"statusRequester"}},{"kind":"Field","name":{"kind":"Name","value":"lcid"}},{"kind":"Field","name":{"kind":"Name","value":"requesterName"}}]}},{"kind":"Field","name":{"kind":"Name","value":"linkedTrbRequests"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"state"},"value":{"kind":"Variable","name":{"kind":"Name","value":"trbRequestState"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"form"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"submittedAt"}}]}},{"kind":"Field","name":{"kind":"Name","value":"status"}},{"kind":"Field","name":{"kind":"Name","value":"state"}},{"kind":"Field","name":{"kind":"Name","value":"requesterInfo"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"commonName"}}]}}]}}]}}]}}]}}]} as unknown as DocumentNode<GetSystemLinkedRequestsQuery, GetSystemLinkedRequestsQueryVariables>;
 export const TypedGetTrbLeadOptionsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetTrbLeadOptions"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"trbLeadOptions"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"euaUserId"}},{"kind":"Field","name":{"kind":"Name","value":"commonName"}}]}}]}}]} as unknown as DocumentNode<GetTrbLeadOptionsQuery, GetTrbLeadOptionsQueryVariables>;

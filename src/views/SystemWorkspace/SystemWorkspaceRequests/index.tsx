@@ -10,9 +10,12 @@ import {
   useSortBy,
   useTable
 } from 'react-table';
-import { useQuery } from '@apollo/client';
 import { Button, IconArrowBack, Table } from '@trussworks/react-uswds';
 import classnames from 'classnames';
+import {
+  TrbRequestState,
+  useGetSystemLinkedRequestsQuery
+} from 'gql/gen/graphql';
 
 import UswdsReactLink from 'components/LinkWrapper';
 import MainContent from 'components/MainContent';
@@ -21,11 +24,6 @@ import PageLoading from 'components/PageLoading';
 import GlobalClientFilter from 'components/TableFilter';
 import TablePageSize from 'components/TablePageSize';
 import TablePagination from 'components/TablePagination';
-import GetLinkedRequestsQuery from 'queries/GetLinkedRequestsQuery';
-import {
-  GetLinkedRequests,
-  GetLinkedRequestsVariables
-} from 'queries/types/GetLinkedRequests';
 import { SystemIntakeState, TRBRequestState } from 'types/graphql-global-types';
 import { SystemLinkedRequest } from 'types/systemLinkedRequest';
 import { formatDateLocal } from 'utils/date';
@@ -49,6 +47,7 @@ function LinkedRequestsTable({ systemId }: { systemId: string }) {
 
   const [activeTable, setActiveTable] = useState<'open' | 'closed'>('open');
 
+  /*
   const { loading, error, data } = useQuery<
     GetLinkedRequests,
     GetLinkedRequestsVariables
@@ -63,10 +62,56 @@ function LinkedRequestsTable({ systemId }: { systemId: string }) {
         activeTable === 'open' ? TRBRequestState.OPEN : TRBRequestState.CLOSED
     }
   });
+  */
+  const { loading, error, data } = useGetSystemLinkedRequestsQuery({
+    variables: {
+      cedarSystemId: systemId,
+      systemIntakeState:
+        activeTable === 'open'
+          ? SystemIntakeState.OPEN
+          : SystemIntakeState.CLOSED,
+      trbRequestState:
+        activeTable === 'open' ? TrbRequestState.OPEN : TrbRequestState.CLOSED
+    }
+  });
 
   const { linkedSystemIntakes, linkedTrbRequests } =
     data?.cedarSystemDetails?.cedarSystem || {};
 
+  /*
+  (property) cedarSystemDetails?: {
+      __typename: "CedarSystemDetails";
+      cedarSystem: {
+          __typename: "CedarSystem";
+          id: string;
+          linkedSystemIntakes: Array<{
+              __typename: "SystemIntake";
+              id: UUID;
+              submittedAt?: Time | null;
+              lcid?: string | null;
+              requesterName?: string | null;
+              name?: string | null;
+              status: SystemIntakeStatusRequester;
+          }>;
+          linkedTrbRequests: Array<{
+              __typename: "TRBRequest";
+              id: UUID;
+              name?: string | null;
+              status: TrbRequestStatus;
+              state: TrbRequestState;
+              form: {
+                  __typename: "TRBRequestForm";
+                  submittedAt?: Time | null;
+              };
+              requesterInfo: {
+                  __typename: "UserInfo";
+                  commonName: string;
+              };
+          }>;
+      };
+  } | null | undefined
+  */
+  // @ts-ignore
   const tableData: SystemLinkedRequest[] = useMemo(
     () =>
       Array.isArray(linkedSystemIntakes) && Array.isArray(linkedTrbRequests)
